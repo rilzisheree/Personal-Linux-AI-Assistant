@@ -37,7 +37,7 @@ class CoreWidget(QWidget):
             painter.restore()
 
         painter.setPen(QPen(QColor("#24566d"), 1))
-        painter.setBrush(QBrush(QColor("#172f3c")))
+        painter.setBrush(QBrush(QColor("#102532")))
         painter.drawEllipse(center, radius * 0.72, radius * 0.72)
         painter.setPen(QPen(QColor("#37758d"), 1))
         painter.drawEllipse(center, radius * 0.56, radius * 0.56)
