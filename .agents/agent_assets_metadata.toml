@@ -28,3 +28,17 @@ mtime_ms = 1788102922528
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:3bc50e20-978a-4fe6-90ba-257423202d9b/62e7b4a2-a2e2-458f-8e1e-62110c04673a/cb94d47d-8fec-4197-88ca-52735b86a156"
 storage_version_token = "1788102946509004"
 content_type = "image/png"
+
+[[outputs]]
+id = "CuDNpeMmHijACXhLKLrAs"
+uri = "file://screenshots/lura-purple-interface-preview.png"
+type = "image"
+title = "Lura purple-core preview"
+description = "Fresh preview of the Lura desktop interface with the updated dark-purple center core."
+logical_id = "afeb15c9-91b7-4c9f-9c8b-7c3349b527b0"
+content_hash = "sha256:20a74abedac9577e9b604fa6b45ab411d517e463df0ae2d24058a85282b370f4"
+size = 141911
+mtime_ms = 1788103086612
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:3bc50e20-978a-4fe6-90ba-257423202d9b/afeb15c9-91b7-4c9f-9c8b-7c3349b527b0/33bc9025-96ce-42ae-8335-dff41750c735"
+storage_version_token = "1788103095757375"
+content_type = "image/png"
