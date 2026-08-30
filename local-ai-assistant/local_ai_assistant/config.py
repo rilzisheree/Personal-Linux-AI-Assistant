@@ -10,6 +10,10 @@ from urllib.parse import urlparse
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_MODEL = "qwen3.5:4b"
+DEFAULT_WHISPER_MODEL = "base"
+DEFAULT_TTS_ENGINE = "espeak-ng"
+DEFAULT_TTS_VOICE = "en-us"
+TTS_ENGINES = ("disabled", "espeak-ng", "piper")
 
 
 @dataclass
@@ -18,10 +22,22 @@ class AppConfig:
 
     ollama_url: str = DEFAULT_OLLAMA_URL
     model: str = DEFAULT_MODEL
+    voice_input_enabled: bool = True
+    voice_responses_enabled: bool = False
+    microphone_device: str = ""
+    whisper_model: str = DEFAULT_WHISPER_MODEL
+    whisper_language: str = "auto"
+    tts_engine: str = DEFAULT_TTS_ENGINE
+    tts_voice: str = DEFAULT_TTS_VOICE
 
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
         self.model = self.model.strip()
+        self.microphone_device = self.microphone_device.strip()
+        self.whisper_model = self.whisper_model.strip()
+        self.whisper_language = self.whisper_language.strip() or "auto"
+        self.tts_engine = self.tts_engine.strip().lower()
+        self.tts_voice = self.tts_voice.strip()
         self.validate()
 
     def validate(self) -> None:
@@ -30,6 +46,16 @@ class AppConfig:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
         if not self.model:
             raise ValueError("Ollama model cannot be empty.")
+        if not isinstance(self.voice_input_enabled, bool):
+            raise ValueError("Voice input setting must be true or false.")
+        if not isinstance(self.voice_responses_enabled, bool):
+            raise ValueError("Voice response setting must be true or false.")
+        if not self.whisper_model:
+            raise ValueError("Whisper model cannot be empty.")
+        if self.tts_engine not in TTS_ENGINES:
+            raise ValueError("TTS engine must be disabled, espeak-ng, or piper.")
+        if not self.tts_voice:
+            raise ValueError("TTS voice cannot be empty.")
 
     @classmethod
     def defaults(cls) -> "AppConfig":
@@ -40,9 +66,20 @@ class AppConfig:
         config_path = path or cls.default_path()
         try:
             raw = json.loads(config_path.read_text(encoding="utf-8"))
+            if not isinstance(raw, dict):
+                raise ValueError("Configuration must be an object.")
             return cls(
                 ollama_url=str(raw.get("ollama_url", DEFAULT_OLLAMA_URL)),
                 model=str(raw.get("model", DEFAULT_MODEL)),
+                voice_input_enabled=_bool_setting(raw.get("voice_input_enabled", True), True),
+                voice_responses_enabled=_bool_setting(
+                    raw.get("voice_responses_enabled", False), False
+                ),
+                microphone_device=str(raw.get("microphone_device", "")),
+                whisper_model=str(raw.get("whisper_model", DEFAULT_WHISPER_MODEL)),
+                whisper_language=str(raw.get("whisper_language", "auto")),
+                tts_engine=str(raw.get("tts_engine", DEFAULT_TTS_ENGINE)),
+                tts_voice=str(raw.get("tts_voice", DEFAULT_TTS_VOICE)),
             )
         except FileNotFoundError:
             return cls.defaults()
@@ -62,3 +99,15 @@ class AppConfig:
     @staticmethod
     def default_path() -> Path:
         return Path.home() / ".config" / "local-ai-assistant" / "config.json"
+
+
+def _bool_setting(value: object, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "off"}:
+            return False
+    return default

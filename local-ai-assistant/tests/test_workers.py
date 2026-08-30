@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import Mock
+
+from local_ai_assistant.voice import VoiceError
+from local_ai_assistant.workers import VoiceRecordWorker, VoiceTranscriptionWorker
+
+
+class VoiceWorkerTests(unittest.TestCase):
+    def test_record_worker_stop_sets_cancel_and_terminates_process(self) -> None:
+        service = Mock()
+        process = Mock()
+        process.poll.return_value = None
+        with tempfile.TemporaryDirectory() as directory:
+            worker = VoiceRecordWorker(service, Path(directory) / "recording.wav")
+            worker._process = process
+            worker.stop()
+        self.assertTrue(worker._stop_event.is_set())
+        process.terminate.assert_called_once_with()
+
+    def test_record_worker_reports_backend_failure(self) -> None:
+        service = Mock()
+        service.start_recorder.side_effect = VoiceError("recorder missing")
+        failed: list[str] = []
+        with tempfile.TemporaryDirectory() as directory:
+            worker = VoiceRecordWorker(service, Path(directory) / "recording.wav")
+            worker.failed.connect(failed.append)
+            worker.run()
+        self.assertEqual(failed, ["recorder missing"])
+
+    def test_transcription_worker_reports_failure_and_path(self) -> None:
+        service = Mock()
+        service.transcribe.side_effect = VoiceError("Whisper missing")
+        failed: list[tuple[str, str]] = []
+        with tempfile.TemporaryDirectory() as directory:
+            audio_path = Path(directory) / "recording.wav"
+            worker = VoiceTranscriptionWorker(service, audio_path)
+            worker.failed.connect(lambda message, path: failed.append((message, path)))
+            worker.run()
+        self.assertEqual(failed, [("Whisper missing", str(audio_path))])
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -25,7 +25,14 @@ from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
 from ..ollama import ChatMessage, OllamaClient
 from ..tools import PermissionLevel, ToolManager
-from ..workers import ChatWorker, ConnectionWorker
+from ..voice import VoiceService
+from ..workers import (
+    ChatWorker,
+    ConnectionWorker,
+    SpeechWorker,
+    VoiceRecordWorker,
+    VoiceTranscriptionWorker,
+)
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
 from .settings_dialog import SettingsDialog
@@ -37,6 +44,7 @@ class MainWindow(QMainWindow):
         self.config = config
         self.client = OllamaClient(config.ollama_url)
         self.service = AssistantService(self.client)
+        self.voice_service = VoiceService(config)
         self.tool_manager = ToolManager()
         self.conversation_store = ConversationStore()
         self.conversations = self.conversation_store.load()
@@ -48,6 +56,12 @@ class MainWindow(QMainWindow):
         self.chat_worker: ChatWorker | None = None
         self.connection_thread: QThread | None = None
         self.connection_worker: ConnectionWorker | None = None
+        self.voice_record_thread: QThread | None = None
+        self.voice_record_worker: VoiceRecordWorker | None = None
+        self.voice_transcription_thread: QThread | None = None
+        self.voice_transcription_worker: VoiceTranscriptionWorker | None = None
+        self.speech_thread: QThread | None = None
+        self.speech_worker: SpeechWorker | None = None
         self.active_assistant_bubble: MessageBubble | None = None
         self.active_response = ""
         self.active_tool_bubbles: dict[str, MessageBubble] = {}
@@ -285,9 +299,9 @@ class MainWindow(QMainWindow):
         composer_layout = QVBoxLayout(composer)
         composer_layout.setContentsMargins(0, 2, 0, 0)
         composer_layout.setSpacing(6)
-        hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
-        hint.setObjectName("composerHint")
-        composer_layout.addWidget(hint)
+        self.composer_hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        self.composer_hint.setObjectName("composerHint")
+        composer_layout.addWidget(self.composer_hint)
 
         input_row = QHBoxLayout()
         input_row.setSpacing(6)
@@ -296,6 +310,14 @@ class MainWindow(QMainWindow):
         self.message_input.setClearButtonEnabled(True)
         self.message_input.returnPressed.connect(self._send_message)
         input_row.addWidget(self.message_input, 1)
+
+        self.mic_button = QPushButton("MIC")
+        self.mic_button.setObjectName("micButton")
+        self.mic_button.setToolTip("Hold to record a local voice message")
+        self.mic_button.pressed.connect(self._start_recording)
+        self.mic_button.released.connect(self._stop_recording)
+        self.mic_button.setEnabled(self.config.voice_input_enabled)
+        input_row.addWidget(self.mic_button)
 
         self.stop_button = QPushButton("×")
         self.stop_button.setObjectName("stopButton")
@@ -402,11 +424,177 @@ class MainWindow(QMainWindow):
         else:
             self.chat_view.add_message("tool", content)
 
+    @Slot()
+    def _start_recording(self) -> None:
+        if (
+            not self.config.voice_input_enabled
+            or self.chat_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+        ):
+            return
+        destination = self.voice_service.new_recording_path()
+        self.voice_record_thread = QThread(self)
+        self.voice_record_worker = VoiceRecordWorker(self.voice_service, destination)
+        self.voice_record_worker.moveToThread(self.voice_record_thread)
+        self.voice_record_thread.started.connect(self.voice_record_worker.run)
+        self.voice_record_worker.started.connect(self._recording_started)
+        self.voice_record_worker.finished.connect(self._recording_finished)
+        self.voice_record_worker.failed.connect(self._recording_failed)
+        self.voice_record_worker.finished.connect(self.voice_record_thread.quit)
+        self.voice_record_worker.failed.connect(self.voice_record_thread.quit)
+        self.voice_record_thread.finished.connect(self._recording_thread_finished)
+        self.voice_record_thread.start()
+        self._set_voice_status("STARTING MICROPHONE…")
+        self.message_input.setEnabled(False)
+        self.send_button.setEnabled(False)
+        self.mic_button.setEnabled(False)
+
+    @Slot()
+    def _recording_started(self) -> None:
+        self.mic_button.setText("STOP")
+        self.mic_button.setProperty("recording", True)
+        self.mic_button.style().unpolish(self.mic_button)
+        self.mic_button.style().polish(self.mic_button)
+        self._set_voice_status("RECORDING // RELEASE TO TRANSCRIBE")
+
+    @Slot()
+    def _stop_recording(self) -> None:
+        if self.voice_record_worker is not None:
+            self.voice_record_worker.stop()
+            self._set_voice_status("PROCESSING LOCAL AUDIO…")
+
+    @Slot(str)
+    def _recording_finished(self, audio_path: str) -> None:
+        self._set_voice_status("TRANSCRIBING WITH LOCAL WHISPER…")
+        self.voice_transcription_thread = QThread(self)
+        self.voice_transcription_worker = VoiceTranscriptionWorker(
+            self.voice_service, Path(audio_path)
+        )
+        self.voice_transcription_worker.moveToThread(self.voice_transcription_thread)
+        self.voice_transcription_thread.started.connect(
+            self.voice_transcription_worker.run
+        )
+        self.voice_transcription_worker.finished.connect(self._transcription_finished)
+        self.voice_transcription_worker.failed.connect(self._transcription_failed)
+        self.voice_transcription_worker.finished.connect(
+            self.voice_transcription_thread.quit
+        )
+        self.voice_transcription_worker.failed.connect(
+            self.voice_transcription_thread.quit
+        )
+        self.voice_transcription_thread.finished.connect(
+            self._transcription_thread_finished
+        )
+        self.voice_transcription_thread.start()
+
+    @Slot(str)
+    def _recording_failed(self, message: str) -> None:
+        self._set_voice_idle()
+        self._set_status("error")
+        self.status_label.setText("Voice input unavailable")
+        self.status_label.setToolTip(message)
+
+    def _recording_thread_finished(self) -> None:
+        if self.voice_record_worker:
+            self.voice_record_worker.deleteLater()
+        if self.voice_record_thread:
+            self.voice_record_thread.deleteLater()
+        self.voice_record_worker = None
+        self.voice_record_thread = None
+        if self.voice_transcription_worker is None:
+            self._set_voice_idle()
+
+    @Slot(str, str)
+    def _transcription_finished(self, text: str, audio_path: str) -> None:
+        self._remove_recording(audio_path)
+        self._set_voice_idle()
+        self.message_input.setText(text)
+        self._send_message()
+
+    @Slot(str, str)
+    def _transcription_failed(self, message: str, audio_path: str) -> None:
+        self._remove_recording(audio_path)
+        self._set_voice_idle()
+        self._set_status("error")
+        self.status_label.setText("Voice transcription failed")
+        self.status_label.setToolTip(message)
+
+    def _transcription_thread_finished(self) -> None:
+        if self.voice_transcription_worker:
+            self.voice_transcription_worker.deleteLater()
+        if self.voice_transcription_thread:
+            self.voice_transcription_thread.deleteLater()
+        self.voice_transcription_worker = None
+        self.voice_transcription_thread = None
+
+    @staticmethod
+    def _remove_recording(audio_path: str) -> None:
+        try:
+            Path(audio_path).unlink()
+        except OSError:
+            pass
+
+    def _set_voice_idle(self) -> None:
+        self.mic_button.setText("MIC")
+        self.mic_button.setProperty("recording", False)
+        self.mic_button.style().unpolish(self.mic_button)
+        self.mic_button.style().polish(self.mic_button)
+        self.mic_button.setEnabled(
+            self.config.voice_input_enabled
+            and self.chat_worker is None
+            and self.voice_record_worker is None
+            and self.voice_transcription_worker is None
+        )
+        self.message_input.setEnabled(self.chat_worker is None)
+        self.send_button.setEnabled(self.chat_worker is None)
+        self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+
+    def _set_voice_status(self, message: str) -> None:
+        self.composer_hint.setText(message)
+
+    def _speak_response(self, response: str) -> None:
+        if (
+            not self.config.voice_responses_enabled
+            or self.config.tts_engine == "disabled"
+            or not response.strip()
+            or self.speech_worker is not None
+        ):
+            return
+        self.speech_thread = QThread(self)
+        self.speech_worker = SpeechWorker(self.voice_service, response)
+        self.speech_worker.moveToThread(self.speech_thread)
+        self.speech_thread.started.connect(self.speech_worker.run)
+        self.speech_worker.finished.connect(self._speech_finished)
+        self.speech_worker.failed.connect(self._speech_failed)
+        self.speech_worker.finished.connect(self.speech_thread.quit)
+        self.speech_worker.failed.connect(self.speech_thread.quit)
+        self.speech_thread.finished.connect(self._speech_thread_finished)
+        self.speech_thread.start()
+        self._set_voice_status("SPEAKING LOCAL RESPONSE…")
+
+    @Slot()
+    def _speech_finished(self) -> None:
+        self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+
+    @Slot(str)
+    def _speech_failed(self, message: str) -> None:
+        self._set_voice_status("VOICE OUTPUT UNAVAILABLE")
+        self.status_label.setToolTip(message)
+
+    def _speech_thread_finished(self) -> None:
+        if self.speech_worker:
+            self.speech_worker.deleteLater()
+        if self.speech_thread:
+            self.speech_thread.deleteLater()
+        self.speech_worker = None
+        self.speech_thread = None
+
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
-        del response
         self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
+        self._speak_response(response)
 
     @Slot(str, str)
     def _chat_failed(self, message: str, kind: str) -> None:
@@ -432,6 +620,7 @@ class MainWindow(QMainWindow):
         self.chat_thread = None
         self.active_assistant_bubble = None
         self.active_response = ""
+        self._set_voice_idle()
 
     def _set_generating(self, generating: bool) -> None:
         self.send_button.setEnabled(not generating)
@@ -440,6 +629,13 @@ class MainWindow(QMainWindow):
         self.message_input.setEnabled(not generating)
         self.model_selector.setEnabled(not generating)
         self.history_list.setEnabled(not generating)
+        self.mic_button.setEnabled(
+            self.config.voice_input_enabled
+            and not generating
+            and self.chat_worker is None
+            and self.voice_record_worker is None
+            and self.voice_transcription_worker is None
+        )
 
     @Slot()
     def _stop_generation(self) -> None:
@@ -492,7 +688,12 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _open_settings(self) -> None:
-        if self.chat_worker is not None:
+        if (
+            self.chat_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+            or self.speech_worker is not None
+        ):
             return
         dialog = SettingsDialog(self.config, self)
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
@@ -501,6 +702,8 @@ class MainWindow(QMainWindow):
         self.config.save()
         self.client = OllamaClient(self.config.ollama_url)
         self.service = AssistantService(self.client)
+        self.voice_service = VoiceService(self.config)
+        self._set_voice_idle()
         self.model_selector.clear()
         self.model_selector.addItem(self.config.model)
         self.runtime_status_value.setText("CHECKING")
@@ -608,6 +811,9 @@ class MainWindow(QMainWindow):
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),
+            (self.voice_record_thread, self.voice_record_worker),
+            (self.voice_transcription_thread, self.voice_transcription_worker),
+            (self.speech_thread, self.speech_worker),
         )
         for thread, worker in threads:
             if worker is not None:

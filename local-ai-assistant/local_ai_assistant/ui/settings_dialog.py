@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -12,7 +14,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..config import AppConfig
+from ..config import AppConfig, TTS_ENGINES
 
 
 class SettingsDialog(QDialog):
@@ -36,6 +38,53 @@ class SettingsDialog(QDialog):
         form.addRow("Default model", self.model_input)
         layout.addLayout(form)
 
+        voice_label = QLabel("Voice")
+        voice_label.setStyleSheet("color: #9ba9b5; font-weight: 700;")
+        layout.addWidget(voice_label)
+
+        voice_form = QFormLayout()
+        voice_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.voice_input_enabled = QCheckBox("Enable push-to-talk microphone")
+        self.voice_input_enabled.setChecked(config.voice_input_enabled)
+        self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
+        self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
+        self.microphone_input = QLineEdit(config.microphone_device)
+        self.microphone_input.setPlaceholderText("Default microphone")
+        self.microphone_input.setToolTip("Optional PipeWire node name or ALSA device.")
+        self.whisper_model_input = QLineEdit(config.whisper_model)
+        self.whisper_model_input.setPlaceholderText("base")
+        self.whisper_language_input = QLineEdit(config.whisper_language)
+        self.whisper_language_input.setPlaceholderText("auto")
+        self.tts_engine_input = QComboBox()
+        engine_labels = {
+            "disabled": "Disabled",
+            "espeak-ng": "eSpeak-NG",
+            "piper": "Piper",
+        }
+        for engine in TTS_ENGINES:
+            self.tts_engine_input.addItem(engine_labels[engine], engine)
+        self.tts_engine_input.setCurrentIndex(
+            max(0, self.tts_engine_input.findData(config.tts_engine))
+        )
+        self.tts_voice_input = QLineEdit(config.tts_voice)
+        self.tts_voice_input.setPlaceholderText("en-us or /path/to/piper.onnx")
+        voice_form.addRow("", self.voice_input_enabled)
+        voice_form.addRow("", self.voice_responses_enabled)
+        voice_form.addRow("Microphone", self.microphone_input)
+        voice_form.addRow("Whisper model", self.whisper_model_input)
+        voice_form.addRow("Language", self.whisper_language_input)
+        voice_form.addRow("TTS engine", self.tts_engine_input)
+        voice_form.addRow("TTS voice", self.tts_voice_input)
+        layout.addLayout(voice_form)
+
+        voice_hint = QLabel(
+            "Push-to-talk uses pw-record/arecord. Whisper, Piper, eSpeak-NG, "
+            "and audio playback remain local optional dependencies."
+        )
+        voice_hint.setWordWrap(True)
+        voice_hint.setStyleSheet("color: #6f8593;")
+        layout.addWidget(voice_hint)
+
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: #ffaaa7;")
         self.error_label.hide()
@@ -49,7 +98,17 @@ class SettingsDialog(QDialog):
         layout.addWidget(buttons)
 
     def config(self) -> AppConfig:
-        return AppConfig(self.url_input.text(), self.model_input.text())
+        return AppConfig(
+            ollama_url=self.url_input.text(),
+            model=self.model_input.text(),
+            voice_input_enabled=self.voice_input_enabled.isChecked(),
+            voice_responses_enabled=self.voice_responses_enabled.isChecked(),
+            microphone_device=self.microphone_input.text(),
+            whisper_model=self.whisper_model_input.text(),
+            whisper_language=self.whisper_language_input.text(),
+            tts_engine=str(self.tts_engine_input.currentData()),
+            tts_voice=self.tts_voice_input.text(),
+        )
 
     def _accept(self) -> None:
         try:

@@ -214,6 +214,26 @@ QPushButton#sendButton {
 QPushButton#sendButton:hover {
     background: #126d85;
 }
+QPushButton#micButton {
+    min-width: 44px;
+    max-width: 64px;
+    padding: 0 7px;
+    background: #0b2230;
+    border: 1px solid #1a5067;
+    border-radius: 4px;
+    color: #82cce0;
+    font-size: 10px;
+    font-weight: 700;
+}
+QPushButton#micButton:hover {
+    background: #10384b;
+    border-color: #35b9d8;
+}
+QPushButton#micButton[recording="true"] {
+    background: #4b1f30;
+    border-color: #f0789a;
+    color: #ffd2de;
+}
 QPushButton#stopButton {
     min-width: 28px;
     max-width: 28px;

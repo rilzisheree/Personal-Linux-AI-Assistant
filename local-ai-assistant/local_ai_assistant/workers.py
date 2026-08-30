@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import threading
+import subprocess
 import uuid
+from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal, Slot
 
@@ -11,6 +13,7 @@ from .assistant_core import AssistantService
 from .errors import OllamaCancelledError, format_ollama_error
 from .ollama import ChatMessage, OllamaClient, ToolCall
 from .tools import PermissionLevel, ToolManager, ToolCallResult, ToolConfirmationRequired
+from .voice import VoiceError, VoiceService
 
 
 MAX_TOOL_ROUNDS = 8
@@ -163,3 +166,95 @@ class ConnectionWorker(QObject):
 
     def cancel(self) -> None:
         self.client.cancel_active_request()
+
+
+class VoiceRecordWorker(QObject):
+    """Record microphone input without blocking the Qt event loop."""
+
+    started = Signal()
+    finished = Signal(str)
+    failed = Signal(str)
+
+    def __init__(self, service: VoiceService, destination: Path) -> None:
+        super().__init__()
+        self.service = service
+        self.destination = destination
+        self._stop_event = threading.Event()
+        self._process: subprocess.Popen | None = None
+
+    @Slot()
+    def run(self) -> None:
+        process = None
+        try:
+            process = self.service.start_recorder(self.destination)
+            self._process = process
+            self.started.emit()
+            while process.poll() is None and not self._stop_event.wait(0.1):
+                pass
+            if process.poll() is None:
+                process.terminate()
+            try:
+                process.wait(timeout=2)
+            except Exception:
+                process.kill()
+                process.wait()
+            self.service.finish_recording(process, self.destination)
+            self.finished.emit(str(self.destination))
+        except (VoiceError, OSError, subprocess.SubprocessError) as error:
+            self.failed.emit(str(error))
+        finally:
+            self._process = None
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        process = self._process
+        if process is not None and process.poll() is None:
+            process.terminate()
+
+    def cancel(self) -> None:
+        self.stop()
+
+
+class VoiceTranscriptionWorker(QObject):
+    """Run a local Whisper backend outside the Qt event loop."""
+
+    finished = Signal(str, str)
+    failed = Signal(str, str)
+
+    def __init__(self, service: VoiceService, audio_path: Path) -> None:
+        super().__init__()
+        self.service = service
+        self.audio_path = audio_path
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            text = self.service.transcribe(self.audio_path)
+            self.finished.emit(text, str(self.audio_path))
+        except Exception as error:
+            self.failed.emit(str(error), str(self.audio_path))
+
+
+class SpeechWorker(QObject):
+    """Generate and play a local TTS response outside the Qt event loop."""
+
+    finished = Signal()
+    failed = Signal(str)
+
+    def __init__(self, service: VoiceService, text: str) -> None:
+        super().__init__()
+        self.service = service
+        self.text = text
+        self.cancel_event = threading.Event()
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            self.service.speak(self.text, self.cancel_event)
+            self.finished.emit()
+        except Exception as error:
+            self.failed.emit(str(error))
+
+    def cancel(self) -> None:
+        self.cancel_event.set()
+        self.service.cancel()

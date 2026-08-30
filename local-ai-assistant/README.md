@@ -11,7 +11,8 @@ permission gates. Phase 3 adds Linux integration for Hyprland windows,
 screenshots, local files, and pointer/keyboard input. The interface uses a
 futuristic local-intelligence HUD visual language, with the supplied Lura core
 artwork as its empty-state focus. History is stored as JSON on the local
-machine only. There is still no cloud provider, web UI, voice, or phone client.
+machine only. Voice input and output use optional local host tools; there is
+still no cloud provider, web UI, or phone client.
 
 ## Requirements
 
@@ -19,6 +20,10 @@ machine only. There is still no cloud provider, web UI, voice, or phone client.
 - PySide6 6.7 or newer
 - Ollama installed and running
 - A local Ollama model, with `qwen3.5:4b` as the default
+- For voice input: PipeWire `pw-record` or ALSA `arecord`, plus a local
+  Whisper CLI (`whisper` or `whisper-cli`)
+- For voice output: `espeak-ng` plus `pw-play`/`aplay`, or Piper with a local
+  voice model
 
 The NVIDIA RTX 4060 and Intel i5-12400F do not require any special code
 configuration. Ollama chooses the available acceleration; verify that Ollama
@@ -45,6 +50,11 @@ Or use the convenience launcher:
 If your distribution manages Python packages externally, use a user
 environment or the virtual environment above instead of installing PySide6
 into the system Python.
+
+Voice backends are intentionally host-provided because Whisper and Piper model
+downloads are large and model licensing varies. No voice backend is contacted
+over the network by Lura. Text chat remains usable when these optional
+commands are not installed.
 
 ## Prepare Ollama
 
@@ -73,6 +83,9 @@ Use the settings button in the app to change:
 
 - Ollama URL, defaulting to `http://localhost:11434`
 - Model name, defaulting to `qwen3.5:4b`
+- Push-to-talk microphone input and optional microphone device
+- Whisper model and language
+- Spoken responses, TTS engine, and voice
 
 Settings are stored locally at:
 
@@ -80,8 +93,8 @@ Settings are stored locally at:
 ~/.config/local-ai-assistant/config.json
 ```
 
-Only the URL and model name are stored. No credentials or prompts are written
-to the settings file. Conversation history is stored separately at
+The Ollama and voice preferences are stored locally. No credentials or prompts
+are written to the settings file. Conversation history is stored separately at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.json`, or
 `~/.local/share/local-ai-assistant/conversations.json` when `XDG_DATA_HOME` is
 not set.
@@ -122,17 +135,32 @@ Stop closes the active HTTP response and asks the worker to cancel. A network
 stack that is currently inside a read may take a short moment to unwind; the
 conversation will clearly mark the request as stopped.
 
+### Voice input is unavailable
+
+Hold the `MIC` button in the composer to record a message. Release it to run
+local transcription and send the resulting text. The recorder prefers
+PipeWire's `pw-record` and falls back to `arecord`. Transcription prefers the
+OpenAI Whisper CLI and then whisper.cpp. Configure the model name (for
+OpenAI Whisper) or model file path (for whisper.cpp) in Settings.
+
+### Voice output is unavailable
+
+Enable spoken responses in Settings. eSpeak-NG is the easiest local option
+and uses a voice name such as `en-us`. Piper requires both the `piper`
+executable and a local `.onnx` voice model path. Playback prefers `pw-play`,
+then `aplay`/`paplay`. Text responses are still displayed if speech fails.
+
 ## Tests
 
-The focused tests do not need PySide6:
+Run the focused tests with the project dependencies installed:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
 They cover Ollama's newline-delimited JSON stream parsing, configuration
-defaults/round-tripping, conversations, permission gates, and the local tool
-handlers.
+defaults/round-tripping, conversations, permission gates, local tool handlers,
+and voice backend selection/error handling.
 
 ## Project structure
 
@@ -145,6 +173,7 @@ local-ai-assistant/
 │   ├── conversations.py       # local conversation model and JSON store
 │   ├── errors.py              # user-facing error categories
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
+│   ├── voice.py               # local recording, Whisper, and TTS adapters
 │   ├── tools.py               # tool registry and permission gates
 │   ├── workers.py             # background Qt workers and tool-call loop
 │   └── ui/
@@ -156,7 +185,9 @@ local-ai-assistant/
 │   ├── test_config.py
 │   ├── test_conversations.py
 │   ├── test_ollama_parser.py
-│   └── test_tools.py
+│   ├── test_tools.py
+│   ├── test_voice.py
+│   └── test_workers.py
 ├── pyproject.toml
 └── run.sh
 ```
@@ -170,5 +201,6 @@ to text files with confirmation for mutations, and input tools prefer
 attached to the next Ollama tool message so vision-capable models can inspect
 the captured image.
 
-The next phase is local voice input/output. The future authenticated API and
-phone web client are intentionally not included.
+Phase 4 local voice input/output is implemented through the `MIC` push-to-talk
+button and optional local backends. The future authenticated API and phone web
+client are intentionally not included.

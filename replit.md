@@ -59,10 +59,12 @@ server and executes a small set of permission-gated tools.
 ## Gotchas
 
 - Ollama must be installed, running, and have the selected model pulled.
-- Voice, SQLite memory, and the future API are not implemented yet. Phase 3
-  Linux integration is implemented through the tool registry: Hyprland window
+- SQLite memory and the future API are not implemented yet. Phase 3 Linux
+  integration is implemented through the tool registry: Hyprland window
   control, Wayland/X11 screenshots, bounded local file operations, and
-  pointer/keyboard automation. Tools still report clear unavailable-backend
+  pointer/keyboard automation. Phase 4 voice is implemented as optional local
+  PipeWire/ALSA recording, Whisper/whisper.cpp transcription, and
+  Piper/eSpeak-NG playback. Tools and voice report clear unavailable-backend
   errors when the host lacks the required Linux utility.
 
 ## Pointers
