@@ -1,12 +1,14 @@
-# Local AI Assistant
+# Lura
 
-The current app is a native-feeling PySide6 desktop chat client for Linux. It
-talks directly to an Ollama server running on the same machine (or another URL
-you configure) and streams responses into the conversation as they arrive.
+Lura is a native-feeling PySide6 desktop chat client for Linux. It talks
+directly to an Ollama server running on the same machine (or another URL you
+configure) and streams responses into the conversation as they arrive.
 
 The first continuation phase adds a local conversation manager: chats are
 restored between launches, can be switched from the sidebar, and can be
-started with New chat. History is stored as JSON on the local machine only.
+started with New chat. The interface uses a futuristic local-intelligence HUD
+visual language, with the supplied Lura core artwork as its empty-state focus.
+History is stored as JSON on the local machine only.
 There is still no cloud provider, web UI, voice, desktop automation, tool
 execution, or phone client.
 

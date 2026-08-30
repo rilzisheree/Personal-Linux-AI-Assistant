@@ -13,8 +13,8 @@ from .ui.styles import APP_STYLE
 
 def main() -> int:
     app = QApplication(sys.argv)
-    app.setApplicationName("Local AI Assistant")
-    app.setOrganizationName("Local AI Assistant")
+    app.setApplicationName("Lura")
+    app.setOrganizationName("Lura")
     app.setStyleSheet(APP_STYLE)
     window = MainWindow(AppConfig.load())
     window.show()

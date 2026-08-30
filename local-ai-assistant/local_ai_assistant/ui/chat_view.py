@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -15,6 +17,54 @@ from PySide6.QtWidgets import (
 )
 
 from ..ollama import ChatMessage
+
+
+REFERENCE_IMAGE = "IMG_5503_1788102795149.jpeg"
+
+
+def _reference_image_path() -> Path:
+    return Path(__file__).resolve().parents[3] / "attached_assets" / REFERENCE_IMAGE
+
+
+def _make_empty_state() -> QWidget:
+    state = QWidget()
+    state.setObjectName("emptyState")
+    state_layout = QVBoxLayout(state)
+    state_layout.setContentsMargins(24, 28, 24, 20)
+    state_layout.setSpacing(8)
+
+    visual = QLabel()
+    visual.setObjectName("luraVisual")
+    visual.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    visual.setMinimumHeight(250)
+    pixmap = QPixmap(str(_reference_image_path()))
+    if not pixmap.isNull():
+        visual.setPixmap(
+            pixmap.scaled(
+                760,
+                380,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
+    else:
+        visual.setText("LURA")
+    state_layout.addWidget(visual, 1)
+
+    kicker = QLabel("LURA // LOCAL INTELLIGENCE")
+    kicker.setObjectName("heroKicker")
+    kicker.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    state_layout.addWidget(kicker)
+    title = QLabel("Ready when you are")
+    title.setObjectName("heroTitle")
+    title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    state_layout.addWidget(title)
+    copy = QLabel("Private conversations, processed by your configured Ollama model.")
+    copy.setObjectName("heroCopy")
+    copy.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    copy.setWordWrap(True)
+    state_layout.addWidget(copy)
+    return state
 
 
 class MessageBubble(QFrame):
@@ -43,14 +93,6 @@ class MessageBubble(QFrame):
         self.body.document().contentsChanged.connect(self._resize_to_content)
         layout.addWidget(self.body)
 
-        if role == "user":
-            self.setStyleSheet(
-                "#userBubble { background: #1b343f; border: 1px solid #2d5967; border-radius: 12px; }"
-            )
-        else:
-            self.setStyleSheet(
-                "#assistantBubble { background: #161d24; border: 1px solid #293641; border-radius: 12px; }"
-            )
         self._resize_to_content()
 
     def set_content(self, content: str) -> None:
@@ -79,11 +121,7 @@ class ChatView(QScrollArea):
         self.layout.addStretch(1)
         self.setWidget(self.container)
 
-        self.empty_state = QLabel(
-            "Start a conversation\n\nYour messages stay local and go directly to Ollama."
-        )
-        self.empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_state.setStyleSheet("color: #778492; font-size: 15px; line-height: 1.5;")
+        self.empty_state = _make_empty_state()
         self.layout.insertWidget(0, self.empty_state)
 
     def add_message(self, role: str, content: str = "") -> MessageBubble:
@@ -100,11 +138,7 @@ class ChatView(QScrollArea):
             item = self.layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-        self.empty_state = QLabel(
-            "Start a conversation\n\nYour messages stay local and go directly to Ollama."
-        )
-        self.empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_state.setStyleSheet("color: #778492; font-size: 15px;")
+        self.empty_state = _make_empty_state()
         self.layout.insertWidget(0, self.empty_state)
 
     def set_messages(self, messages: list[ChatMessage]) -> None:

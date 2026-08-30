@@ -14,3 +14,17 @@ mtime_ms = 1788102666420
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:3bc50e20-978a-4fe6-90ba-257423202d9b/51ad9ca6-ddc1-4195-b293-4905ef8b03a9/3d7719df-1d8b-4fbd-bcb5-19e40a404ee7"
 storage_version_token = "1788102674085903"
 content_type = "image/png"
+
+[[outputs]]
+id = "JOcp3x-kr_LPKfnVdG1aX"
+uri = "file://screenshots/lura-interface-preview.png"
+type = "image"
+title = "Lura interface preview"
+description = "Updated Lura desktop interface inspired by the supplied HUD reference, with the local AI core artwork, cyan-blue console accents, chat history, model status, and New chat controls."
+logical_id = "62e7b4a2-a2e2-458f-8e1e-62110c04673a"
+content_hash = "sha256:e97e1b0ebffafb6745e6b9ae12ed3001f837e0decc30b2aff30934fd2398bdea"
+size = 229328
+mtime_ms = 1788102922528
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:3bc50e20-978a-4fe6-90ba-257423202d9b/62e7b4a2-a2e2-458f-8e1e-62110c04673a/cb94d47d-8fec-4197-88ca-52735b86a156"
+storage_version_token = "1788102946509004"
+content_type = "image/png"

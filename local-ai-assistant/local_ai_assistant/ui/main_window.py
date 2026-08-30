@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.active_response = ""
         self.available_models: list[str] = []
 
-        self.setWindowTitle("Local AI Assistant")
+        self.setWindowTitle("Lura")
         self.resize(1040, 760)
         self.setMinimumSize(700, 540)
         self._build_ui()
@@ -70,9 +70,9 @@ class MainWindow(QMainWindow):
 
         identity = QVBoxLayout()
         identity.setSpacing(2)
-        mark = QLabel("Local AI Assistant")
+        mark = QLabel("Lura")
         mark.setObjectName("appMark")
-        subtitle = QLabel("Private chat through Ollama")
+        subtitle = QLabel("Local intelligence interface")
         subtitle.setObjectName("appSubtitle")
         identity.addWidget(mark)
         identity.addWidget(subtitle)
@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
         input_row = QHBoxLayout()
         input_row.setSpacing(10)
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Message your local assistant…")
+        self.message_input.setPlaceholderText("Ask Lura anything locally…")
         self.message_input.setClearButtonEnabled(True)
         self.message_input.returnPressed.connect(self._send_message)
         input_row.addWidget(self.message_input, 1)
