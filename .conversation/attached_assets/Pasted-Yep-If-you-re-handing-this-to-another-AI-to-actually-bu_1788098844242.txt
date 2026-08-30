@@ -1,0 +1,761 @@
+Yep. If you’re handing this to another AI to actually build it, give it a clear spec rather than just a list of technologies.
+
+Here’s a copy-paste-ready project brief for the Linux app first, with the phone web app explicitly planned for later.
+
+Personal AI Assistant — Linux App First
+
+Project Goal
+
+Build a personal AI assistant application for my Linux PC.
+
+The first version should be a native Linux desktop application that provides a ChatGPT/Jarvis-style interface and connects to my local Ollama installation.
+
+The application should eventually be capable of understanding text and voice, executing approved actions on the Linux desktop, and later being controlled remotely from my phone through a web app.
+
+Important: Do NOT build the phone/web application yet. Only design the architecture so it can be added later without rewriting the Linux application.
+
+⸻
+
+1. Current Environment
+
+OS:
+
+* CachyOS
+* Hyprland
+* Linux
+* NVIDIA RTX 4060
+* Intel i5-12400F
+
+AI runtime:
+
+* Ollama
+
+Currently installed Ollama models:
+
+* qwen3.5:4b
+* qwen3.5:2b
+* llama3.1:8b-instruct-q4_K_M
+* qwen3:8b
+
+Current preferred model:
+
+ollama/qwen3.5:4b
+
+The application should allow the model to be changed later through settings.
+
+⸻
+
+2. Linux Application
+
+Build the Linux application first.
+
+Recommended stack:
+
+Backend
+
+* Python 3
+* FastAPI or a lightweight internal Python service
+* Ollama API
+* WebSocket support
+* SQLite for local data
+
+GUI
+
+Use:
+
+* PySide6
+* Qt
+
+The GUI should feel like a modern AI assistant rather than a traditional Linux utility.
+
+Do NOT build a web-based GUI for the Linux application unless there is a strong technical reason.
+
+⸻
+
+3. Basic Architecture
+
+Use a modular architecture.
+
+Linux AI Assistant
+│
+├── GUI
+│   └── PySide6 / Qt
+│
+├── Assistant Core
+│   ├── conversation manager
+│   ├── model manager
+│   ├── tool manager
+│   └── permission manager
+│
+├── AI
+│   └── Ollama
+│
+├── Voice
+│   ├── speech-to-text
+│   └── text-to-speech
+│
+├── Tools
+│   ├── application control
+│   ├── terminal
+│   ├── files
+│   ├── screenshots
+│   ├── keyboard
+│   ├── mouse
+│   ├── windows
+│   └── system information
+│
+├── Storage
+│   └── SQLite
+│
+└── Future API
+    └── WebSocket / HTTP
+        └── future phone web app
+
+Keep each component separate.
+
+⸻
+
+4. AI Communication
+
+The application should communicate directly with Ollama.
+
+Do NOT use OpenClaw.
+
+Do NOT use Telegram.
+
+Do NOT depend on a cloud AI provider.
+
+The application should send requests to the local Ollama API.
+
+Example:
+
+User
+ ↓
+Linux GUI
+ ↓
+Assistant Core
+ ↓
+Ollama
+ ↓
+Qwen 3.5
+
+The Ollama model should be configurable.
+
+Default:
+
+qwen3.5:4b
+
+⸻
+
+5. Tool Calling
+
+This is one of the most important parts.
+
+The AI must be able to call actual application tools.
+
+Do NOT simply ask the model to output fake JSON and then display that JSON to the user.
+
+The application should implement a real tool/function-calling layer.
+
+Example:
+
+User:
+
+Open Firefox
+
+Assistant:
+
+AI determines that the open_app tool is required.
+
+Application executes:
+
+open_app("firefox")
+
+Firefox launches.
+
+Assistant responds:
+
+Done.
+
+The user should never need to manually copy commands.
+
+⸻
+
+6. Initial Tools
+
+Implement these tools first.
+
+Application control
+
+open_app(app)
+close_app(app)
+restart_app(app)
+
+Example:
+
+open_app("firefox")
+
+⸻
+
+Terminal
+
+Provide:
+
+exec(command)
+
+However, this MUST have a permission/safety layer.
+
+Commands that can modify/delete large amounts of data should require confirmation.
+
+For example:
+
+rm -rf
+mkfs
+dd
+shutdown
+reboot
+sudo
+
+should not automatically execute without confirmation.
+
+⸻
+
+7. System Information
+
+Implement:
+
+get_cpu_usage()
+get_gpu_usage()
+get_ram_usage()
+get_disk_usage()
+get_temperature()
+get_battery()
+get_volume()
+
+The assistant should be able to answer questions such as:
+
+How much RAM am I using?
+
+or:
+
+What's my GPU usage?
+
+⸻
+
+8. Window Management
+
+Because I use Hyprland, support Hyprland where possible.
+
+Implement tools such as:
+
+list_windows()
+focus_window(window)
+move_window(window, workspace)
+resize_window(window)
+close_window(window)
+
+Use Hyprland’s native tools/IPC where appropriate.
+
+Do not assume GNOME/KDE behavior.
+
+⸻
+
+9. Screenshot / Vision
+
+Add a screenshot tool:
+
+take_screenshot()
+
+The assistant should eventually be able to inspect the screenshot with a vision-capable model.
+
+The architecture should support models with image input.
+
+The current qwen3.5:4b installation supports image input, so keep the system compatible with that.
+
+Example:
+
+User:
+
+What's on my screen?
+
+Assistant:
+
+1. Take screenshot
+2. Send screenshot to vision-capable model
+3. Analyze it
+4. Respond
+
+⸻
+
+10. Keyboard and Mouse
+
+Eventually support:
+
+mouse_move(x, y)
+mouse_click(x, y)
+keyboard_type(text)
+keyboard_press(key)
+
+These should be implemented as separate tools.
+
+The assistant should be able to perform tasks such as:
+
+Open Firefox and search for YouTube.
+
+But this should be added AFTER the basic assistant and tool system work reliably.
+
+Do not attempt to implement every automation feature immediately.
+
+⸻
+
+11. File System Tools
+
+Eventually implement:
+
+search_files()
+read_file()
+write_file()
+create_file()
+delete_file()
+move_file()
+copy_file()
+
+File deletion and potentially destructive operations should require confirmation.
+
+The assistant should understand natural language.
+
+Example:
+
+Find my Minecraft screenshots.
+
+should translate into a file search.
+
+⸻
+
+12. Voice
+
+Voice is required, but should be implemented after the text-based assistant works.
+
+Speech → Text
+
+Use a local Whisper implementation.
+
+The system should:
+
+Microphone
+ ↓
+Whisper
+ ↓
+Text
+ ↓
+AI
+
+Prefer local processing.
+
+⸻
+
+13. Text → Speech
+
+Use a local TTS engine.
+
+Possible options:
+
+* Piper
+* Kokoro
+
+Architecture:
+
+AI response
+ ↓
+TTS
+ ↓
+Audio output
+
+The user should be able to enable/disable voice responses.
+
+⸻
+
+14. Push-to-Talk
+
+The first voice implementation should use push-to-talk.
+
+Do NOT implement wake-word detection initially.
+
+Example:
+
+Hold microphone button
+ ↓
+Speak
+ ↓
+Release
+ ↓
+Whisper
+ ↓
+AI
+
+Wake-word support can be added later.
+
+⸻
+
+15. GUI
+
+The main window should contain:
+
+┌───────────────────────────────────────┐
+│  AI Assistant                         │
+├───────────────────────────────────────┤
+│                                       │
+│  User: Open Firefox                   │
+│                                       │
+│  AI: Done.                            │
+│                                       │
+│                                       │
+├───────────────────────────────────────┤
+│  Message...                     🎤     │
+└───────────────────────────────────────┘
+
+Required UI:
+
+* conversation history
+* message input
+* send button
+* microphone button
+* stop generation button
+* model selector
+* settings
+* tool execution indicators
+* confirmation dialogs
+* connection/Ollama status
+
+Keep the UI clean and modern.
+
+⸻
+
+16. Tool Execution UI
+
+When the assistant uses a tool, show what it is doing.
+
+For example:
+
+🤖 Opening Firefox...
+
+Then:
+
+✓ Firefox opened
+
+For dangerous actions:
+
+⚠️ This command will delete files.
+Command:
+rm -rf ~/Downloads/test
+[Cancel] [Allow]
+
+Never silently execute destructive operations.
+
+⸻
+
+17. Conversation History
+
+Use SQLite.
+
+Store:
+
+conversations
+messages
+settings
+tool_history
+
+The user should be able to:
+
+* start a new conversation
+* view previous conversations
+* delete conversations
+* rename conversations
+
+Keep all data local.
+
+⸻
+
+18. Settings
+
+Create a settings page.
+
+Settings should include:
+
+AI
+
+* Ollama URL
+* default model
+* temperature if supported
+* context length if supported
+
+Voice
+
+* enable/disable voice
+* microphone
+* speech recognition model
+* TTS engine
+* voice
+
+Tools
+
+* enable/disable individual tools
+* confirmation behavior
+
+Appearance
+
+* dark/light/system
+* font size
+* UI preferences
+
+⸻
+
+19. Permissions / Security
+
+The assistant has the ability to control the computer, so security is important.
+
+Create a permission system.
+
+Tools should have categories:
+
+SAFE
+CONFIRMATION_REQUIRED
+DANGEROUS
+
+Example:
+
+SAFE:
+
+get_cpu_usage
+get_ram_usage
+open_app
+list_windows
+
+CONFIRMATION_REQUIRED:
+
+write_file
+move_file
+close_app
+exec
+
+DANGEROUS:
+
+delete_file
+rm
+sudo commands
+disk operations
+shutdown
+reboot
+
+Never allow the AI to bypass the permission system.
+
+The model decides WHAT it wants to do.
+
+The application decides WHETHER it is allowed to do it.
+
+⸻
+
+20. Future Phone Application
+
+DO NOT BUILD THIS YET.
+
+The future phone application should be a web application/PWA rather than a native iOS app.
+
+Planned architecture:
+
+📱 Phone Web App
+       │
+       │ HTTPS / WebSocket
+       ▼
+🖥️ Linux Assistant
+       │
+       ├── Ollama
+       ├── Tools
+       ├── Voice
+       └── Desktop
+
+The Linux application should therefore expose a clean internal API so the web app can be added later.
+
+Do not make the Linux application depend on the phone application.
+
+⸻
+
+21. Future Web App Requirements
+
+For later:
+
+* responsive mobile UI
+* text chat
+* microphone input
+* AI responses
+* voice responses
+* connection status
+* authentication
+* conversation history
+* screenshots
+* remote commands
+
+But this is NOT part of the first implementation.
+
+⸻
+
+22. Development Order
+
+Build in this exact order.
+
+Phase 1 — Foundation
+
+1. Create project
+2. Create Python environment
+3. Create PySide6 GUI
+4. Connect to Ollama
+5. Send/receive normal chat messages
+6. Display streaming responses
+
+Phase 2 — Tool System
+
+7. Create tool interface
+8. Implement open_app
+9. Implement exec
+10. Implement system information
+11. Add permission system
+12. Add tool execution UI
+
+At this point:
+
+"Open Firefox"
+
+must actually open Firefox.
+
+Phase 3 — Linux Integration
+
+13. Hyprland window management
+14. Screenshot support
+15. File system tools
+16. Keyboard/mouse automation
+
+Phase 4 — Voice
+
+17. Microphone
+18. Whisper
+19. Push-to-talk
+20. TTS
+21. Voice settings
+
+Phase 5 — Memory
+
+22. SQLite
+23. Conversation history
+24. Persistent settings
+25. Basic assistant memory
+
+Phase 6 — Polish
+
+26. Better UI
+27. Error handling
+28. Loading states
+29. Tool status
+30. Permission dialogs
+31. Packaging
+32. Autostart/background mode
+
+Phase 7 — Later
+
+Only after the Linux application is stable:
+
+33. Build mobile web app
+34. Add authentication
+35. Add WebSocket remote connection
+36. Add remote voice
+37. Add remote desktop controls
+
+⸻
+
+23. Important Development Rules
+
+Do NOT:
+
+* use OpenClaw
+* use Telegram
+* require cloud AI
+* hard-code a single Ollama model
+* put all code into one giant Python file
+* allow unrestricted shell execution
+* fake tool calls by parsing arbitrary assistant text
+* build the phone application yet
+
+Do:
+
+* keep the project modular
+* use local Ollama
+* use real tool functions
+* implement permissions
+* support streaming responses
+* handle errors cleanly
+* keep secrets/configuration outside source code
+* design the API so a web client can be added later
+* prioritize reliability over adding hundreds of features
+
+⸻
+
+24. First Milestone
+
+Do NOT attempt to build the entire project immediately.
+
+The first working milestone is ONLY:
+
+PySide6 GUI
+      ↓
+Ollama
+      ↓
+Qwen3.5:4b
+      ↓
+Response displayed in GUI
+
+Then add:
+
+"Open Firefox"
+      ↓
+AI tool call
+      ↓
+open_app("firefox")
+      ↓
+Firefox launches
+
+Once those two things work reliably, continue to the next phase.
+
+⸻
+
+25. Expected Result
+
+The final Linux application should feel like a personal local AI assistant.
+
+I should be able to say:
+
+Open Firefox.
+
+and Firefox actually opens.
+
+I should be able to ask:
+
+What's my GPU usage?
+
+and receive the real value.
+
+I should eventually be able to say:
+
+Look at my screen.
+
+and have the assistant analyze a screenshot.
+
+I should eventually be able to speak:
+
+Open Discord and lower my volume to 30%.
+
+and have the assistant perform the actions.
+
+Everything should primarily run locally through Ollama and the Linux machine.
+
+The phone web app comes later.
+
+That’s the spec I’d give the coding AI. Start with Phase 1 only—don’t let it try to generate the entire Jarvis system in one shot.
