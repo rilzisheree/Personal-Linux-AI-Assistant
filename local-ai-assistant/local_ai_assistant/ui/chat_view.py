@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from ..ollama import ChatMessage
 
 
-REFERENCE_IMAGE = "IMG_5503_1788102795149.jpeg"
+REFERENCE_IMAGE = "lura-core-purple.jpeg"
 
 
 def _reference_image_path() -> Path:
