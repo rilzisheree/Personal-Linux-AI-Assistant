@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -19,51 +17,10 @@ from PySide6.QtWidgets import (
 from ..ollama import ChatMessage
 
 
-REFERENCE_IMAGE = "lura-core-purple.jpeg"
-
-
-def _reference_image_path() -> Path:
-    return Path(__file__).resolve().parents[3] / "attached_assets" / REFERENCE_IMAGE
-
-
 def _make_empty_state() -> QWidget:
-    state = QWidget()
+    state = QLabel("NO TRANSMISSION YET\n\nAsk Lura something to begin.")
     state.setObjectName("emptyState")
-    state_layout = QVBoxLayout(state)
-    state_layout.setContentsMargins(24, 28, 24, 20)
-    state_layout.setSpacing(8)
-
-    visual = QLabel()
-    visual.setObjectName("luraVisual")
-    visual.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    visual.setMinimumHeight(250)
-    pixmap = QPixmap(str(_reference_image_path()))
-    if not pixmap.isNull():
-        visual.setPixmap(
-            pixmap.scaled(
-                760,
-                380,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-        )
-    else:
-        visual.setText("LURA")
-    state_layout.addWidget(visual, 1)
-
-    kicker = QLabel("LURA // LOCAL INTELLIGENCE")
-    kicker.setObjectName("heroKicker")
-    kicker.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    state_layout.addWidget(kicker)
-    title = QLabel("Ready when you are")
-    title.setObjectName("heroTitle")
-    title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    state_layout.addWidget(title)
-    copy = QLabel("Private conversations, processed by your configured Ollama model.")
-    copy.setObjectName("heroCopy")
-    copy.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    copy.setWordWrap(True)
-    state_layout.addWidget(copy)
+    state.setAlignment(Qt.AlignmentFlag.AlignCenter)
     return state
 
 
@@ -78,8 +35,8 @@ class MessageBubble(QFrame):
         layout.setContentsMargins(16, 12, 16, 12)
         layout.setSpacing(6)
 
-        label = QLabel("You" if role == "user" else "Assistant")
-        label.setStyleSheet("color: #7fced0; font-size: 11px; font-weight: 700;")
+        label = QLabel("YOU" if role == "user" else "LURA")
+        label.setObjectName("messageRole")
         layout.addWidget(label)
 
         self.body = QTextBrowser()
@@ -116,8 +73,8 @@ class ChatView(QScrollArea):
 
         self.container = QWidget()
         self.layout = QVBoxLayout(self.container)
-        self.layout.setContentsMargins(28, 24, 28, 28)
-        self.layout.setSpacing(14)
+        self.layout.setContentsMargins(12, 12, 12, 12)
+        self.layout.setSpacing(8)
         self.layout.addStretch(1)
         self.setWidget(self.container)
 

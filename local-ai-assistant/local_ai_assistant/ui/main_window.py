@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QObject, QThread, Qt, Signal, Slot
+from pathlib import Path
+
+from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QComboBox,
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QListWidget,
-    QListWidgetItem,
     QMainWindow,
     QPushButton,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -25,6 +24,7 @@ from ..conversations import Conversation, ConversationStore
 from ..ollama import ChatMessage, OllamaClient
 from ..workers import ChatWorker, ConnectionWorker
 from .chat_view import ChatView, MessageBubble
+from .core_widget import CoreWidget
 from .settings_dialog import SettingsDialog
 
 
@@ -49,8 +49,8 @@ class MainWindow(QMainWindow):
         self.available_models: list[str] = []
 
         self.setWindowTitle("Lura")
-        self.resize(1040, 760)
-        self.setMinimumSize(700, 540)
+        self.resize(1280, 760)
+        self.setMinimumSize(900, 580)
         self._build_ui()
         self._populate_conversations()
         self.chat_view.set_messages(self.messages)
@@ -66,21 +66,18 @@ class MainWindow(QMainWindow):
         top_bar = QFrame()
         top_bar.setObjectName("topBar")
         top_layout = QHBoxLayout(top_bar)
-        top_layout.setContentsMargins(24, 16, 24, 16)
+        top_layout.setContentsMargins(14, 10, 14, 10)
+        top_layout.setSpacing(10)
 
         identity = QVBoxLayout()
         identity.setSpacing(2)
-        mark = QLabel("Lura")
+        mark = QLabel("L.U.R.A.")
         mark.setObjectName("appMark")
-        subtitle = QLabel("Local intelligence interface")
+        subtitle = QLabel("LOCAL USER RUNTIME ASSISTANT")
         subtitle.setObjectName("appSubtitle")
         identity.addWidget(mark)
         identity.addWidget(subtitle)
         top_layout.addLayout(identity)
-        new_chat_button = QPushButton("New chat")
-        new_chat_button.setObjectName("newChatButton")
-        new_chat_button.clicked.connect(self._new_chat)
-        top_layout.addWidget(new_chat_button)
         top_layout.addStretch(1)
 
         self.status_label = QLabel("Checking Ollama")
@@ -88,76 +85,230 @@ class MainWindow(QMainWindow):
         self.status_label.setProperty("status", "checking")
         top_layout.addWidget(self.status_label)
 
+        self.clock_label = QLabel()
+        self.clock_label.setObjectName("topMeta")
+        top_layout.addWidget(self.clock_label)
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self._update_clock)
+        self.clock_timer.start(1000)
+        self._update_clock()
+
         self.model_selector = QComboBox()
-        self.model_selector.setMinimumWidth(190)
+        self.model_selector.setMinimumWidth(150)
         self.model_selector.setToolTip("Model used for the next message")
         self.model_selector.addItem(self.config.model)
         top_layout.addWidget(self.model_selector)
 
         settings_button = QPushButton("Settings")
         settings_button.setObjectName("settingsButton")
+        settings_button.setToolTip("Configure Ollama")
         settings_button.clicked.connect(self._open_settings)
         top_layout.addWidget(settings_button)
         root_layout.addWidget(top_bar)
 
         body = QWidget()
         body_layout = QHBoxLayout(body)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-        body_layout.setSpacing(0)
+        body_layout.setContentsMargins(10, 10, 10, 10)
+        body_layout.setSpacing(10)
 
-        history_panel = QFrame()
-        history_panel.setObjectName("historyPanel")
-        history_panel.setMinimumWidth(210)
-        history_panel.setMaximumWidth(280)
-        history_layout = QVBoxLayout(history_panel)
-        history_layout.setContentsMargins(14, 18, 10, 14)
-        history_layout.setSpacing(10)
-        history_label = QLabel("Chats")
-        history_label.setObjectName("sectionLabel")
-        history_layout.addWidget(history_label)
-        self.history_list = QListWidget()
-        self.history_list.setObjectName("historyList")
-        self.history_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.history_list.currentItemChanged.connect(self._conversation_selected)
-        history_layout.addWidget(self.history_list, 1)
-        body_layout.addWidget(history_panel)
+        left_rail = QWidget()
+        left_rail.setObjectName("leftRail")
+        left_rail.setFixedWidth(235)
+        left_layout = QVBoxLayout(left_rail)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(8)
 
-        chat_column = QWidget()
-        chat_column_layout = QVBoxLayout(chat_column)
-        chat_column_layout.setContentsMargins(0, 0, 0, 0)
-        chat_column_layout.setSpacing(0)
+        def make_card(title: str, eyebrow: str) -> tuple[QFrame, QVBoxLayout]:
+            card = QFrame()
+            card.setObjectName("panelCard")
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(10, 9, 10, 10)
+            card_layout.setSpacing(7)
+            heading = QHBoxLayout()
+            heading.setSpacing(5)
+            title_label = QLabel(title)
+            title_label.setObjectName("cardTitle")
+            heading.addWidget(title_label)
+            heading.addStretch(1)
+            eyebrow_label = QLabel(eyebrow)
+            eyebrow_label.setObjectName("cardEyebrow")
+            heading.addWidget(eyebrow_label)
+            card_layout.addLayout(heading)
+            return card, card_layout
+
+        def add_value_row(layout: QVBoxLayout, label: str, value: str) -> QLabel:
+            row = QHBoxLayout()
+            row.setSpacing(4)
+            key_label = QLabel(label)
+            key_label.setObjectName("cardKey")
+            value_label = QLabel(value)
+            value_label.setObjectName("cardValue")
+            row.addWidget(key_label)
+            row.addStretch(1)
+            row.addWidget(value_label)
+            layout.addLayout(row)
+            return value_label
+
+        stats_card, stats_layout = make_card("System Stats", "LOCAL")
+        add_value_row(stats_layout, "MODEL", self.config.model)
+        add_value_row(stats_layout, "MODE", "STREAM")
+        add_value_row(stats_layout, "STORE", "PRIVATE")
+        left_layout.addWidget(stats_card)
+
+        runtime_card, runtime_layout = make_card("Runtime", "HOST")
+        add_value_row(runtime_layout, "ENDPOINT", "11434")
+        self.runtime_status_value = add_value_row(runtime_layout, "STATUS", "CHECKING")
+        add_value_row(runtime_layout, "CHANNEL", "OLLAMA")
+        left_layout.addWidget(runtime_card)
+
+        camera_card, camera_layout = make_card("Vision Input", "SENSOR")
+        camera_preview = QFrame()
+        camera_preview.setObjectName("cameraPreview")
+        camera_preview_layout = QVBoxLayout(camera_preview)
+        camera_preview_layout.setContentsMargins(8, 12, 8, 12)
+        camera_status = QLabel("NO SIGNAL")
+        camera_status.setObjectName("cameraStatus")
+        camera_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        camera_preview_layout.addWidget(camera_status)
+        camera_layout.addWidget(camera_preview)
+        camera_note = QLabel("Vision input is not connected")
+        camera_note.setObjectName("cardNote")
+        camera_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        camera_layout.addWidget(camera_note)
+        left_layout.addWidget(camera_card)
+
+        lighting_card, lighting_layout = make_card("Custom Lighting", "LURA")
+        swatches = QHBoxLayout()
+        swatches.setSpacing(6)
+        for color in ("#11b6e8", "#31708a", "#6a4ca2", "#182a42"):
+            swatch = QFrame()
+            swatch.setObjectName("colorSwatch")
+            swatch.setStyleSheet(f"background: {color};")
+            swatches.addWidget(swatch)
+        lighting_layout.addLayout(swatches)
+        lighting_note = QLabel("CORE PALETTE // ACTIVE")
+        lighting_note.setObjectName("cardNote")
+        lighting_layout.addWidget(lighting_note)
+        left_layout.addWidget(lighting_card)
+        left_layout.addStretch(1)
+        body_layout.addWidget(left_rail)
+
+        center_stage = QFrame()
+        center_stage.setObjectName("centerStage")
+        center_layout = QVBoxLayout(center_stage)
+        center_layout.setContentsMargins(10, 10, 10, 10)
+        center_layout.setSpacing(7)
+        center_layout.addStretch(1)
+        self.core_widget = CoreWidget()
+        self.core_widget.setFixedSize(240, 240)
+        center_layout.addWidget(self.core_widget, 0, Qt.AlignmentFlag.AlignCenter)
+        core_name = QLabel("L.U.R.A.")
+        core_name.setObjectName("coreName")
+        core_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        center_layout.addWidget(core_name)
+        core_status = QLabel("●  Local mode active")
+        core_status.setObjectName("coreStatus")
+        core_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        center_layout.addWidget(core_status)
+        center_layout.addStretch(1)
+        core_actions = QHBoxLayout()
+        core_actions.setSpacing(8)
+        new_core_button = QPushButton("＋")
+        new_core_button.setObjectName("coreAction")
+        new_core_button.setToolTip("New chat")
+        new_core_button.clicked.connect(self._new_chat)
+        focus_button = QPushButton("⌕")
+        focus_button.setObjectName("coreAction")
+        focus_button.setToolTip("Focus message input")
+        focus_button.clicked.connect(lambda: self.message_input.setFocus())
+        settings_core_button = QPushButton("▣")
+        settings_core_button.setObjectName("coreAction")
+        settings_core_button.setToolTip("Configure Ollama")
+        settings_core_button.clicked.connect(self._open_settings)
+        for button in (new_core_button, focus_button, settings_core_button):
+            core_actions.addWidget(button)
+        center_layout.addLayout(core_actions)
+        body_layout.addWidget(center_stage, 1)
+
+        conversation_panel = QFrame()
+        conversation_panel.setObjectName("conversationPanel")
+        conversation_panel.setMinimumWidth(365)
+        conversation_panel.setMaximumWidth(460)
+        conversation_layout = QVBoxLayout(conversation_panel)
+        conversation_layout.setContentsMargins(10, 10, 10, 10)
+        conversation_layout.setSpacing(8)
+
+        conversation_header = QHBoxLayout()
+        conversation_identity = QVBoxLayout()
+        conversation_identity.setSpacing(1)
+        conversation_title = QLabel("Conversation")
+        conversation_title.setObjectName("conversationTitle")
+        conversation_identity.addWidget(conversation_title)
+        conversation_subtitle = QLabel("PRIVATE CHANNEL // LURA")
+        conversation_subtitle.setObjectName("conversationSubtitle")
+        conversation_identity.addWidget(conversation_subtitle)
+        conversation_header.addLayout(conversation_identity, 1)
+        clear_button = QPushButton("Clear")
+        clear_button.setObjectName("panelButton")
+        clear_button.clicked.connect(self._clear_current_conversation)
+        conversation_header.addWidget(clear_button)
+        export_button = QPushButton("Export")
+        export_button.setObjectName("panelButton")
+        export_button.clicked.connect(self._export_current_conversation)
+        conversation_header.addWidget(export_button)
+        conversation_layout.addLayout(conversation_header)
+
+        session_row = QHBoxLayout()
+        session_label = QLabel("SESSION")
+        session_label.setObjectName("cardEyebrow")
+        session_row.addWidget(session_label)
+        self.history_list = QComboBox()
+        self.history_list.setObjectName("sessionSelector")
+        self.history_list.currentIndexChanged.connect(self._conversation_selected)
+        session_row.addWidget(self.history_list, 1)
+        new_chat_button = QPushButton("New")
+        new_chat_button.setObjectName("panelButton")
+        new_chat_button.clicked.connect(self._new_chat)
+        session_row.addWidget(new_chat_button)
+        conversation_layout.addLayout(session_row)
+
         self.chat_view = ChatView()
-        chat_column_layout.addWidget(self.chat_view, 1)
+        conversation_layout.addWidget(self.chat_view, 1)
 
         composer = QFrame()
+        composer.setObjectName("composer")
         composer_layout = QVBoxLayout(composer)
-        composer_layout.setContentsMargins(24, 10, 24, 22)
-        composer_layout.setSpacing(10)
-        hint = QLabel("Messages are sent directly to your configured Ollama server.")
-        hint.setStyleSheet("color: #72808d; font-size: 12px;")
+        composer_layout.setContentsMargins(0, 2, 0, 0)
+        composer_layout.setSpacing(6)
+        hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        hint.setObjectName("composerHint")
         composer_layout.addWidget(hint)
 
         input_row = QHBoxLayout()
-        input_row.setSpacing(10)
+        input_row.setSpacing(6)
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Ask Lura anything locally…")
+        self.message_input.setPlaceholderText("Type a message…")
         self.message_input.setClearButtonEnabled(True)
         self.message_input.returnPressed.connect(self._send_message)
         input_row.addWidget(self.message_input, 1)
 
-        self.stop_button = QPushButton("Stop")
+        self.stop_button = QPushButton("×")
         self.stop_button.setObjectName("stopButton")
+        self.stop_button.setToolTip("Stop generation")
         self.stop_button.setEnabled(False)
+        self.stop_button.setVisible(False)
         self.stop_button.clicked.connect(self._stop_generation)
         input_row.addWidget(self.stop_button)
 
-        self.send_button = QPushButton("Send")
+        self.send_button = QPushButton("↗")
+        self.send_button.setObjectName("sendButton")
+        self.send_button.setToolTip("Send message")
         self.send_button.setDefault(True)
         self.send_button.clicked.connect(self._send_message)
         input_row.addWidget(self.send_button)
         composer_layout.addLayout(input_row)
-        chat_column_layout.addWidget(composer)
-        body_layout.addWidget(chat_column, 1)
+        conversation_layout.addWidget(composer)
+        body_layout.addWidget(conversation_panel)
         root_layout.addWidget(body, 1)
 
         self.setCentralWidget(root)
@@ -232,6 +383,7 @@ class MainWindow(QMainWindow):
     def _set_generating(self, generating: bool) -> None:
         self.send_button.setEnabled(not generating)
         self.stop_button.setEnabled(generating)
+        self.stop_button.setVisible(generating)
         self.message_input.setEnabled(not generating)
         self.model_selector.setEnabled(not generating)
         self.history_list.setEnabled(not generating)
@@ -267,12 +419,14 @@ class MainWindow(QMainWindow):
         self.model_selector.setCurrentText(current)
         self.model_selector.blockSignals(False)
         self.status_label.setText(f"Connected · {current}")
+        self.runtime_status_value.setText("ONLINE")
         self._set_status("connected")
 
     @Slot(str)
     def _connection_failed(self, message: str) -> None:
         self.status_label.setText("Ollama unavailable")
         self.status_label.setToolTip(message)
+        self.runtime_status_value.setText("OFFLINE")
         self._set_status("error")
 
     def _connection_thread_finished(self) -> None:
@@ -296,6 +450,7 @@ class MainWindow(QMainWindow):
         self.service = AssistantService(self.client)
         self.model_selector.clear()
         self.model_selector.addItem(self.config.model)
+        self.runtime_status_value.setText("CHECKING")
         self._refresh_connection()
 
     @Slot()
@@ -313,13 +468,11 @@ class MainWindow(QMainWindow):
         self._populate_conversations()
         self.message_input.setFocus()
 
-    @Slot(QListWidgetItem, QListWidgetItem)
-    def _conversation_selected(
-        self, current: QListWidgetItem | None, previous: QListWidgetItem | None
-    ) -> None:
-        if current is None:
+    @Slot(int)
+    def _conversation_selected(self, index: int) -> None:
+        if index < 0:
             return
-        conversation_id = current.data(Qt.ItemDataRole.UserRole)
+        conversation_id = self.history_list.itemData(index)
         if conversation_id == self.current_conversation.id:
             return
         selected = next(
@@ -334,6 +487,37 @@ class MainWindow(QMainWindow):
         self.chat_view.set_messages(self.messages)
         self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self.message_input.setFocus()
+
+    @Slot()
+    def _clear_current_conversation(self) -> None:
+        if self.chat_worker is not None:
+            return
+        self.messages = []
+        self.chat_view.clear_messages()
+        self._persist_current_conversation()
+        self.message_input.setFocus()
+
+    @Slot()
+    def _export_current_conversation(self) -> None:
+        if not self.messages:
+            return
+        default_name = f"{self.current_conversation.title.replace('/', '-')}.md"
+        file_name, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export conversation",
+            str(Path.home() / default_name),
+            "Markdown files (*.md)",
+        )
+        if not file_name:
+            return
+        lines = [f"# {self.current_conversation.title}", ""]
+        for message in self.messages:
+            speaker = "You" if message.role == "user" else "Lura"
+            lines.extend([f"## {speaker}", "", message.content, ""])
+        try:
+            Path(file_name).write_text("\n".join(lines), encoding="utf-8")
+        except OSError as error:
+            self.status_label.setToolTip(f"Could not export conversation: {error}")
 
     def _persist_current_conversation(self) -> None:
         self.current_conversation.update_messages(self.messages)
@@ -351,17 +535,16 @@ class MainWindow(QMainWindow):
         self.history_list.blockSignals(True)
         self.history_list.clear()
         for conversation in self.conversations:
-            item = QListWidgetItem(conversation.title)
-            item.setData(Qt.ItemDataRole.UserRole, conversation.id)
-            item.setToolTip(
-                f"{len(conversation.messages)} messages"
-                if conversation.messages
-                else "No messages yet"
-            )
-            self.history_list.addItem(item)
+            self.history_list.addItem(conversation.title, conversation.id)
             if conversation.id == selected_id:
-                self.history_list.setCurrentItem(item)
+                self.history_list.setCurrentIndex(self.history_list.count() - 1)
         self.history_list.blockSignals(False)
+
+    @Slot()
+    def _update_clock(self) -> None:
+        self.clock_label.setText(
+            QDateTime.currentDateTime().toString("HH:mm:ss  |  MMM d, yyyy")
+        )
 
     def _set_status(self, status: str) -> None:
         self.status_label.setProperty("status", status)
