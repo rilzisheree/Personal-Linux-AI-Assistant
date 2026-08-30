@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .ollama import ChatMessage
+from .ollama import ChatMessage, ToolCall
 
 
 def _now() -> str:
@@ -72,7 +72,28 @@ class Conversation:
             content = raw_message.get("content")
             if not isinstance(role, str) or not isinstance(content, str):
                 raise ValueError("Conversation message has invalid fields.")
-            messages.append(ChatMessage(role, content))
+            raw_tool_calls = raw_message.get("tool_calls", [])
+            if not isinstance(raw_tool_calls, list):
+                raise ValueError("Conversation tool calls must be a list.")
+            tool_calls: list[ToolCall] = []
+            for raw_tool_call in raw_tool_calls:
+                if not isinstance(raw_tool_call, dict):
+                    raise ValueError("Conversation tool call must be an object.")
+                function = raw_tool_call.get("function")
+                if not isinstance(function, dict):
+                    raise ValueError("Conversation tool call has no function.")
+                name = function.get("name")
+                arguments = function.get("arguments", {})
+                call_id = raw_tool_call.get("id", "")
+                if not isinstance(name, str) or not isinstance(arguments, dict):
+                    raise ValueError("Conversation tool call has invalid fields.")
+                if not isinstance(call_id, str):
+                    call_id = ""
+                tool_calls.append(ToolCall(name, arguments, call_id))
+            name = raw_message.get("name", "")
+            if not isinstance(name, str):
+                name = ""
+            messages.append(ChatMessage(role, content, tuple(tool_calls), name))
 
         title = raw.get("title")
         created_at = raw.get("created_at")

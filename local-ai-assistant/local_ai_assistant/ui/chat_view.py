@@ -28,14 +28,19 @@ class MessageBubble(QFrame):
     def __init__(self, role: str, content: str = "") -> None:
         super().__init__()
         self.role = role
-        self.setObjectName("assistantBubble" if role == "assistant" else "userBubble")
+        object_name = {
+            "assistant": "assistantBubble",
+            "tool": "toolBubble",
+            "user": "userBubble",
+        }.get(role, "assistantBubble")
+        self.setObjectName(object_name)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 12)
         layout.setSpacing(6)
 
-        label = QLabel("YOU" if role == "user" else "LURA")
+        label = QLabel({"user": "YOU", "tool": "TOOL"}.get(role, "LURA"))
         label.setObjectName("messageRole")
         layout.addWidget(label)
 

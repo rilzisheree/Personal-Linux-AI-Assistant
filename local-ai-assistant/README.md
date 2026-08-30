@@ -143,7 +143,8 @@ local-ai-assistant/
 │   ├── conversations.py       # local conversation model and JSON store
 │   ├── errors.py              # user-facing error categories
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
-│   ├── workers.py             # background Qt workers
+│   ├── tools.py               # tool registry and permission gates
+│   ├── workers.py             # background Qt workers and tool-call loop
 │   └── ui/
 │       ├── chat_view.py       # conversation rendering
 │       ├── main_window.py     # application shell and interactions
@@ -152,12 +153,16 @@ local-ai-assistant/
 ├── tests/
 │   ├── test_config.py
 │   ├── test_conversations.py
-│   └── test_ollama_parser.py
+│   ├── test_ollama_parser.py
+│   └── test_tools.py
 ├── pyproject.toml
 └── run.sh
 ```
 
-The assistant boundary and Ollama adapter are separate from the widgets so
-later phases can add a conversation manager, permissions, persistence,
-function/tool interfaces, voice, Hyprland integrations, or an authenticated
-API without rewriting the chat UI.
+The assistant boundary and Ollama adapter are separate from the widgets.
+Ollama-native function calls now flow through the tool registry and its
+permission gate: system-information tools and `open_app` are safe, while
+`exec`, `close_app`, and `restart_app` require an explicit confirmation dialog.
+The next planned phases are Hyprland integration, screenshots, file tools,
+voice, and the future authenticated API; they are intentionally not included
+yet.

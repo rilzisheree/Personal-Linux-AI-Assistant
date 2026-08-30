@@ -1,45 +1,65 @@
-# [Project name]
+# Lura
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Lura is a native PySide6 Linux desktop assistant that chats with a local Ollama
+server and executes a small set of permission-gated tools.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `cd local-ai-assistant && python3 -m unittest discover -s tests -v` — run
+  dependency-light tests
+- `cd local-ai-assistant && python3 -m local_ai_assistant.app` — launch the
+  desktop app
+- `cd local-ai-assistant && ./run.sh` — launch through the convenience script
+- The app expects a local Ollama service at `http://localhost:11434` by default.
+  The URL and model are configurable in Settings.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Python 3.10+
+- PySide6 6.7+
+- Ollama HTTP API with newline-delimited streaming
+- Local JSON persistence for conversations and settings
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `local-ai-assistant/local_ai_assistant/app.py` — Qt entry point
+- `local-ai-assistant/local_ai_assistant/ui/` — main window and chat widgets
+- `local-ai-assistant/local_ai_assistant/ollama.py` — Ollama HTTP and stream
+  protocol adapter
+- `local-ai-assistant/local_ai_assistant/tools.py` — native tool schemas,
+  implementations, and permission gates
+- `local-ai-assistant/local_ai_assistant/conversations.py` — local history
+  persistence
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Tool calls use Ollama's native `message.tool_calls` protocol; assistant text
+  is never parsed as fake JSON.
+- Every non-safe tool is blocked until the Qt UI receives an explicit Allow
+  decision.
+- Conversation history remains local JSON for the current desktop milestone;
+  SQLite and a remote API are later phases from the original handoff.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Stream local Ollama chat responses.
+- Switch models discovered from the configured Ollama endpoint.
+- Save, switch, clear, and export conversations locally.
+- Run safe system-information tools and open applications.
+- Review and approve confirmation-required or dangerous terminal/app actions.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the Linux desktop app as the current scope; do not build the phone/web
+  client until the desktop milestones are stable.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Ollama must be installed, running, and have the selected model pulled.
+- The current tool set is intentionally limited; screenshots, Hyprland window
+  management, file operations, voice, and the future API are not implemented.
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See `local-ai-assistant/README.md` for installation, Ollama setup, and
+  troubleshooting.

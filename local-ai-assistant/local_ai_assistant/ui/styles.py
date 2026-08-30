@@ -175,11 +175,15 @@ QFrame#assistantBubble {
     background: #0b202c;
     border: 1px solid #1c5062;
 }
+QFrame#toolBubble {
+    background: #1b1d24;
+    border: 1px solid #75652b;
+}
 QFrame#userBubble {
     background: #0e3040;
     border: 1px solid #237593;
 }
-QFrame#assistantBubble QTextBrowser, QFrame#userBubble QTextBrowser {
+QFrame#assistantBubble QTextBrowser, QFrame#toolBubble QTextBrowser, QFrame#userBubble QTextBrowser {
     background: transparent;
     border: 0;
     color: #cde5ed;

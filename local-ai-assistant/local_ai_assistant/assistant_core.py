@@ -19,6 +19,7 @@ class AssistantBackend(Protocol):
         messages: list[ChatMessage],
         model: str,
         cancel_event: threading.Event | None = None,
+        tools: list[dict] | None = None,
     ) -> Iterator[StreamEvent]:
         ...
 
@@ -34,5 +35,6 @@ class AssistantService:
         messages: list[ChatMessage],
         model: str,
         cancel_event: threading.Event | None = None,
+        tools: list[dict] | None = None,
     ) -> Iterator[StreamEvent]:
-        return self.ollama.stream_chat(messages, model, cancel_event)
+        return self.ollama.stream_chat(messages, model, cancel_event, tools)

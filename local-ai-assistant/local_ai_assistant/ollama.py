@@ -20,12 +20,33 @@ from .errors import (
 
 
 @dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: dict
+    id: str = ""
+
+    def as_dict(self) -> dict:
+        function = {"name": self.name, "arguments": self.arguments}
+        payload = {"function": function}
+        if self.id:
+            payload["id"] = self.id
+        return payload
+
+
+@dataclass(frozen=True)
 class ChatMessage:
     role: str
     content: str
+    tool_calls: tuple[ToolCall, ...] = ()
+    name: str = ""
 
-    def as_dict(self) -> dict[str, str]:
-        return {"role": self.role, "content": self.content}
+    def as_dict(self) -> dict:
+        payload: dict = {"role": self.role, "content": self.content}
+        if self.tool_calls:
+            payload["tool_calls"] = [tool_call.as_dict() for tool_call in self.tool_calls]
+        if self.name:
+            payload["name"] = self.name
+        return payload
 
 
 @dataclass(frozen=True)
@@ -34,6 +55,7 @@ class StreamEvent:
 
     content: str = ""
     done: bool = False
+    tool_calls: tuple[ToolCall, ...] = ()
 
 
 def parse_stream_line(line: str | bytes) -> StreamEvent | None:
@@ -63,7 +85,39 @@ def parse_stream_line(line: str | bytes) -> StreamEvent | None:
     content = message.get("content", "") if isinstance(message, dict) else ""
     if not isinstance(content, str):
         raise OllamaProtocolError("Ollama sent a non-text message chunk.")
-    return StreamEvent(content=content, done=bool(payload.get("done", False)))
+    tool_calls: list[ToolCall] = []
+    raw_tool_calls = message.get("tool_calls", []) if isinstance(message, dict) else []
+    if raw_tool_calls is None:
+        raw_tool_calls = []
+    if not isinstance(raw_tool_calls, list):
+        raise OllamaProtocolError("Ollama sent invalid tool calls.")
+    for raw_tool_call in raw_tool_calls:
+        if not isinstance(raw_tool_call, dict):
+            raise OllamaProtocolError("Ollama sent an invalid tool call.")
+        function = raw_tool_call.get("function")
+        if (
+            not isinstance(function, dict)
+            or not isinstance(function.get("name"), str)
+            or not function["name"].strip()
+        ):
+            raise OllamaProtocolError("Ollama sent an invalid tool function.")
+        arguments = function.get("arguments", {})
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except json.JSONDecodeError as error:
+                raise OllamaProtocolError("Ollama sent invalid tool arguments.") from error
+        if not isinstance(arguments, dict):
+            raise OllamaProtocolError("Ollama sent non-object tool arguments.")
+        call_id = raw_tool_call.get("id", "")
+        if not isinstance(call_id, str):
+            call_id = ""
+        tool_calls.append(ToolCall(function["name"], arguments, call_id))
+    return StreamEvent(
+        content=content,
+        done=bool(payload.get("done", False)),
+        tool_calls=tuple(tool_calls),
+    )
 
 
 def parse_stream(lines: Iterable[str | bytes]) -> Iterator[StreamEvent]:
@@ -100,14 +154,16 @@ class OllamaClient:
         messages: list[ChatMessage],
         model: str,
         cancel_event: threading.Event | None = None,
+        tools: list[dict] | None = None,
     ) -> Iterator[StreamEvent]:
-        body = json.dumps(
-            {
-                "model": model,
-                "messages": [message.as_dict() for message in messages],
-                "stream": True,
-            }
-        ).encode("utf-8")
+        payload = {
+            "model": model,
+            "messages": [message.as_dict() for message in messages],
+            "stream": True,
+        }
+        if tools:
+            payload["tools"] = tools
+        body = json.dumps(payload).encode("utf-8")
         request = Request(
             self._url("/api/chat"),
             data=body,

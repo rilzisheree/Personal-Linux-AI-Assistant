@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from local_ai_assistant.conversations import Conversation, ConversationStore, title_for_messages
-from local_ai_assistant.ollama import ChatMessage
+from local_ai_assistant.ollama import ChatMessage, ToolCall
 
 
 class ConversationTests(unittest.TestCase):
@@ -56,6 +56,25 @@ class ConversationTests(unittest.TestCase):
             loaded = ConversationStore(path).load()
             self.assertEqual(len(loaded), 1)
             self.assertEqual(loaded[0].id, "valid")
+
+    def test_tool_call_messages_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ConversationStore(Path(directory) / "history.json")
+            conversation = Conversation.create()
+            conversation.update_messages(
+                [
+                    ChatMessage(
+                        "assistant",
+                        "",
+                        (ToolCall("open_app", {"app": "firefox"}, "call-1"),),
+                    ),
+                    ChatMessage("tool", "firefox opened.", name="open_app"),
+                ]
+            )
+            store.save([conversation])
+            loaded = store.load()
+
+        self.assertEqual(loaded[0].messages, conversation.messages)
 
 
 if __name__ == "__main__":

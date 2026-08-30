@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -22,6 +24,7 @@ from ..assistant_core import AssistantService
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
 from ..ollama import ChatMessage, OllamaClient
+from ..tools import PermissionLevel, ToolManager
 from ..workers import ChatWorker, ConnectionWorker
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
@@ -34,6 +37,7 @@ class MainWindow(QMainWindow):
         self.config = config
         self.client = OllamaClient(config.ollama_url)
         self.service = AssistantService(self.client)
+        self.tool_manager = ToolManager()
         self.conversation_store = ConversationStore()
         self.conversations = self.conversation_store.load()
         if not self.conversations:
@@ -46,6 +50,7 @@ class MainWindow(QMainWindow):
         self.connection_worker: ConnectionWorker | None = None
         self.active_assistant_bubble: MessageBubble | None = None
         self.active_response = ""
+        self.active_tool_bubbles: dict[str, MessageBubble] = {}
         self.available_models: list[str] = []
 
         self.setWindowTitle("Lura")
@@ -328,10 +333,14 @@ class MainWindow(QMainWindow):
         self._set_generating(True)
 
         self.chat_thread = QThread(self)
-        self.chat_worker = ChatWorker(self.service, list(self.messages), model)
+        self.chat_worker = ChatWorker(self.service, list(self.messages), model, self.tool_manager)
         self.chat_worker.moveToThread(self.chat_thread)
         self.chat_thread.started.connect(self.chat_worker.run)
         self.chat_worker.chunk.connect(self._append_assistant_chunk)
+        self.chat_worker.conversation_ready.connect(self._conversation_ready)
+        self.chat_worker.tool_started.connect(self._tool_started)
+        self.chat_worker.tool_requested.connect(self._tool_confirmation_requested)
+        self.chat_worker.tool_completed.connect(self._tool_completed)
         self.chat_worker.finished.connect(self._chat_finished)
         self.chat_worker.failed.connect(self._chat_failed)
         self.chat_worker.finished.connect(self.chat_thread.quit)
@@ -348,10 +357,54 @@ class MainWindow(QMainWindow):
             self.active_assistant_bubble.set_content(self.active_response)
             self.chat_view.verticalScrollBar().setValue(self.chat_view.verticalScrollBar().maximum())
 
+    @Slot(object)
+    def _conversation_ready(self, messages: object) -> None:
+        if isinstance(messages, list) and all(isinstance(message, ChatMessage) for message in messages):
+            self.messages = list(messages)
+            self._persist_current_conversation()
+
+    @Slot(str, str, object, str)
+    def _tool_started(self, call_id: str, name: str, arguments: object, permission: str) -> None:
+        details = json.dumps(arguments, indent=2, sort_keys=True) if isinstance(arguments, dict) else str(arguments)
+        if permission == PermissionLevel.SAFE.value:
+            content = f"Running {name}…"
+        else:
+            content = f"⚠ Approval required for {name}\n\n{details}"
+        self.active_tool_bubbles[call_id] = self.chat_view.add_message("tool", content)
+
+    @Slot(str, str, object, str)
+    def _tool_confirmation_requested(
+        self, call_id: str, name: str, arguments: object, permission: str
+    ) -> None:
+        if not self.chat_worker:
+            return
+        details = json.dumps(arguments, indent=2, sort_keys=True) if isinstance(arguments, dict) else str(arguments)
+        label = "dangerous" if permission == PermissionLevel.DANGEROUS.value else "confirmation-required"
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Icon.Warning)
+        dialog.setWindowTitle("Permission required")
+        dialog.setText(f"Lura wants to run a {label} tool: {name}")
+        dialog.setInformativeText(f"Arguments:\n{details}\n\nAllow this action?")
+        allow_button = dialog.addButton("Allow", QMessageBox.ButtonRole.AcceptRole)
+        dialog.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+        dialog.exec()
+        approved = dialog.clickedButton() is allow_button
+        if self.chat_worker:
+            self.chat_worker.resolve_tool_call(call_id, approved)
+
+    @Slot(str, str, str, bool)
+    def _tool_completed(self, call_id: str, name: str, result: str, success: bool) -> None:
+        bubble = self.active_tool_bubbles.pop(call_id, None)
+        prefix = "✓" if success else "✕"
+        content = f"{prefix} {name}\n\n{result}"
+        if bubble:
+            bubble.set_content(content)
+        else:
+            self.chat_view.add_message("tool", content)
+
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
-        self.messages.append(ChatMessage("assistant", response))
-        self._persist_current_conversation()
+        del response
         self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
 

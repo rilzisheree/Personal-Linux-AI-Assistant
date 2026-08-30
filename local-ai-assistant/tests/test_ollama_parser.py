@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 
 from local_ai_assistant.errors import OllamaProtocolError
-from local_ai_assistant.ollama import StreamEvent, parse_stream, parse_stream_line
+from local_ai_assistant.ollama import StreamEvent, ToolCall, parse_stream, parse_stream_line
 
 
 class OllamaParserTests(unittest.TestCase):
@@ -41,6 +41,31 @@ class OllamaParserTests(unittest.TestCase):
     def test_rejects_non_text_content(self) -> None:
         with self.assertRaises(OllamaProtocolError):
             parse_stream_line('{"message":{"content":42},"done":false}')
+
+    def test_parses_native_tool_calls(self) -> None:
+        event = parse_stream_line(
+            '{"message":{"role":"assistant","content":"","tool_calls":['
+            '{"id":"call-1","function":{"name":"open_app","arguments":{"app":"firefox"}}}'
+            ']},"done":true}'
+        )
+        self.assertEqual(
+            event,
+            StreamEvent("", True, (ToolCall("open_app", {"app": "firefox"}, "call-1"),)),
+        )
+
+    def test_rejects_invalid_tool_arguments(self) -> None:
+        with self.assertRaisesRegex(OllamaProtocolError, "tool arguments"):
+            parse_stream_line(
+                '{"message":{"tool_calls":[{"function":{"name":"open_app",'
+                '"arguments":"not-json"}}]},"done":true}'
+            )
+
+    def test_rejects_tool_calls_without_a_name(self) -> None:
+        with self.assertRaisesRegex(OllamaProtocolError, "tool function"):
+            parse_stream_line(
+                '{"message":{"tool_calls":[{"function":{"name":"",'
+                '"arguments":{}}}]},"done":true}'
+            )
 
 
 if __name__ == "__main__":
