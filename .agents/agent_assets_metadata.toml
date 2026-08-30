@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "0zd7vPbEy39N7UZnf6iSf"
+uri = "file://screenshots/local-ai-assistant.png"
+type = "image"
+title = "Local AI Assistant preview"
+description = "A preview of the current PySide6 desktop app showing the dark Ollama chat interface, conversation sidebar, model selector, and New chat flow."
+logical_id = "51ad9ca6-ddc1-4195-b293-4905ef8b03a9"
+content_hash = "sha256:51c9c2e8014415fee5775cfc89e86ec77b81ef6bebbc5b9b932977be5e7c3bd3"
+size = 74955
+mtime_ms = 1788102666420
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:3bc50e20-978a-4fe6-90ba-257423202d9b/51ad9ca6-ddc1-4195-b293-4905ef8b03a9/3d7719df-1d8b-4fbd-bcb5-19e40a404ee7"
+storage_version_token = "1788102674085903"
+content_type = "image/png"
