@@ -1,7 +1,7 @@
 """Assistant service boundary.
 
-Phase 1 deliberately exposes only conversational streaming. Future tool
-calling should be added as an explicit interface here, never inferred by
+The service owns the transport boundary while workers coordinate streaming
+and explicit Ollama-native tool calls. Tool requests are never inferred by
 parsing arbitrary assistant text.
 """
 

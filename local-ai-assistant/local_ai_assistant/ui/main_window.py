@@ -1,4 +1,4 @@
-"""Main Phase 1 chat window."""
+"""Main Lura chat window."""
 
 from __future__ import annotations
 
@@ -605,6 +605,18 @@ class MainWindow(QMainWindow):
         self.status_label.style().polish(self.status_label)
 
     def closeEvent(self, event) -> None:
-        if self.chat_worker:
-            self.chat_worker.cancel()
+        threads = (
+            (self.chat_thread, self.chat_worker),
+            (self.connection_thread, self.connection_worker),
+        )
+        for thread, worker in threads:
+            if worker is not None:
+                cancel = getattr(worker, "cancel", None)
+                if cancel is not None:
+                    cancel()
+            if thread is not None and thread.isRunning():
+                thread.quit()
+                if not thread.wait(2000):
+                    thread.terminate()
+                    thread.wait(1000)
         event.accept()

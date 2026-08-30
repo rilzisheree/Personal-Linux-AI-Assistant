@@ -9,6 +9,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -60,6 +61,11 @@ _DANGEROUS_COMMANDS = re.compile(
     r"(\s|$)|\b(rm\s+-rf|rm\s+-fr)\b",
     re.IGNORECASE,
 )
+_WINDOW_ADDRESS = re.compile(r"^0x[0-9a-f]+$", re.IGNORECASE)
+_WORKSPACE_NAME = re.compile(r"^[A-Za-z0-9_:-]+$")
+_MAX_SEARCH_RESULTS = 50
+_MAX_SEARCH_DIRECTORIES = 10_000
+_MAX_SCREENSHOTS = 20
 
 
 def _string_argument(arguments: dict, name: str) -> str:
@@ -252,8 +258,8 @@ class ToolManager:
                 {
                     "type": "object",
                     "properties": {
-                        "x": {"type": "integer", "minimum": 0, "maximum": 20000},
-                        "y": {"type": "integer", "minimum": 0, "maximum": 20000},
+                        "x": {"type": "integer", "minimum": -20000, "maximum": 20000},
+                        "y": {"type": "integer", "minimum": -20000, "maximum": 20000},
                     },
                     "required": ["x", "y"],
                 },
@@ -266,8 +272,8 @@ class ToolManager:
                 {
                     "type": "object",
                     "properties": {
-                        "x": {"type": "integer", "minimum": 0, "maximum": 20000},
-                        "y": {"type": "integer", "minimum": 0, "maximum": 20000},
+                        "x": {"type": "integer", "minimum": -20000, "maximum": 20000},
+                        "y": {"type": "integer", "minimum": -20000, "maximum": 20000},
                         "button": {"type": "string", "enum": ["left", "right", "middle"]},
                     },
                     "required": ["x", "y", "button"],
@@ -552,10 +558,14 @@ class ToolManager:
         if window is None:
             return ToolCallResult(False, error or "Window not found.")
         workspace = _string_argument(arguments, "workspace")
-        if not re.fullmatch(r"[A-Za-z0-9_:-]+", workspace):
+        if not _WORKSPACE_NAME.fullmatch(workspace):
             return ToolCallResult(False, "Workspace must be a name or number without shell characters.")
-        address = str(window.get("address", ""))
-        result = self._hyprland_dispatch("movetoworkspace", workspace, f"address:{address}")
+        address = self._window_address(window)
+        if address is None:
+            return ToolCallResult(False, "Hyprland returned a window without a valid address.")
+        # Hyprland expects the workspace and window selector in one dispatcher
+        # parameter: movetoworkspace WORKSPACE,address:ADDRESS.
+        result = self._hyprland_dispatch("movetoworkspace", f"{workspace},address:{address}")
         return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
 
     def _resize_window(self, arguments: dict) -> ToolCallResult:
@@ -564,7 +574,9 @@ class ToolManager:
             return ToolCallResult(False, error or "Window not found.")
         width = _integer_argument(arguments, "width", 1, 10000)
         height = _integer_argument(arguments, "height", 1, 10000)
-        address = str(window.get("address", ""))
+        address = self._window_address(window)
+        if address is None:
+            return ToolCallResult(False, "Hyprland returned a window without a valid address.")
         focus = self._hyprland_dispatch("focuswindow", f"address:{address}")
         if not focus.success:
             return focus
@@ -575,7 +587,9 @@ class ToolManager:
         window, error = self._find_window(arguments)
         if window is None:
             return ToolCallResult(False, error or "Window not found.")
-        address = str(window.get("address", ""))
+        address = self._window_address(window)
+        if address is None:
+            return ToolCallResult(False, "Hyprland returned a window without a valid address.")
         result = self._hyprland_dispatch("closewindow", f"address:{address}")
         return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
 
@@ -584,29 +598,67 @@ class ToolManager:
         del arguments
         screenshot_dir = Path.home() / ".cache" / "local-ai-assistant" / "screenshots"
         screenshot_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
         destination = screenshot_dir / f"screenshot-{timestamp}.png"
         commands = (
             (["grim", str(destination)], "grim"),
+            (["hyprshot", "-m", "output", "-f", str(destination)], "hyprshot"),
             (["gnome-screenshot", "-f", str(destination)], "gnome-screenshot"),
             (["spectacle", "-b", "-n", "-o", str(destination)], "spectacle"),
             (["scrot", str(destination)], "scrot"),
             (["import", "-window", "root", str(destination)], "ImageMagick"),
         )
+        attempted: list[str] = []
         for command, label in commands:
             if not shutil.which(command[0]):
                 continue
+            attempted.append(label)
             try:
                 result = subprocess.run(command, capture_output=True, text=True, timeout=20, check=False)
             except (OSError, subprocess.SubprocessError) as error:
-                return ToolCallResult(False, f"{label} failed: {error}")
+                attempted[-1] = f"{label} ({error})"
+                continue
             if result.returncode == 0 and destination.is_file() and destination.stat().st_size:
+                ToolManager._prune_screenshots(screenshot_dir, destination)
                 return ToolCallResult(
                     True,
                     f"Screenshot saved to {destination}.",
                     (str(destination),),
                 )
-        return ToolCallResult(False, "No supported screenshot utility is available.")
+            detail = result.stderr.strip() or result.stdout.strip()
+            if detail:
+                attempted[-1] = f"{label} ({detail[:160]})"
+        if attempted:
+            return ToolCallResult(
+                False,
+                "Screenshot capture failed. Tried: " + ", ".join(attempted) + ".",
+            )
+        return ToolCallResult(
+            False,
+            "No supported screenshot utility is available. Install grim or hyprshot for Wayland.",
+        )
+
+    @staticmethod
+    def _prune_screenshots(directory: Path, newest: Path) -> None:
+        try:
+            screenshots = sorted(
+                (
+                    path
+                    for path in directory.glob("screenshot-*.png")
+                    if path.is_file() and path != newest
+                ),
+                key=lambda path: path.stat().st_mtime,
+                reverse=True,
+            )
+            for old_path in screenshots[_MAX_SCREENSHOTS - 1 :]:
+                try:
+                    old_path.unlink()
+                except OSError:
+                    continue
+        except OSError:
+            # Screenshot retention is housekeeping, not a reason to fail a
+            # screenshot that was already captured successfully.
+            return
 
     @staticmethod
     def _search_files(arguments: dict) -> ToolCallResult:
@@ -626,10 +678,17 @@ class ToolManager:
                 for name in files:
                     if query in name.casefold():
                         results.append(str(Path(root) / name))
-                        if len(results) >= 50:
-                            return ToolCallResult(True, "\n".join(results) + "\n(Showing first 50 matches.)")
-                if visited >= 10000:
-                    break
+                        if len(results) >= _MAX_SEARCH_RESULTS:
+                            return ToolCallResult(
+                                True,
+                                "\n".join(results) + f"\n(Showing first {_MAX_SEARCH_RESULTS} matches.)",
+                            )
+                if visited >= _MAX_SEARCH_DIRECTORIES:
+                    return ToolCallResult(
+                        bool(results),
+                        "\n".join(results)
+                        + f"\n(Search stopped after {_MAX_SEARCH_DIRECTORIES} directories.)",
+                    )
         except OSError as error:
             return ToolCallResult(False, f"Could not search {directory}: {error}")
         return ToolCallResult(bool(results), "\n".join(results) if results else f"No files matched '{query}'.")
@@ -654,7 +713,7 @@ class ToolManager:
             return ToolCallResult(False, f"Path is a directory: {path}")
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            _atomic_write_text(path, content)
         except OSError as error:
             return ToolCallResult(False, f"Could not write {path}: {error}")
         return ToolCallResult(True, f"Wrote {len(content)} characters to {path}.")
@@ -666,7 +725,7 @@ class ToolManager:
             return ToolCallResult(False, f"File already exists: {path}")
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            _atomic_write_text(path, content, exclusive=True)
         except OSError as error:
             return ToolCallResult(False, f"Could not create {path}: {error}")
         return ToolCallResult(True, f"Created {path}.")
@@ -716,42 +775,53 @@ class ToolManager:
 
     @staticmethod
     def _mouse_move(arguments: dict) -> ToolCallResult:
-        x = _integer_argument(arguments, "x", 0, 20000)
-        y = _integer_argument(arguments, "y", 0, 20000)
+        x = _integer_argument(arguments, "x", -20000, 20000)
+        y = _integer_argument(arguments, "y", -20000, 20000)
         if shutil.which("hyprctl"):
             return ToolManager._hyprland_dispatch("movecursor", str(x), str(y))
         if shutil.which("ydotool"):
             return _run_input_command(["ydotool", "mousemove", "--absolute", str(x), str(y)])
+        if shutil.which("xdotool"):
+            return _run_input_command(["xdotool", "mousemove", str(x), str(y)])
         return ToolCallResult(False, "No supported pointer-control utility is available.")
 
     @staticmethod
     def _mouse_click(arguments: dict) -> ToolCallResult:
-        move = ToolManager._mouse_move(arguments)
-        if not move.success:
-            return move
         button = _string_argument(arguments, "button").lower()
         button_code = {"left": "0xC0", "right": "0xC1", "middle": "0xC2"}.get(button)
         if not button_code:
             return ToolCallResult(False, "Button must be left, right, or middle.")
-        if not shutil.which("ydotool"):
-            return ToolCallResult(False, "ydotool is required for mouse clicks.")
-        return _run_input_command(["ydotool", "click", button_code])
+        move = ToolManager._mouse_move(arguments)
+        if not move.success:
+            return move
+        if shutil.which("ydotool"):
+            return _run_input_command(["ydotool", "click", button_code])
+        if shutil.which("xdotool"):
+            xdotool_button = {"left": "1", "right": "3", "middle": "2"}[button]
+            return _run_input_command(["xdotool", "click", xdotool_button])
+        return ToolCallResult(False, "ydotool is required for Wayland mouse clicks.")
 
     @staticmethod
     def _keyboard_type(arguments: dict) -> ToolCallResult:
         text = _string_argument(arguments, "text")
         if len(text) > 2000:
             return ToolCallResult(False, "Text exceeds the 2000 character limit.")
-        if not shutil.which("wtype"):
-            return ToolCallResult(False, "wtype is required for keyboard input.")
-        return _run_input_command(["wtype", "--", text])
+        if shutil.which("wtype"):
+            return _run_input_command(["wtype", "--", text])
+        if shutil.which("ydotool"):
+            return _run_input_command(["ydotool", "type", "--", text])
+        if shutil.which("xdotool"):
+            return _run_input_command(["xdotool", "type", "--", text])
+        return ToolCallResult(False, "wtype or ydotool is required for Wayland keyboard input.")
 
     @staticmethod
     def _keyboard_press(arguments: dict) -> ToolCallResult:
         key = _string_argument(arguments, "key")
-        if not shutil.which("wtype"):
-            return ToolCallResult(False, "wtype is required for keyboard input.")
-        return _run_input_command(["wtype", "-k", key])
+        if shutil.which("wtype"):
+            return _run_input_command(["wtype", "-k", key])
+        if shutil.which("xdotool"):
+            return _run_input_command(["xdotool", "key", "--", key])
+        return ToolCallResult(False, "wtype is required for Wayland key presses.")
 
     @staticmethod
     def _get_cpu_usage(arguments: dict) -> ToolCallResult:
@@ -855,6 +925,11 @@ class ToolManager:
                 return ToolCallResult(True, result.stdout.strip())
         return ToolCallResult(False, "Audio volume is unavailable.")
 
+    @staticmethod
+    def _window_address(window: dict) -> str | None:
+        address = str(window.get("address", "")).strip()
+        return address if _WINDOW_ADDRESS.fullmatch(address) else None
+
 
 def _integer_argument(arguments: dict, name: str, minimum: int, maximum: int) -> int:
     value = arguments.get(name)
@@ -877,6 +952,31 @@ def _file_and_content(arguments: dict) -> tuple[Path, str]:
     if len(content.encode("utf-8")) > 200_000:
         raise ValueError("File content exceeds the 200 KiB tool limit.")
     return path, content
+
+
+def _atomic_write_text(path: Path, content: str, exclusive: bool = False) -> None:
+    """Write UTF-8 text beside the destination, then replace it atomically."""
+
+    temporary_path: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            delete=False,
+        ) as temporary:
+            temporary.write(content)
+            temporary_path = temporary.name
+        if exclusive and path.exists():
+            raise FileExistsError(path)
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path:
+            try:
+                os.unlink(temporary_path)
+            except FileNotFoundError:
+                pass
 
 
 def _source_destination(arguments: dict) -> tuple[Path, Path]:

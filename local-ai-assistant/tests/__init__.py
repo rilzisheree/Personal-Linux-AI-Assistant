@@ -1,1 +1,1 @@
-"""Focused Phase 1 tests."""
+"""Focused local assistant tests."""

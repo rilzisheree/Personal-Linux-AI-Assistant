@@ -233,9 +233,12 @@ class OllamaClient:
 
     def _request_json(self, method: str, path: str) -> dict:
         request = Request(self._url(path), headers={"Accept": "application/json"}, method=method)
+        response: HTTPResponse | None = None
         try:
-            with urlopen(request, timeout=self.timeout) as response:
-                raw = response.read()
+            response = urlopen(request, timeout=self.timeout)
+            with self._response_lock:
+                self._response = response
+            raw = response.read()
             payload = json.loads(raw.decode("utf-8"))
             if not isinstance(payload, dict):
                 raise OllamaProtocolError("Ollama returned an invalid JSON object.")
@@ -247,6 +250,12 @@ class OllamaClient:
             raise OllamaUnavailableError(self._network_message(error)) from error
         except json.JSONDecodeError as error:
             raise OllamaProtocolError("Ollama returned invalid JSON.") from error
+        finally:
+            with self._response_lock:
+                if self._response is response:
+                    self._response = None
+            if response is not None:
+                response.close()
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"

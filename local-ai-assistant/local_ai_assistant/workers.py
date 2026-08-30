@@ -160,3 +160,6 @@ class ConnectionWorker(QObject):
             self.succeeded.emit(self.client.list_models())
         except Exception as error:
             self.failed.emit(format_ollama_error(error))
+
+    def cancel(self) -> None:
+        self.client.cancel_active_request()

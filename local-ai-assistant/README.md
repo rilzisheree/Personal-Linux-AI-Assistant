@@ -6,11 +6,12 @@ configure) and streams responses into the conversation as they arrive.
 
 The first continuation phase adds a local conversation manager: chats are
 restored between launches, can be switched from the sidebar, and can be
-started with New chat. The interface uses a futuristic local-intelligence HUD
-visual language, with the supplied Lura core artwork as its empty-state focus.
-History is stored as JSON on the local machine only.
-There is still no cloud provider, web UI, voice, desktop automation, tool
-execution, or phone client.
+started with New chat. Phase 2 adds Ollama-native tool calls with explicit
+permission gates. Phase 3 adds Linux integration for Hyprland windows,
+screenshots, local files, and pointer/keyboard input. The interface uses a
+futuristic local-intelligence HUD visual language, with the supplied Lura core
+artwork as its empty-state focus. History is stored as JSON on the local
+machine only. There is still no cloud provider, web UI, voice, or phone client.
 
 ## Requirements
 
@@ -129,8 +130,9 @@ The focused tests do not need PySide6:
 python -m unittest discover -s tests -v
 ```
 
-They cover Ollama's newline-delimited JSON stream parsing and configuration
-defaults/round-tripping.
+They cover Ollama's newline-delimited JSON stream parsing, configuration
+defaults/round-tripping, conversations, permission gates, and the local tool
+handlers.
 
 ## Project structure
 
@@ -160,9 +162,13 @@ local-ai-assistant/
 ```
 
 The assistant boundary and Ollama adapter are separate from the widgets.
-Ollama-native function calls now flow through the tool registry and its
-permission gate: system-information tools and `open_app` are safe, while
-`exec`, `close_app`, and `restart_app` require an explicit confirmation dialog.
-The next planned phases are Hyprland integration, screenshots, file tools,
-voice, and the future authenticated API; they are intentionally not included
-yet.
+Ollama-native function calls flow through the tool registry and its permission
+gate. Phase 3's Hyprland tools use `hyprctl` JSON/dispatch commands, the
+screenshot tool prefers `grim`/`hyprshot` on Wayland, file tools are bounded
+to text files with confirmation for mutations, and input tools prefer
+`wtype`/`ydotool` with X11 fallbacks where available. Screenshot paths are
+attached to the next Ollama tool message so vision-capable models can inspect
+the captured image.
+
+The next phase is local voice input/output. The future authenticated API and
+phone web client are intentionally not included.
