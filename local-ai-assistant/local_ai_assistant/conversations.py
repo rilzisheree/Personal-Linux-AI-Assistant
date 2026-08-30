@@ -93,7 +93,10 @@ class Conversation:
             name = raw_message.get("name", "")
             if not isinstance(name, str):
                 name = ""
-            messages.append(ChatMessage(role, content, tuple(tool_calls), name))
+            raw_images = raw_message.get("images", [])
+            if not isinstance(raw_images, list) or not all(isinstance(image, str) for image in raw_images):
+                raise ValueError("Conversation images must be file paths.")
+            messages.append(ChatMessage(role, content, tuple(tool_calls), name, tuple(raw_images)))
 
         title = raw.get("title")
         created_at = raw.get("created_at")

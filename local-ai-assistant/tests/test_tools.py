@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import tempfile
 import unittest
+from pathlib import Path
 
 from local_ai_assistant.tools import (
     PermissionLevel,
@@ -22,6 +24,26 @@ class ToolManagerTests(unittest.TestCase):
         self.assertIn("exec", names)
         self.assertIn("get_ram_usage", names)
         self.assertIn("get_gpu_usage", names)
+        for name in (
+            "list_windows",
+            "focus_window",
+            "move_window",
+            "resize_window",
+            "close_window",
+            "take_screenshot",
+            "search_files",
+            "read_file",
+            "write_file",
+            "create_file",
+            "delete_file",
+            "move_file",
+            "copy_file",
+            "mouse_move",
+            "mouse_click",
+            "keyboard_type",
+            "keyboard_press",
+        ):
+            self.assertIn(name, names)
 
     def test_safe_system_tool_does_not_need_approval(self) -> None:
         result = self.manager.execute("get_disk_usage", {})
@@ -46,6 +68,35 @@ class ToolManagerTests(unittest.TestCase):
         result = self.manager.execute("exec", {"command": "printf tool-ok"}, approved=True)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "tool-ok")
+
+    def test_file_tools_read_and_create_without_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "note.txt"
+            created = self.manager.execute(
+                "create_file",
+                {"path": str(path), "content": "hello"},
+                approved=True,
+            )
+            self.assertTrue(created.success)
+            self.assertEqual(
+                self.manager.execute("read_file", {"path": str(path)}).content,
+                "hello",
+            )
+            duplicate = self.manager.execute(
+                "create_file",
+                {"path": str(path), "content": "changed"},
+                approved=True,
+            )
+            self.assertFalse(duplicate.success)
+            self.assertEqual(path.read_text(encoding="utf-8"), "hello")
+
+    def test_file_mutations_require_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "note.txt"
+            path.write_text("hello", encoding="utf-8")
+            with self.assertRaises(ToolConfirmationRequired):
+                self.manager.execute("delete_file", {"path": str(path)})
+            self.assertTrue(path.exists())
 
 
 if __name__ == "__main__":

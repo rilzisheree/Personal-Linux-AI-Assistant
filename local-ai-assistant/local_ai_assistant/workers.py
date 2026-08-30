@@ -100,7 +100,14 @@ class ChatWorker(QObject):
                     except ToolConfirmationRequired:
                         result = ToolCallResult(False, "The user did not approve this action.")
                     self.tool_completed.emit(call_id, tool_call.name, result.content, result.success)
-                    messages.append(ChatMessage("tool", result.content, name=tool_call.name))
+                    messages.append(
+                        ChatMessage(
+                            "tool",
+                            result.content,
+                            name=tool_call.name,
+                            images=result.images,
+                        )
+                    )
             self.failed.emit("Generation stopped.", "cancelled")
         except OllamaCancelledError:
             self.conversation_ready.emit(messages)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import glob
+import json
 import os
 import re
 import shlex
@@ -10,6 +11,7 @@ import shutil
 import subprocess
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Callable
@@ -27,6 +29,7 @@ class ToolCallResult:
 
     success: bool
     content: str
+    images: tuple[str, ...] = ()
 
 
 class ToolConfirmationRequired(Exception):
@@ -119,6 +122,180 @@ class ToolManager:
                 },
                 self._exec,
             ),
+            "list_windows": self._system_definition(
+                "list_windows", "List windows in the current Hyprland session.", self._list_windows
+            ),
+            "focus_window": self._window_definition(
+                "focus_window", "Focus a Hyprland window by address, title, or application class.", self._focus_window
+            ),
+            "move_window": ToolDefinition(
+                "move_window",
+                "Move a Hyprland window to another workspace.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "window": {"type": "string", "description": "Window address, title, or application class"},
+                        "workspace": {"type": "string", "description": "Workspace name or number"},
+                    },
+                    "required": ["window", "workspace"],
+                },
+                self._move_window,
+            ),
+            "resize_window": ToolDefinition(
+                "resize_window",
+                "Resize a Hyprland window to an exact width and height.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "window": {"type": "string", "description": "Window address, title, or application class"},
+                        "width": {"type": "integer", "minimum": 1, "maximum": 10000},
+                        "height": {"type": "integer", "minimum": 1, "maximum": 10000},
+                    },
+                    "required": ["window", "width", "height"],
+                },
+                self._resize_window,
+            ),
+            "close_window": ToolDefinition(
+                "close_window",
+                "Close a Hyprland window.",
+                PermissionLevel.DANGEROUS,
+                {
+                    "type": "object",
+                    "properties": {"window": {"type": "string", "description": "Window address, title, or application class"}},
+                    "required": ["window"],
+                },
+                self._close_window,
+            ),
+            "take_screenshot": ToolDefinition(
+                "take_screenshot",
+                "Capture the current Linux desktop screen for local vision analysis.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {"type": "object", "properties": {}},
+                self._take_screenshot,
+            ),
+            "search_files": ToolDefinition(
+                "search_files",
+                "Find files below a local directory by name.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Case-insensitive part of a filename"},
+                        "directory": {"type": "string", "description": "Directory to search, defaulting to the home directory"},
+                    },
+                    "required": ["query"],
+                },
+                self._search_files,
+            ),
+            "read_file": ToolDefinition(
+                "read_file",
+                "Read a UTF-8 text file from the local machine.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {"path": {"type": "string", "description": "File path"}},
+                    "required": ["path"],
+                },
+                self._read_file,
+            ),
+            "write_file": self._file_definition(
+                "write_file", "Overwrite a UTF-8 text file.", self._write_file
+            ),
+            "create_file": self._file_definition(
+                "create_file", "Create a new UTF-8 text file.", self._create_file
+            ),
+            "delete_file": ToolDefinition(
+                "delete_file",
+                "Delete one local file. Directories and protected home paths are rejected.",
+                PermissionLevel.DANGEROUS,
+                {
+                    "type": "object",
+                    "properties": {"path": {"type": "string", "description": "File path"}},
+                    "required": ["path"],
+                },
+                self._delete_file,
+            ),
+            "move_file": ToolDefinition(
+                "move_file",
+                "Move one local file to another path.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "source": {"type": "string", "description": "Source file path"},
+                        "destination": {"type": "string", "description": "Destination file path"},
+                    },
+                    "required": ["source", "destination"],
+                },
+                self._move_file,
+            ),
+            "copy_file": ToolDefinition(
+                "copy_file",
+                "Copy one local file to another path.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "source": {"type": "string", "description": "Source file path"},
+                        "destination": {"type": "string", "description": "Destination file path"},
+                    },
+                    "required": ["source", "destination"],
+                },
+                self._copy_file,
+            ),
+            "mouse_move": ToolDefinition(
+                "mouse_move",
+                "Move the pointer to screen coordinates.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "integer", "minimum": 0, "maximum": 20000},
+                        "y": {"type": "integer", "minimum": 0, "maximum": 20000},
+                    },
+                    "required": ["x", "y"],
+                },
+                self._mouse_move,
+            ),
+            "mouse_click": ToolDefinition(
+                "mouse_click",
+                "Click a mouse button at screen coordinates.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "integer", "minimum": 0, "maximum": 20000},
+                        "y": {"type": "integer", "minimum": 0, "maximum": 20000},
+                        "button": {"type": "string", "enum": ["left", "right", "middle"]},
+                    },
+                    "required": ["x", "y", "button"],
+                },
+                self._mouse_click,
+            ),
+            "keyboard_type": ToolDefinition(
+                "keyboard_type",
+                "Type text into the currently focused application.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {"text": {"type": "string", "maxLength": 2000}},
+                    "required": ["text"],
+                },
+                self._keyboard_type,
+            ),
+            "keyboard_press": ToolDefinition(
+                "keyboard_press",
+                "Press one key in the currently focused application.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {"key": {"type": "string", "description": "Key name, such as Return or Escape"}},
+                    "required": ["key"],
+                },
+                self._keyboard_press,
+            ),
             "get_cpu_usage": self._system_definition(
                 "get_cpu_usage", "Get current CPU utilization as a percentage.", self._get_cpu_usage
             ),
@@ -151,6 +328,41 @@ class ToolManager:
             description,
             PermissionLevel.SAFE,
             {"type": "object", "properties": {}},
+            handler,
+        )
+
+    @staticmethod
+    def _window_definition(
+        name: str, description: str, handler: Callable[[dict], ToolCallResult]
+    ) -> ToolDefinition:
+        return ToolDefinition(
+            name,
+            description,
+            PermissionLevel.SAFE,
+            {
+                "type": "object",
+                "properties": {"window": {"type": "string", "description": "Window address, title, or application class"}},
+                "required": ["window"],
+            },
+            handler,
+        )
+
+    @staticmethod
+    def _file_definition(
+        name: str, description: str, handler: Callable[[dict], ToolCallResult]
+    ) -> ToolDefinition:
+        return ToolDefinition(
+            name,
+            description,
+            PermissionLevel.CONFIRMATION_REQUIRED,
+            {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File path"},
+                    "content": {"type": "string", "description": "UTF-8 text content", "maxLength": 200000},
+                },
+                "required": ["path", "content"],
+            },
             handler,
         )
 
@@ -243,6 +455,303 @@ class ToolManager:
         if completed.returncode:
             return ToolCallResult(False, f"Command exited with code {completed.returncode}.\n{detail}")
         return ToolCallResult(True, detail)
+
+    @staticmethod
+    def _hyprland_clients() -> tuple[list[dict] | None, str | None]:
+        if not shutil.which("hyprctl"):
+            return None, "Hyprland is unavailable: hyprctl was not found."
+        try:
+            result = subprocess.run(
+                ["hyprctl", "clients", "-j"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            return None, f"Could not query Hyprland: {error}"
+        if result.returncode:
+            return None, result.stderr.strip() or "Hyprland did not return its window list."
+        try:
+            clients = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return None, "Hyprland returned invalid window data."
+        if not isinstance(clients, list) or not all(isinstance(client, dict) for client in clients):
+            return None, "Hyprland returned an invalid window list."
+        return clients, None
+
+    def _find_window(self, arguments: dict) -> tuple[dict | None, str | None]:
+        query = _string_argument(arguments, "window")
+        clients, error = self._hyprland_clients()
+        if clients is None:
+            return None, error
+        normalized = query.casefold()
+        matches = [
+            client
+            for client in clients
+            if normalized
+            in " ".join(
+                str(client.get(field, ""))
+                for field in ("address", "title", "class", "initialTitle", "initialClass")
+            ).casefold()
+        ]
+        if not matches:
+            return None, f"No Hyprland window matched '{query}'."
+        if len(matches) > 1:
+            choices = ", ".join(
+                str(client.get("title") or client.get("class") or client.get("address"))
+                for client in matches[:5]
+            )
+            return None, f"Multiple windows matched '{query}': {choices}. Use a unique address or title."
+        return matches[0], None
+
+    @staticmethod
+    def _hyprland_dispatch(*arguments: str) -> ToolCallResult:
+        try:
+            result = subprocess.run(
+                ["hyprctl", "dispatch", *arguments],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            return ToolCallResult(False, f"Hyprland command failed: {error}")
+        if result.returncode:
+            return ToolCallResult(False, result.stderr.strip() or result.stdout.strip() or "Hyprland rejected the command.")
+        return ToolCallResult(True, result.stdout.strip() or "Hyprland command completed.")
+
+    @staticmethod
+    def _list_windows(arguments: dict) -> ToolCallResult:
+        del arguments
+        clients, error = ToolManager._hyprland_clients()
+        if clients is None:
+            return ToolCallResult(False, error or "Hyprland is unavailable.")
+        if not clients:
+            return ToolCallResult(True, "No open windows.")
+        lines = []
+        for client in clients:
+            address = str(client.get("address", "unknown"))
+            app = str(client.get("class") or client.get("initialClass") or "unknown")
+            title = str(client.get("title") or "(untitled)")
+            workspace = client.get("workspace", {})
+            workspace_name = workspace.get("name", "?") if isinstance(workspace, dict) else "?"
+            lines.append(f"{address} | {app} | {title} | workspace {workspace_name}")
+        return ToolCallResult(True, "\n".join(lines))
+
+    def _focus_window(self, arguments: dict) -> ToolCallResult:
+        window, error = self._find_window(arguments)
+        if window is None:
+            return ToolCallResult(False, error or "Window not found.")
+        address = str(window.get("address", ""))
+        result = self._hyprland_dispatch("focuswindow", f"address:{address}")
+        return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
+
+    def _move_window(self, arguments: dict) -> ToolCallResult:
+        window, error = self._find_window(arguments)
+        if window is None:
+            return ToolCallResult(False, error or "Window not found.")
+        workspace = _string_argument(arguments, "workspace")
+        if not re.fullmatch(r"[A-Za-z0-9_:-]+", workspace):
+            return ToolCallResult(False, "Workspace must be a name or number without shell characters.")
+        address = str(window.get("address", ""))
+        result = self._hyprland_dispatch("movetoworkspace", workspace, f"address:{address}")
+        return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
+
+    def _resize_window(self, arguments: dict) -> ToolCallResult:
+        window, error = self._find_window(arguments)
+        if window is None:
+            return ToolCallResult(False, error or "Window not found.")
+        width = _integer_argument(arguments, "width", 1, 10000)
+        height = _integer_argument(arguments, "height", 1, 10000)
+        address = str(window.get("address", ""))
+        focus = self._hyprland_dispatch("focuswindow", f"address:{address}")
+        if not focus.success:
+            return focus
+        result = self._hyprland_dispatch("resizeactive", "exact", str(width), str(height))
+        return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
+
+    def _close_window(self, arguments: dict) -> ToolCallResult:
+        window, error = self._find_window(arguments)
+        if window is None:
+            return ToolCallResult(False, error or "Window not found.")
+        address = str(window.get("address", ""))
+        result = self._hyprland_dispatch("closewindow", f"address:{address}")
+        return ToolCallResult(result.success, f"{window.get('title') or window.get('class')}: {result.content}")
+
+    @staticmethod
+    def _take_screenshot(arguments: dict) -> ToolCallResult:
+        del arguments
+        screenshot_dir = Path.home() / ".cache" / "local-ai-assistant" / "screenshots"
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        destination = screenshot_dir / f"screenshot-{timestamp}.png"
+        commands = (
+            (["grim", str(destination)], "grim"),
+            (["gnome-screenshot", "-f", str(destination)], "gnome-screenshot"),
+            (["spectacle", "-b", "-n", "-o", str(destination)], "spectacle"),
+            (["scrot", str(destination)], "scrot"),
+            (["import", "-window", "root", str(destination)], "ImageMagick"),
+        )
+        for command, label in commands:
+            if not shutil.which(command[0]):
+                continue
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, timeout=20, check=False)
+            except (OSError, subprocess.SubprocessError) as error:
+                return ToolCallResult(False, f"{label} failed: {error}")
+            if result.returncode == 0 and destination.is_file() and destination.stat().st_size:
+                return ToolCallResult(
+                    True,
+                    f"Screenshot saved to {destination}.",
+                    (str(destination),),
+                )
+        return ToolCallResult(False, "No supported screenshot utility is available.")
+
+    @staticmethod
+    def _search_files(arguments: dict) -> ToolCallResult:
+        query = _string_argument(arguments, "query").casefold()
+        directory_value = arguments.get("directory", str(Path.home()))
+        if not isinstance(directory_value, str) or not directory_value.strip():
+            return ToolCallResult(False, "Tool argument 'directory' must be a path.")
+        directory = Path(directory_value).expanduser()
+        if not directory.is_dir():
+            return ToolCallResult(False, f"Directory not found: {directory}")
+        results: list[str] = []
+        visited = 0
+        try:
+            for root, directories, files in os.walk(directory, followlinks=False):
+                visited += 1
+                directories[:] = [name for name in directories if name not in {".git", ".cache", "node_modules"}]
+                for name in files:
+                    if query in name.casefold():
+                        results.append(str(Path(root) / name))
+                        if len(results) >= 50:
+                            return ToolCallResult(True, "\n".join(results) + "\n(Showing first 50 matches.)")
+                if visited >= 10000:
+                    break
+        except OSError as error:
+            return ToolCallResult(False, f"Could not search {directory}: {error}")
+        return ToolCallResult(bool(results), "\n".join(results) if results else f"No files matched '{query}'.")
+
+    @staticmethod
+    def _read_file(arguments: dict) -> ToolCallResult:
+        path = _file_path(arguments, "path")
+        if not path.is_file():
+            return ToolCallResult(False, f"File not found: {path}")
+        try:
+            if path.stat().st_size > 100_000:
+                return ToolCallResult(False, "File is larger than the 100 KiB tool limit.")
+            content = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as error:
+            return ToolCallResult(False, f"Could not read {path}: {error}")
+        return ToolCallResult(True, content or "(empty file)")
+
+    @staticmethod
+    def _write_file(arguments: dict) -> ToolCallResult:
+        path, content = _file_and_content(arguments)
+        if path.is_dir():
+            return ToolCallResult(False, f"Path is a directory: {path}")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+        except OSError as error:
+            return ToolCallResult(False, f"Could not write {path}: {error}")
+        return ToolCallResult(True, f"Wrote {len(content)} characters to {path}.")
+
+    @staticmethod
+    def _create_file(arguments: dict) -> ToolCallResult:
+        path, content = _file_and_content(arguments)
+        if path.exists():
+            return ToolCallResult(False, f"File already exists: {path}")
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+        except OSError as error:
+            return ToolCallResult(False, f"Could not create {path}: {error}")
+        return ToolCallResult(True, f"Created {path}.")
+
+    @staticmethod
+    def _delete_file(arguments: dict) -> ToolCallResult:
+        path = _file_path(arguments, "path")
+        if path in {Path("/"), Path.home()}:
+            return ToolCallResult(False, "Refusing to delete a protected path.")
+        if not path.exists():
+            return ToolCallResult(False, f"File not found: {path}")
+        if not path.is_file():
+            return ToolCallResult(False, "Only individual files can be deleted.")
+        try:
+            path.unlink()
+        except OSError as error:
+            return ToolCallResult(False, f"Could not delete {path}: {error}")
+        return ToolCallResult(True, f"Deleted {path}.")
+
+    @staticmethod
+    def _move_file(arguments: dict) -> ToolCallResult:
+        source, destination = _source_destination(arguments)
+        if not source.is_file():
+            return ToolCallResult(False, f"Source file not found: {source}")
+        if destination.exists():
+            return ToolCallResult(False, f"Destination already exists: {destination}")
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(source), str(destination))
+        except OSError as error:
+            return ToolCallResult(False, f"Could not move file: {error}")
+        return ToolCallResult(True, f"Moved {source} to {destination}.")
+
+    @staticmethod
+    def _copy_file(arguments: dict) -> ToolCallResult:
+        source, destination = _source_destination(arguments)
+        if not source.is_file():
+            return ToolCallResult(False, f"Source file not found: {source}")
+        if destination.exists():
+            return ToolCallResult(False, f"Destination already exists: {destination}")
+        try:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        except OSError as error:
+            return ToolCallResult(False, f"Could not copy file: {error}")
+        return ToolCallResult(True, f"Copied {source} to {destination}.")
+
+    @staticmethod
+    def _mouse_move(arguments: dict) -> ToolCallResult:
+        x = _integer_argument(arguments, "x", 0, 20000)
+        y = _integer_argument(arguments, "y", 0, 20000)
+        if shutil.which("hyprctl"):
+            return ToolManager._hyprland_dispatch("movecursor", str(x), str(y))
+        if shutil.which("ydotool"):
+            return _run_input_command(["ydotool", "mousemove", "--absolute", str(x), str(y)])
+        return ToolCallResult(False, "No supported pointer-control utility is available.")
+
+    @staticmethod
+    def _mouse_click(arguments: dict) -> ToolCallResult:
+        move = ToolManager._mouse_move(arguments)
+        if not move.success:
+            return move
+        button = _string_argument(arguments, "button").lower()
+        button_code = {"left": "0xC0", "right": "0xC1", "middle": "0xC2"}.get(button)
+        if not button_code:
+            return ToolCallResult(False, "Button must be left, right, or middle.")
+        if not shutil.which("ydotool"):
+            return ToolCallResult(False, "ydotool is required for mouse clicks.")
+        return _run_input_command(["ydotool", "click", button_code])
+
+    @staticmethod
+    def _keyboard_type(arguments: dict) -> ToolCallResult:
+        text = _string_argument(arguments, "text")
+        if len(text) > 2000:
+            return ToolCallResult(False, "Text exceeds the 2000 character limit.")
+        if not shutil.which("wtype"):
+            return ToolCallResult(False, "wtype is required for keyboard input.")
+        return _run_input_command(["wtype", "--", text])
+
+    @staticmethod
+    def _keyboard_press(arguments: dict) -> ToolCallResult:
+        key = _string_argument(arguments, "key")
+        if not shutil.which("wtype"):
+            return ToolCallResult(False, "wtype is required for keyboard input.")
+        return _run_input_command(["wtype", "-k", key])
 
     @staticmethod
     def _get_cpu_usage(arguments: dict) -> ToolCallResult:
@@ -345,6 +854,43 @@ class ToolManager:
             if result.returncode == 0 and result.stdout.strip():
                 return ToolCallResult(True, result.stdout.strip())
         return ToolCallResult(False, "Audio volume is unavailable.")
+
+
+def _integer_argument(arguments: dict, name: str, minimum: int, maximum: int) -> int:
+    value = arguments.get(name)
+    if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
+        raise ValueError(f"Tool argument '{name}' must be an integer from {minimum} to {maximum}.")
+    return value
+
+
+def _file_path(arguments: dict, name: str) -> Path:
+    value = _string_argument(arguments, name)
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else Path.cwd() / path
+
+
+def _file_and_content(arguments: dict) -> tuple[Path, str]:
+    path = _file_path(arguments, "path")
+    content = arguments.get("content")
+    if not isinstance(content, str):
+        raise ValueError("Tool argument 'content' must be text.")
+    if len(content.encode("utf-8")) > 200_000:
+        raise ValueError("File content exceeds the 200 KiB tool limit.")
+    return path, content
+
+
+def _source_destination(arguments: dict) -> tuple[Path, Path]:
+    return _file_path(arguments, "source"), _file_path(arguments, "destination")
+
+
+def _run_input_command(command: list[str]) -> ToolCallResult:
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10, check=False)
+    except (OSError, subprocess.SubprocessError) as error:
+        return ToolCallResult(False, f"Input command failed: {error}")
+    if result.returncode:
+        return ToolCallResult(False, result.stderr.strip() or result.stdout.strip() or "Input command was rejected.")
+    return ToolCallResult(True, result.stdout.strip() or "Input command completed.")
 
 
 def _read_cpu_times() -> tuple[int, ...]:

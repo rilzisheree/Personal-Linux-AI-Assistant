@@ -1,9 +1,19 @@
 from __future__ import annotations
 
 import unittest
+import base64
+import tempfile
+from pathlib import Path
 
 from local_ai_assistant.errors import OllamaProtocolError
-from local_ai_assistant.ollama import StreamEvent, ToolCall, parse_stream, parse_stream_line
+from local_ai_assistant.ollama import (
+    ChatMessage,
+    OllamaClient,
+    StreamEvent,
+    ToolCall,
+    parse_stream,
+    parse_stream_line,
+)
 
 
 class OllamaParserTests(unittest.TestCase):
@@ -66,6 +76,15 @@ class OllamaParserTests(unittest.TestCase):
                 '{"message":{"tool_calls":[{"function":{"name":"",'
                 '"arguments":{}}}]},"done":true}'
             )
+
+    def test_encodes_image_paths_only_for_ollama_requests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            image_path = Path(directory) / "screen.png"
+            image_path.write_bytes(b"png-bytes")
+            payload = OllamaClient._message_payload(
+                ChatMessage("tool", "Screenshot captured.", images=(str(image_path),))
+            )
+        self.assertEqual(payload["images"], [base64.b64encode(b"png-bytes").decode("ascii")])
 
 
 if __name__ == "__main__":

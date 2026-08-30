@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import socket
 import threading
 from dataclasses import dataclass
 from http.client import HTTPResponse
+from pathlib import Path
 from typing import Iterator, Iterable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -39,6 +41,7 @@ class ChatMessage:
     content: str
     tool_calls: tuple[ToolCall, ...] = ()
     name: str = ""
+    images: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
         payload: dict = {"role": self.role, "content": self.content}
@@ -46,6 +49,8 @@ class ChatMessage:
             payload["tool_calls"] = [tool_call.as_dict() for tool_call in self.tool_calls]
         if self.name:
             payload["name"] = self.name
+        if self.images:
+            payload["images"] = list(self.images)
         return payload
 
 
@@ -158,7 +163,7 @@ class OllamaClient:
     ) -> Iterator[StreamEvent]:
         payload = {
             "model": model,
-            "messages": [message.as_dict() for message in messages],
+            "messages": [self._message_payload(message) for message in messages],
             "stream": True,
         }
         if tools:
@@ -203,6 +208,20 @@ class OllamaClient:
             raise OllamaProtocolError(message) from error
         except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
             raise OllamaUnavailableError(self._network_message(error)) from error
+
+    @staticmethod
+    def _message_payload(message: ChatMessage) -> dict:
+        payload = message.as_dict()
+        image_paths = payload.pop("images", [])
+        if image_paths:
+            encoded_images: list[str] = []
+            for image_path in image_paths:
+                try:
+                    encoded_images.append(base64.b64encode(Path(image_path).read_bytes()).decode("ascii"))
+                except (OSError, TypeError) as error:
+                    raise OllamaProtocolError(f"Could not read image input: {error}") from error
+            payload["images"] = encoded_images
+        return payload
 
     def cancel_active_request(self) -> None:
         """Close the active response so a worker can unwind promptly."""

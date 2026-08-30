@@ -47,6 +47,9 @@ server and executes a small set of permission-gated tools.
 - Save, switch, clear, and export conversations locally.
 - Run safe system-information tools and open applications.
 - Review and approve confirmation-required or dangerous terminal/app actions.
+- Capture screenshots for local vision-capable Ollama models.
+- Inspect and manipulate files, Hyprland windows, and pointer/keyboard input
+  through explicit tool calls.
 
 ## User preferences
 
@@ -56,8 +59,8 @@ server and executes a small set of permission-gated tools.
 ## Gotchas
 
 - Ollama must be installed, running, and have the selected model pulled.
-- The current tool set is intentionally limited; screenshots, Hyprland window
-  management, file operations, voice, and the future API are not implemented.
+- The current tool set is intentionally limited; voice, SQLite memory, and the
+  future API are not implemented.
 
 ## Pointers
 
