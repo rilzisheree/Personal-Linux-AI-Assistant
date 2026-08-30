@@ -1,0 +1,1 @@
+- [Headless Qt runtime](qt-runtime.md) — PySide6 smoke tests need the native Qt libraries declared in `.replit` on this workspace.

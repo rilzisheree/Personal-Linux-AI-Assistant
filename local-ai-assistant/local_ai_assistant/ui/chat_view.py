@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..ollama import ChatMessage
+
 
 class MessageBubble(QFrame):
     def __init__(self, role: str, content: str = "") -> None:
@@ -104,6 +106,11 @@ class ChatView(QScrollArea):
         self.empty_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.empty_state.setStyleSheet("color: #778492; font-size: 15px;")
         self.layout.insertWidget(0, self.empty_state)
+
+    def set_messages(self, messages: list[ChatMessage]) -> None:
+        self.clear_messages()
+        for message in messages:
+            self.add_message(message.role, message.content)
 
     def _scroll_to_bottom(self) -> None:
         scrollbar = self.verticalScrollBar()

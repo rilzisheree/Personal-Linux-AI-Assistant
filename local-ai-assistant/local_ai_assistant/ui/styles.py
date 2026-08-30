@@ -17,6 +17,35 @@ QFrame#topBar {
     background: #161c23;
     border-bottom: 1px solid #27313c;
 }
+QFrame#historyPanel {
+    background: #131a21;
+    border-right: 1px solid #27313c;
+}
+QLabel#sectionLabel {
+    color: #8794a3;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+QListWidget#historyList {
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: #bac5cf;
+    padding: 2px;
+}
+QListWidget#historyList::item {
+    border-radius: 8px;
+    padding: 10px 8px;
+    margin: 2px 0;
+}
+QListWidget#historyList::item:hover {
+    background: #1b2730;
+}
+QListWidget#historyList::item:selected {
+    background: #234550;
+    color: #effcff;
+}
 QLabel#appMark {
     color: #f1f5f9;
     font-size: 18px;
@@ -83,6 +112,11 @@ QPushButton#stopButton:hover {
     background: #3b252b;
 }
 QPushButton#settingsButton {
+    background: transparent;
+    border-color: #34404c;
+    color: #b6c2cd;
+}
+QPushButton#newChatButton {
     background: transparent;
     border-color: #34404c;
     color: #b6c2cd;

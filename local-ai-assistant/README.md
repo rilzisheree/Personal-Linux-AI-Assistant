@@ -1,12 +1,14 @@
 # Local AI Assistant
 
-Phase 1 is a native-feeling PySide6 desktop chat client for Linux. It talks
-directly to an Ollama server running on the same machine (or another URL you
-configure) and streams responses into the conversation as they arrive.
+The current app is a native-feeling PySide6 desktop chat client for Linux. It
+talks directly to an Ollama server running on the same machine (or another URL
+you configure) and streams responses into the conversation as they arrive.
 
-This is intentionally only the reliable local chat foundation. There is no
-cloud provider, web UI, voice, desktop automation, tool execution, phone
-client, or SQLite persistence in this phase.
+The first continuation phase adds a local conversation manager: chats are
+restored between launches, can be switched from the sidebar, and can be
+started with New chat. History is stored as JSON on the local machine only.
+There is still no cloud provider, web UI, voice, desktop automation, tool
+execution, or phone client.
 
 ## Requirements
 
@@ -76,7 +78,10 @@ Settings are stored locally at:
 ```
 
 Only the URL and model name are stored. No credentials or prompts are written
-by this phase.
+to the settings file. Conversation history is stored separately at
+`$XDG_DATA_HOME/local-ai-assistant/conversations.json`, or
+`~/.local/share/local-ai-assistant/conversations.json` when `XDG_DATA_HOME` is
+not set.
 
 ## Troubleshooting
 
@@ -133,6 +138,7 @@ local-ai-assistant/
 │   ├── app.py                 # Qt application entry point
 │   ├── assistant_core.py      # GUI-independent assistant boundary
 │   ├── config.py              # validated local settings
+│   ├── conversations.py       # local conversation model and JSON store
 │   ├── errors.py              # user-facing error categories
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
 │   ├── workers.py             # background Qt workers
@@ -143,6 +149,7 @@ local-ai-assistant/
 │       └── styles.py          # Qt stylesheet
 ├── tests/
 │   ├── test_config.py
+│   ├── test_conversations.py
 │   └── test_ollama_parser.py
 ├── pyproject.toml
 └── run.sh
