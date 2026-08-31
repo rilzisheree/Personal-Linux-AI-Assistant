@@ -9,6 +9,8 @@ description = "A native PySide6 desktop chat client for a local Ollama server"
 requires-python = ">=3.10"
 dependencies = [
     "PySide6>=6.7",
+    "openai-whisper>=20240930",
+    "piper-tts>=1.2.0",
 ]
 
 [project.scripts]

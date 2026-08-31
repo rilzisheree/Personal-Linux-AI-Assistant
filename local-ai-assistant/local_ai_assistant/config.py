@@ -12,18 +12,15 @@ DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_MODEL = "qwen3.5:4b"
 DEFAULT_CONTEXT_SIZE = 8192
 DEFAULT_WHISPER_MODEL = "base"
-DEFAULT_TTS_ENGINE = "espeak-ng"
-DEFAULT_TTS_VOICE = "en-gb+m3"
-TTS_ENGINES = ("disabled", "espeak-ng", "piper")
-ESPEAK_VOICE_PRESETS = (
-    ("British · Jarvis-style", "en-gb+m3"),
-    ("Female-sounding", "en-gb+f2"),
-)
+DEFAULT_TTS_ENGINE = "piper"
+PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
-    ("British · Alan (Piper)", "~/Models/piper/en_GB-alan-medium.onnx"),
-    ("Female · Amy (Piper)", "~/Models/piper/en_US-amy-medium.onnx"),
+    ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
+    ("Laura", f"{PIPER_VOICE_DIRECTORY}/en_US-amy-medium.onnx"),
 )
-TTS_VOICE_PRESETS = ESPEAK_VOICE_PRESETS + PIPER_VOICE_PRESETS
+DEFAULT_TTS_VOICE = PIPER_VOICE_PRESETS[0][1]
+TTS_ENGINES = ("disabled", "piper")
+TTS_VOICE_PRESETS = PIPER_VOICE_PRESETS
 
 
 @dataclass
@@ -62,6 +59,14 @@ class AppConfig:
         self.whisper_language = self.whisper_language.strip() or "auto"
         self.tts_engine = self.tts_engine.strip().lower()
         self.tts_voice = self.tts_voice.strip()
+        # Migrate settings saved by older versions to the two supported Piper
+        # voices instead of leaving an obsolete eSpeak/custom voice selected.
+        if self.tts_engine == "espeak-ng":
+            self.tts_engine = DEFAULT_TTS_ENGINE
+        if self.tts_voice in {"en-gb+m3", "en-gb+f2", "~/Models/piper/en_GB-alan-medium.onnx"}:
+            self.tts_voice = DEFAULT_TTS_VOICE
+        elif self.tts_voice == "~/Models/piper/en_US-amy-medium.onnx":
+            self.tts_voice = PIPER_VOICE_PRESETS[1][1]
         self.telegram_allowed_user_id = str(self.telegram_allowed_user_id).strip()
         self.assistant_name = self.assistant_name.strip() or "Lura"
         self.wake_word = self.wake_word.strip() or self.assistant_name
@@ -126,7 +131,7 @@ class AppConfig:
         if not self.whisper_model:
             raise ValueError("Whisper model cannot be empty.")
         if self.tts_engine not in TTS_ENGINES:
-            raise ValueError("TTS engine must be disabled, espeak-ng, or piper.")
+            raise ValueError("TTS engine must be disabled or piper.")
         if not self.tts_voice:
             raise ValueError("TTS voice cannot be empty.")
 

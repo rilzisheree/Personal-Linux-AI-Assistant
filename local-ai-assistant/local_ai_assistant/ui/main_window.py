@@ -878,11 +878,18 @@ class MainWindow(QMainWindow):
         if worker is not None:
             worker.cancel()
         if thread is not None and thread.isRunning():
-            if not thread.wait(2500):
-                thread.terminate()
-                thread.wait(1000)
-        self.telegram_worker = None
-        self.telegram_thread = None
+            # Telegram polling is a Python call stack. Terminating its QThread
+            # can leave the C++ QThread object alive with a Python worker
+            # underneath it, which makes Qt abort later during Settings.
+            thread.quit()
+            thread.wait()
+        if self.telegram_thread is thread:
+            if worker is not None:
+                worker.deleteLater()
+            if thread is not None:
+                thread.deleteLater()
+            self.telegram_worker = None
+            self.telegram_thread = None
 
     @Slot()
     def _open_settings(self) -> None:

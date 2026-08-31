@@ -165,7 +165,6 @@ class SettingsDialog(QDialog):
         self.tts_engine_input = QComboBox()
         engine_labels = {
             "disabled": "Disabled",
-            "espeak-ng": "eSpeak-NG",
             "piper": "Piper",
         }
         for engine in TTS_ENGINES:
@@ -176,9 +175,6 @@ class SettingsDialog(QDialog):
         self.tts_voice_input = QComboBox()
         for label, voice in TTS_VOICE_PRESETS:
             self.tts_voice_input.addItem(label, voice)
-        self.tts_voice_input.addItem("Custom voice / Piper model path", None)
-        self.custom_voice_input = QLineEdit()
-        self.custom_voice_input.setPlaceholderText("e.g. en-us or /path/to/piper.onnx")
         preset_index = next(
             (
                 index
@@ -188,8 +184,6 @@ class SettingsDialog(QDialog):
             len(TTS_VOICE_PRESETS),
         )
         self.tts_voice_input.setCurrentIndex(preset_index)
-        if preset_index == len(TTS_VOICE_PRESETS):
-            self.custom_voice_input.setText(config.tts_voice)
         self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
         form.addRow("", self.voice_input_enabled)
         form.addRow("", self.voice_responses_enabled)
@@ -198,11 +192,10 @@ class SettingsDialog(QDialog):
         form.addRow("Language", self.whisper_language_input)
         form.addRow("TTS engine", self.tts_engine_input)
         form.addRow("TTS voice", self.tts_voice_input)
-        form.addRow("Custom voice", self.custom_voice_input)
         layout.addWidget(group)
         hint = QLabel(
-            "Hold the central orb to record. Whisper, Piper, eSpeak-NG, and "
-            "playback remain optional local dependencies."
+            "Hold the central orb to record. Voice responses use the local "
+            "Piper models for Jarvis or Laura."
         )
         hint.setObjectName("settingsHint")
         hint.setWordWrap(True)
@@ -327,15 +320,10 @@ class SettingsDialog(QDialog):
         return self.telegram_token_input.text().strip()
 
     def _selected_voice(self) -> str:
-        preset = self.tts_voice_input.currentData()
-        if isinstance(preset, str):
-            return preset
-        return self.custom_voice_input.text()
+        return str(self.tts_voice_input.currentData())
 
     def _voice_changed(self, index: int) -> None:
         voice = self.tts_voice_input.itemData(index)
-        is_custom = voice is None
-        self.custom_voice_input.setEnabled(is_custom)
         if isinstance(voice, str) and voice.lower().endswith(".onnx"):
             self.tts_engine_input.setCurrentIndex(self.tts_engine_input.findData("piper"))
 
