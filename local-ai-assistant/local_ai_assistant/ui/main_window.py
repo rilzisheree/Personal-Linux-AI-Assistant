@@ -357,6 +357,11 @@ class MainWindow(QMainWindow):
         self.composer_hint.setObjectName("composerHint")
         composer_layout.addWidget(self.composer_hint)
         stage_layout.addWidget(self.composer, 0, Qt.AlignmentFlag.AlignHCenter)
+
+        self.creator_credit = QLabel("Made by Jooie -")
+        self.creator_credit.setObjectName("creatorCredit")
+        self.creator_credit.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        stage_layout.addWidget(self.creator_credit)
         stage_layout.addStretch(1)
 
         root_layout.addWidget(stage, 1)
@@ -1056,6 +1061,7 @@ class MainWindow(QMainWindow):
         self.transcript_header.setVisible(not enabled)
         self.chat_view.setVisible(not enabled)
         self.composer.setVisible(not enabled)
+        self.creator_credit.setVisible(not enabled)
         self.core_status.setVisible(not enabled)
         self.core_quote.setVisible(enabled)
         self.focus_button.setToolTip(

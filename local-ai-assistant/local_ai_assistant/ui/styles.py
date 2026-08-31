@@ -151,6 +151,13 @@ QLabel#coreQuote {
     padding: 6px 12px;
 }
 
+QLabel#creatorCredit {
+    color: #30485c;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 5px 0 0;
+}
+
 QScrollArea#transcript {
     background: transparent;
 }
