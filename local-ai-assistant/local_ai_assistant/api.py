@@ -51,6 +51,38 @@ class ApiServer(ThreadingHTTPServer):
         self.context_size = context_size
 
 
+def start_background_server(
+    ollama_url: str = DEFAULT_OLLAMA_URL,
+    default_model: str = DEFAULT_MODEL,
+    context_size: int = DEFAULT_CONTEXT_SIZE,
+) -> tuple[ApiServer | None, threading.Thread | None]:
+    """Start a localhost API for the desktop app without blocking Qt."""
+
+    if os.environ.get("LURA_API_AUTOSTART", "1").casefold() in {"0", "false", "no"}:
+        return None, None
+    try:
+        port = int(os.environ.get("LURA_API_PORT", "8000"))
+        server = ApiServer(
+            (os.environ.get("LURA_API_HOST", "127.0.0.1"), port),
+            ApiStore(),
+            ollama_url,
+            default_model,
+            context_size,
+        )
+    except (OSError, ValueError, RuntimeError) as error:
+        # An independently running API is valid; do not prevent the desktop
+        # client from opening when its port is already occupied.
+        print(f"Lura API autostart skipped: {error}")
+        return None, None
+    thread = threading.Thread(
+        target=server.serve_forever,
+        name="lura-api",
+        daemon=True,
+    )
+    thread.start()
+    return server, thread
+
+
 class ApiRequestHandler(BaseHTTPRequestHandler):
     """Small JSON/SSE API surface kept dependency-free for the desktop project."""
 

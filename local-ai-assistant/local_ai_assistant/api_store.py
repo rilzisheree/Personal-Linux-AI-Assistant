@@ -11,6 +11,7 @@ import secrets
 import sqlite3
 import threading
 import time
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,9 +39,18 @@ class ApiStore:
         self,
         path: Path | None = None,
         session_secret: str | bytes | None = None,
+        session_secret_path: Path | None = None,
     ) -> None:
         self.path = path or self.default_path()
-        secret = session_secret if session_secret is not None else os.environ.get("SESSION_SECRET", "")
+        secret = (
+            session_secret
+            if session_secret is not None
+            else os.environ.get("SESSION_SECRET")
+        )
+        if not secret:
+            secret = self._load_or_create_local_secret(
+                session_secret_path or self.default_secret_path()
+            )
         self.session_secret = secret.encode("utf-8") if isinstance(secret, str) else secret
         if not self.session_secret or len(self.session_secret) < 16:
             raise ValueError("SESSION_SECRET must be configured with at least 16 characters.")
@@ -51,6 +61,10 @@ class ApiStore:
         data_home = os.environ.get("XDG_DATA_HOME")
         base = Path(data_home) if data_home else Path.home() / ".local" / "share"
         return base / "local-ai-assistant" / "api.db"
+
+    @staticmethod
+    def default_secret_path() -> Path:
+        return Path.home() / ".config" / "local-ai-assistant" / "api-session.secret"
 
     def register(self, email: str, password: str) -> dict:
         normalized_email = self._validate_credentials(email, password)[0]
@@ -327,6 +341,47 @@ class ApiStore:
             return "New chat"
         normalized = " ".join(title.split()).strip()
         return normalized[:200] or "New chat"
+
+    @staticmethod
+    def _load_or_create_local_secret(path: Path) -> str:
+        try:
+            existing = path.read_text(encoding="utf-8").strip()
+            if len(existing) >= 16:
+                return existing
+        except FileNotFoundError:
+            pass
+        except OSError as error:
+            raise RuntimeError(
+                f"Could not read the local API session secret: {error}"
+            ) from error
+
+        generated = secrets.token_urlsafe(32)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                encoding="utf-8",
+                dir=path.parent,
+                prefix=f"{path.name}.",
+                delete=False,
+            ) as temporary:
+                os.chmod(temporary.name, 0o600)
+                temporary.write(generated + "\n")
+                temporary_path = temporary.name
+            os.replace(temporary_path, path)
+            os.chmod(path, 0o600)
+            return generated
+        except OSError as error:
+            raise RuntimeError(
+                f"Could not create the local API session secret: {error}"
+            ) from error
+        finally:
+            if temporary_path:
+                try:
+                    os.unlink(temporary_path)
+                except FileNotFoundError:
+                    pass
 
     def _connect(self) -> sqlite3.Connection:
         self.path.parent.mkdir(parents=True, exist_ok=True)

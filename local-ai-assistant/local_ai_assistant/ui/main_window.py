@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..assistant_core import AssistantService
+from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
 from ..ollama import ChatMessage, OllamaClient
@@ -46,6 +47,8 @@ class MainWindow(QMainWindow):
         self.service = AssistantService(self.client)
         self.voice_service = VoiceService(config)
         self.tool_manager = ToolManager()
+        self.api_server: ApiServer | None = None
+        self.api_thread = None
         self.conversation_store = ConversationStore()
         self.conversations = self.conversation_store.load()
         if not self.conversations:
@@ -72,6 +75,11 @@ class MainWindow(QMainWindow):
         self.resize(1280, 760)
         self.setMinimumSize(900, 580)
         self._build_ui()
+        self.api_server, self.api_thread = start_background_server(
+            config.ollama_url,
+            config.model,
+            config.ollama_context_size,
+        )
         self._populate_conversations()
         self.chat_view.set_messages(self.messages)
         self._persist_conversations()
@@ -852,4 +860,9 @@ class MainWindow(QMainWindow):
                 if not thread.wait(2000):
                     thread.terminate()
                     thread.wait(1000)
+        if self.api_server is not None:
+            self.api_server.shutdown()
+            self.api_server.server_close()
+            if self.api_thread is not None:
+                self.api_thread.join(timeout=2)
         event.accept()

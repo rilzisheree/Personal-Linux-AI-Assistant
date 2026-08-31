@@ -21,14 +21,20 @@ exposing the desktop control tools. It uses the same local Ollama endpoint and
 stores accounts, sessions, and user-owned conversations in a separate SQLite
 database.
 
-Start it from this directory with:
+Start it manually from this directory with:
 
 ```bash
-SESSION_SECRET='use-a-long-random-value' python -m local_ai_assistant.api
+python -m local_ai_assistant.api
 ```
 
-The service listens on `PORT` (default `8000`). Configure these environment
-variables when needed:
+When started manually without `SESSION_SECRET`, Lura creates a random,
+permission-restricted local secret at `~/.config/local-ai-assistant/api-session.secret`.
+For a deployed or shared server, set `SESSION_SECRET` explicitly instead. The
+desktop app starts a localhost API automatically when it opens; set
+`LURA_API_AUTOSTART=0` to disable that behavior.
+
+The service listens on `PORT` (default `8000`) when started directly. Configure
+these environment variables when needed:
 
 - `SESSION_SECRET` — required, at least 16 characters; never commit it
 - `LURA_OLLAMA_URL` — Ollama base URL, defaulting to `http://localhost:11434`
@@ -37,6 +43,8 @@ variables when needed:
 - `LURA_API_HOST` — bind address, defaulting to `0.0.0.0`
 - `LURA_ALLOWED_ORIGIN` — optional exact browser origin for credentialed CORS
 - `LURA_COOKIE_SECURE` — set to `1` when HTTPS is guaranteed
+- `LURA_API_AUTOSTART` — set to `0` to prevent desktop API autostart
+- `LURA_API_PORT` — desktop autostart port, defaulting to `8000`
 
 Available endpoints:
 

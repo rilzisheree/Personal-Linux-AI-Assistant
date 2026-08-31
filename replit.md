@@ -11,7 +11,8 @@ server and executes a small set of permission-gated tools.
   desktop app
 - `cd local-ai-assistant && ./run.sh` — launch through the convenience script
 - `cd local-ai-assistant && python3 -m local_ai_assistant.api` — launch the
-  authenticated API service; it requires `SESSION_SECRET`
+  authenticated API service; it creates a local session secret when one is not
+  provided
 - The app expects a local Ollama service at `http://localhost:11434` by default.
   The URL and model are configurable in Settings.
 
@@ -65,7 +66,8 @@ server and executes a small set of permission-gated tools.
 - Ollama must be installed, running, and have the selected model pulled.
 - The Phase 6 API requires `SESSION_SECRET`, keeps API data separate from the
   desktop history database, streams chat over SSE, and intentionally does not
-  expose desktop control tools remotely. Phase 3 Linux
+  expose desktop control tools remotely. The desktop app starts a localhost API
+  automatically unless `LURA_API_AUTOSTART=0`. Phase 3 Linux
   integration is implemented through the tool registry: Hyprland window
   control, Wayland/X11 screenshots, bounded local file operations, and
   pointer/keyboard automation. Phase 4 voice is implemented as optional local

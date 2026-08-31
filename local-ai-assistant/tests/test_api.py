@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import threading
 import unittest
@@ -198,3 +199,21 @@ class ApiTests(unittest.TestCase):
             cookie=cookie,
         )
         self.assertEqual(status, 201)
+
+    def test_local_session_secret_is_created_when_environment_secret_is_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            secret_path = Path(directory) / "api-session.secret"
+            with patch.dict(os.environ, {"SESSION_SECRET": ""}):
+                store = ApiStore(
+                    Path(directory) / "api.db",
+                    session_secret_path=secret_path,
+                )
+                token, _ = store.create_session(
+                    store.register(
+                        "local@example.com",
+                        "correct horse battery staple",
+                    )["id"]
+                )
+                self.assertIsNotNone(store.user_for_session(token))
+            self.assertTrue(secret_path.is_file())
+            self.assertGreaterEqual(len(secret_path.read_text(encoding="utf-8").strip()), 16)
