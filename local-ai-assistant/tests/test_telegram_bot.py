@@ -6,11 +6,14 @@ import unittest
 from unittest.mock import patch
 
 from local_ai_assistant.telegram_bot import (
+    LocalAssistant,
+    REMOTE_TOOL_NAMES,
     TelegramConfig,
     TelegramResponseStreamer,
     _handle_message,
     _message_chunks,
 )
+from local_ai_assistant.ollama import StreamEvent, ToolCall
 
 
 class FakeTelegram:
@@ -60,7 +63,60 @@ class SlowAssistant(FakeAssistant):
         return "Partial reply"
 
 
+class ToolAwareOllama:
+    def __init__(self) -> None:
+        self.tool_names: list[str] = []
+        self.call_count = 0
+
+    def stream_chat(self, messages, model, cancel_event=None, tools=None, context_size=None):
+        del messages, model, cancel_event, context_size
+        self.call_count += 1
+        self.tool_names = [
+            tool["function"]["name"]
+            for tool in (tools or [])
+        ]
+        if self.call_count == 1:
+            yield StreamEvent(
+                done=True,
+                tool_calls=(ToolCall("close_app", {"app": "firefox"}),),
+            )
+        else:
+            yield StreamEvent(content="Firefox closed.", done=True)
+
+
 class TelegramBotTests(unittest.TestCase):
+    def test_remote_tools_include_controls_but_not_dangerous_operations(self) -> None:
+        self.assertIn("close_app", REMOTE_TOOL_NAMES)
+        self.assertIn("restart_app", REMOTE_TOOL_NAMES)
+        self.assertIn("list_windows", REMOTE_TOOL_NAMES)
+        self.assertIn("get_ram_usage", REMOTE_TOOL_NAMES)
+        self.assertIn("read_file", REMOTE_TOOL_NAMES)
+        self.assertNotIn("exec", REMOTE_TOOL_NAMES)
+        self.assertNotIn("delete_file", REMOTE_TOOL_NAMES)
+        self.assertNotIn("keyboard_type", REMOTE_TOOL_NAMES)
+
+    def test_close_app_is_available_and_approved_for_telegram(self) -> None:
+        config = TelegramConfig(token="not-printed", allowed_user_id=999)
+        assistant = LocalAssistant(config)
+        ollama = ToolAwareOllama()
+        assistant.ollama = ollama
+
+        with patch.object(
+            assistant.tool_manager,
+            "execute",
+            return_value=unittest.mock.Mock(success=True, content="Firefox closed."),
+        ) as execute:
+            response = assistant.reply(456, "Close Firefox")
+
+        self.assertEqual(response, "Firefox closed.")
+        self.assertIn("close_app", ollama.tool_names)
+        self.assertNotIn("exec", ollama.tool_names)
+        execute.assert_called_once_with(
+            "close_app",
+            {"app": "firefox"},
+            approved=True,
+        )
+
     def test_message_chunks_respect_telegram_limit(self) -> None:
         chunks = _message_chunks("x" * 8193)
         self.assertEqual([len(chunk) for chunk in chunks], [4096, 4096, 1])

@@ -21,7 +21,7 @@ from urllib.request import Request, urlopen
 from .config import DEFAULT_CONTEXT_SIZE, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from .errors import format_ollama_error
 from .ollama import ChatMessage, OllamaClient, OllamaProtocolError, ToolCall
-from .tools import PermissionLevel, ToolCallResult, ToolManager
+from .tools import ToolCallResult, ToolManager
 
 
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096
@@ -33,7 +33,32 @@ TELEGRAM_REPLY_TIMEOUT = 60.0
 MAX_TOOL_ROUNDS = 4
 MAX_HISTORY_MESSAGES = 40
 DEFAULT_OLLAMA_TIMEOUT = 120.0
-REMOTE_TOOL_NAMES = frozenset({"open_app"})
+
+# Telegram is restricted to the configured private user, but it still crosses
+# Telegram's servers. Keep the remote surface useful without exposing shell
+# execution, file mutations, input automation, screenshots, or destructive
+# window/file operations.
+REMOTE_TOOL_NAMES = frozenset(
+    {
+        "open_app",
+        "close_app",
+        "restart_app",
+        "list_windows",
+        "focus_window",
+        "move_window",
+        "resize_window",
+        "search_files",
+        "read_file",
+        "get_cpu_usage",
+        "get_gpu_usage",
+        "get_ram_usage",
+        "get_disk_usage",
+        "get_temperature",
+        "get_battery",
+        "get_volume",
+    }
+)
+REMOTE_AUTO_APPROVED_TOOL_NAMES = REMOTE_TOOL_NAMES
 TELEGRAM_TOKEN_PATH = (
     Path.home() / ".config" / "local-ai-assistant" / "telegram-bot.token"
 )
@@ -283,12 +308,7 @@ class LocalAssistant:
                         False,
                         f"Remote tool '{tool_call.name}' is not enabled.",
                     )
-                elif (
-                    self.tool_manager.permission_for(
-                        tool_call.name, tool_call.arguments
-                    )
-                    != PermissionLevel.SAFE
-                ):
+                elif tool_call.name not in REMOTE_AUTO_APPROVED_TOOL_NAMES:
                     result = ToolCallResult(
                         False,
                         f"Remote tool '{tool_call.name}' requires local approval.",
@@ -450,7 +470,10 @@ def _handle_message(
             chat_id,
             "Lura is connected to this Linux PC.\n"
             "Send a normal message to chat with the local model.\n"
-            "Try: Open Firefox on my PC\n\n"
+            "Available controls include opening, closing, and restarting apps; "
+            "listing, focusing, moving, and resizing windows; checking system "
+            "status; and searching or reading files.\n"
+            "Try: Close Firefox on my PC\n\n"
             "/reset clears this Telegram chat's local context.",
         )
         return

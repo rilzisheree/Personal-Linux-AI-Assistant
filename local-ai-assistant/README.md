@@ -62,10 +62,12 @@ Available endpoints:
 
 There are no email accounts or registration flows. Remote API requests can use
 the allowlisted safe `open_app` tool so the phone can launch an installed
-application on the trusted Linux machine. Desktop tools such as terminal
-commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
-input remain available only inside the trusted desktop app with its existing
-permission dialogs.
+application on the trusted Linux machine. Telegram can also use app lifecycle
+and window tools (`close_app`, `restart_app`, `list_windows`, `focus_window`,
+`move_window`, and `resize_window`), system status tools, and read-only file
+search/reading. Terminal commands, file mutations, screenshots, keyboard/mouse
+input, and destructive window/file tools remain available only inside the
+trusted desktop app with its existing permission dialogs.
 
 ## Telegram phone companion
 
@@ -77,7 +79,9 @@ Responses are sent immediately as a thinking message and updated while Ollama
 generates the answer, rather than waiting for the full response to finish.
 
 The local bot intentionally accepts private messages only from one configured
-Telegram numeric user ID and initially exposes only the safe `open_app` tool.
+Telegram numeric user ID. The selected remote tools are explicitly
+auto-approved for that one allowlisted user; dangerous tools are not exposed
+to Telegram.
 The bot token must be stored on the Linux machine, not committed to the
 repository or pasted into chat. The desktop app can save the token and start
 the listener from Settings; enabling Lura's existing autostart option starts
