@@ -2,4 +2,10 @@
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
-exec python3 -m local_ai_assistant.app "$@"
+
+python_bin="python3"
+if [[ -x ".venv/bin/python" ]]; then
+  python_bin=".venv/bin/python"
+fi
+
+exec "$python_bin" -m local_ai_assistant.app "$@"
