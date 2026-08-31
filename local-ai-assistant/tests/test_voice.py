@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import signal
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -55,6 +56,14 @@ class VoiceServiceTests(unittest.TestCase):
             with patch("local_ai_assistant.voice.shutil.which", return_value=None):
                 with self.assertRaisesRegex(VoiceError, "No local Whisper backend"):
                     service.transcribe(audio)
+
+    def test_stop_recorder_uses_sigint_to_finalize_audio(self) -> None:
+        service = VoiceService(AppConfig())
+        process = Mock()
+        process.poll.return_value = None
+        service.stop_recorder(process)
+        process.send_signal.assert_called_once_with(signal.SIGINT)
+        process.terminate.assert_not_called()
 
     def test_piper_receives_response_text_on_stdin(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

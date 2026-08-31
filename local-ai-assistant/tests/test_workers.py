@@ -19,7 +19,8 @@ class VoiceWorkerTests(unittest.TestCase):
             worker._process = process
             worker.stop()
         self.assertTrue(worker._stop_event.is_set())
-        process.terminate.assert_called_once_with()
+        service.stop_recorder.assert_called_once_with(process)
+        process.send_signal.assert_not_called()
 
     def test_record_worker_reports_backend_failure(self) -> None:
         service = Mock()

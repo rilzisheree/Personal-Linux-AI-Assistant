@@ -192,7 +192,7 @@ class VoiceRecordWorker(QObject):
             while process.poll() is None and not self._stop_event.wait(0.1):
                 pass
             if process.poll() is None:
-                process.terminate()
+                self.service.stop_recorder(process)
             try:
                 process.wait(timeout=2)
             except Exception:
@@ -209,7 +209,7 @@ class VoiceRecordWorker(QObject):
         self._stop_event.set()
         process = self._process
         if process is not None and process.poll() is None:
-            process.terminate()
+            self.service.stop_recorder(process)
 
     def cancel(self) -> None:
         self.stop()

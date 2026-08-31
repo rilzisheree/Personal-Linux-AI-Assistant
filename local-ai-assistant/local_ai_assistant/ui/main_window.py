@@ -490,6 +490,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
+        self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_voice_idle()
         self._set_status("error")
         self.status_label.setText("Voice input unavailable")

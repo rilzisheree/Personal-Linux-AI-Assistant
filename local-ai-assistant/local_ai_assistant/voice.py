@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import signal
 import subprocess
 import tempfile
 import threading
@@ -80,16 +81,27 @@ class VoiceService:
         return process
 
     def finish_recording(self, process: subprocess.Popen, destination: Path) -> None:
-        if process.returncode not in (0, -15, -2) and not destination.is_file():
-            detail = ""
-            if process.stderr is not None:
-                detail = process.stderr.read().strip()
+        detail = process.stderr.read().strip() if process.stderr is not None else ""
+        if process.returncode not in (0, -signal.SIGINT, -signal.SIGTERM):
             raise VoiceError(
                 f"Microphone recording failed"
                 + (f": {detail[:240]}" if detail else ".")
             )
         if not destination.is_file() or destination.stat().st_size < 44:
-            raise VoiceError("The microphone produced no audio. Check the selected input device.")
+            raise VoiceError(
+                "The microphone produced no usable audio. Check the selected "
+                "input device."
+                + (f" {detail[:240]}" if detail else "")
+            )
+
+    @staticmethod
+    def stop_recorder(process: subprocess.Popen) -> None:
+        """Ask recorder CLIs to finalize their WAV headers before exiting."""
+        if process.poll() is None:
+            try:
+                process.send_signal(signal.SIGINT)
+            except OSError:
+                process.terminate()
 
     def transcribe(self, audio_path: Path) -> str:
         if not audio_path.is_file():
