@@ -83,6 +83,7 @@ Use the settings button in the app to change:
 
 - Ollama URL, defaulting to `http://localhost:11434`
 - Model name, defaulting to `qwen3.5:4b`
+- Ollama context size, defaulting to 8,192 tokens
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
 - Spoken responses, TTS engine, and voice
@@ -98,6 +99,12 @@ are written to the settings file. Conversation history is stored separately at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.json`, or
 `~/.local/share/local-ai-assistant/conversations.json` when `XDG_DATA_HOME` is
 not set.
+
+The context size is a local model setting, not a cloud account quota. It limits
+how much conversation history and tool context Ollama sends to the model in one
+request. Larger values support longer chats but require more RAM or VRAM. If a
+model reaches its configured context limit, start a new chat or increase this
+setting in Settings if the computer has enough memory.
 
 ## Troubleshooting
 

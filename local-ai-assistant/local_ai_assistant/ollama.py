@@ -160,12 +160,15 @@ class OllamaClient:
         model: str,
         cancel_event: threading.Event | None = None,
         tools: list[dict] | None = None,
+        context_size: int | None = None,
     ) -> Iterator[StreamEvent]:
         payload = {
             "model": model,
             "messages": [self._message_payload(message) for message in messages],
             "stream": True,
         }
+        if context_size:
+            payload["options"] = {"num_ctx": context_size}
         if tools:
             payload["tools"] = tools
         body = json.dumps(payload).encode("utf-8")

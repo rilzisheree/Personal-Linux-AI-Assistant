@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_MODEL = "qwen3.5:4b"
+DEFAULT_CONTEXT_SIZE = 8192
 DEFAULT_WHISPER_MODEL = "base"
 DEFAULT_TTS_ENGINE = "espeak-ng"
 DEFAULT_TTS_VOICE = "en-us"
@@ -22,6 +23,7 @@ class AppConfig:
 
     ollama_url: str = DEFAULT_OLLAMA_URL
     model: str = DEFAULT_MODEL
+    ollama_context_size: int = DEFAULT_CONTEXT_SIZE
     voice_input_enabled: bool = True
     voice_responses_enabled: bool = False
     microphone_device: str = ""
@@ -33,6 +35,8 @@ class AppConfig:
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
         self.model = self.model.strip()
+        if isinstance(self.ollama_context_size, str):
+            self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
         self.whisper_model = self.whisper_model.strip()
         self.whisper_language = self.whisper_language.strip() or "auto"
@@ -46,6 +50,13 @@ class AppConfig:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
         if not self.model:
             raise ValueError("Ollama model cannot be empty.")
+        if (
+            isinstance(self.ollama_context_size, bool)
+            or not isinstance(self.ollama_context_size, int)
+            or not 2048 <= self.ollama_context_size <= 131072
+            or self.ollama_context_size % 1024
+        ):
+            raise ValueError("Ollama context size must be a multiple of 1024 between 2048 and 131072.")
         if not isinstance(self.voice_input_enabled, bool):
             raise ValueError("Voice input setting must be true or false.")
         if not isinstance(self.voice_responses_enabled, bool):
@@ -71,6 +82,10 @@ class AppConfig:
             return cls(
                 ollama_url=str(raw.get("ollama_url", DEFAULT_OLLAMA_URL)),
                 model=str(raw.get("model", DEFAULT_MODEL)),
+                ollama_context_size=_int_setting(
+                    raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
+                    DEFAULT_CONTEXT_SIZE,
+                ),
                 voice_input_enabled=_bool_setting(raw.get("voice_input_enabled", True), True),
                 voice_responses_enabled=_bool_setting(
                     raw.get("voice_responses_enabled", False), False
@@ -111,3 +126,10 @@ def _bool_setting(value: object, default: bool) -> bool:
         if normalized in {"false", "0", "no", "off"}:
             return False
     return default
+
+
+def _int_setting(value: object, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default

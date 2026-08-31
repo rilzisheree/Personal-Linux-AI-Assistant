@@ -356,7 +356,13 @@ class MainWindow(QMainWindow):
         self._set_generating(True)
 
         self.chat_thread = QThread(self)
-        self.chat_worker = ChatWorker(self.service, list(self.messages), model, self.tool_manager)
+        self.chat_worker = ChatWorker(
+            self.service,
+            list(self.messages),
+            model,
+            self.tool_manager,
+            self.config.ollama_context_size,
+        )
         self.chat_worker.moveToThread(self.chat_thread)
         self.chat_thread.started.connect(self.chat_worker.run)
         self.chat_worker.chunk.connect(self._append_assistant_chunk)

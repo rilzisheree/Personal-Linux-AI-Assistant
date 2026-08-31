@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import unittest
 import base64
+import json
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 from local_ai_assistant.errors import OllamaProtocolError
 from local_ai_assistant.ollama import (
@@ -85,6 +87,20 @@ class OllamaParserTests(unittest.TestCase):
                 ChatMessage("tool", "Screenshot captured.", images=(str(image_path),))
             )
         self.assertEqual(payload["images"], [base64.b64encode(b"png-bytes").decode("ascii")])
+
+    def test_context_size_is_sent_as_ollama_option(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"ok"},"done":true}\n',
+            ]
+            urlopen.return_value = response
+            list(client.stream_chat([], "qwen3.5:4b", context_size=8192))
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertEqual(payload["options"], {"num_ctx": 8192})
 
 
 if __name__ == "__main__":

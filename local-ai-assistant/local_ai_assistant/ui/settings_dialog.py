@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QLineEdit,
+    QSpinBox,
     QVBoxLayout,
 )
 
@@ -34,8 +35,17 @@ class SettingsDialog(QDialog):
         self.url_input.setPlaceholderText("http://localhost:11434")
         self.model_input = QLineEdit(config.model)
         self.model_input.setPlaceholderText("qwen3.5:4b")
+        self.context_size_input = QSpinBox()
+        self.context_size_input.setRange(2048, 131072)
+        self.context_size_input.setSingleStep(1024)
+        self.context_size_input.setValue(config.ollama_context_size)
+        self.context_size_input.setSuffix(" tokens")
+        self.context_size_input.setToolTip(
+            "Larger context windows support longer chats but use more RAM/VRAM."
+        )
         form.addRow("Ollama URL", self.url_input)
         form.addRow("Default model", self.model_input)
+        form.addRow("Context size", self.context_size_input)
         layout.addLayout(form)
 
         voice_label = QLabel("Voice")
@@ -101,6 +111,7 @@ class SettingsDialog(QDialog):
         return AppConfig(
             ollama_url=self.url_input.text(),
             model=self.model_input.text(),
+            ollama_context_size=self.context_size_input.value(),
             voice_input_enabled=self.voice_input_enabled.isChecked(),
             voice_responses_enabled=self.voice_responses_enabled.isChecked(),
             microphone_device=self.microphone_input.text(),

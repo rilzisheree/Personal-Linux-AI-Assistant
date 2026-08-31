@@ -34,12 +34,14 @@ class ChatWorker(QObject):
         messages: list[ChatMessage],
         model: str,
         tool_manager: ToolManager,
+        context_size: int | None = None,
     ) -> None:
         super().__init__()
         self.service = service
         self.messages = messages
         self.model = model
         self.tool_manager = tool_manager
+        self.context_size = context_size
         self.cancel_event = threading.Event()
         self._approval_events: dict[str, threading.Event] = {}
         self._approval_results: dict[str, bool] = {}
@@ -59,6 +61,7 @@ class ChatWorker(QObject):
                     self.model,
                     self.cancel_event,
                     self.tool_manager.definitions_for_ollama(),
+                    self.context_size,
                 ):
                     if event.content:
                         cycle_response.append(event.content)
