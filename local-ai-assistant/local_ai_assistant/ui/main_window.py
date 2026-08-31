@@ -901,7 +901,14 @@ class MainWindow(QMainWindow):
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
         if self.connection_thread is not None and self.connection_thread.isRunning():
-            self._cancel_connection_check()
+            if not self._cancel_connection_check():
+                QMessageBox.warning(
+                    self,
+                    "Connection check still running",
+                    "Lura is still checking Ollama. Please wait a moment and "
+                    "try saving Settings again.",
+                )
+                return
         previous_autostart = self.config.autostart_enabled
         try:
             next_config = dialog.config()
@@ -939,19 +946,27 @@ class MainWindow(QMainWindow):
         self._refresh_connection()
         self._start_telegram_bot()
 
-    def _cancel_connection_check(self) -> None:
+    def _cancel_connection_check(self) -> bool:
         thread = self.connection_thread
         worker = self.connection_worker
+        if thread is None:
+            return True
         if worker is not None:
             worker.cancel()
         if thread is not None and thread.isRunning():
             thread.quit()
-            if not thread.wait(2000):
-                thread.terminate()
-                thread.wait(1000)
+            # OllamaClient has an eight-second network timeout. Never release
+            # the QThread while urlopen may still be executing: Qt aborts the
+            # process when a live QThread is destroyed.
+            if not thread.wait(10_000):
+                return False
         if self.connection_thread is thread:
+            if worker is not None:
+                worker.deleteLater()
+            thread.deleteLater()
             self.connection_worker = None
             self.connection_thread = None
+        return True
 
     @Slot()
     def _new_chat(self) -> None:
@@ -1114,9 +1129,10 @@ class MainWindow(QMainWindow):
                     cancel()
             if thread is not None and thread.isRunning():
                 thread.quit()
-                if not thread.wait(2000):
-                    thread.terminate()
-                    thread.wait(1000)
+                # Do not terminate a Python worker underneath Qt. Waiting for
+                # the worker to unwind prevents "QThread destroyed while
+                # thread is still running" aborts during application shutdown.
+                thread.wait()
         if self.api_server is not None:
             self.api_server.shutdown()
             self.api_server.server_close()

@@ -6,6 +6,7 @@ import shutil
 import shlex
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -274,32 +275,21 @@ class VoiceService:
         if self.config.tts_engine == "piper":
             executable = shutil.which("piper")
             model = Path(self.config.tts_voice).expanduser()
-            if executable and model.is_file():
-                self._run_checked(
-                    [executable, "--model", str(model), "--output_file", str(audio_path)],
-                    120,
-                    "Piper",
-                    input_text=text,
-                )
-                if not audio_path.is_file() or audio_path.stat().st_size == 0:
-                    raise VoiceError("Piper completed without producing an audio file.")
-                return
-
-            fallback = shutil.which("espeak-ng") or shutil.which("espeak")
-            if fallback:
-                self._synthesize_espeak(
-                    fallback, text, audio_path, DEFAULT_TTS_VOICE
-                )
-                return
             if not executable:
                 raise VoiceError(
-                    "Piper is not installed and no eSpeak fallback is available. "
-                    "Install Piper or eSpeak-NG."
+                    "Piper is not installed. Install piper-tts in the same "
+                    "Python environment Lura uses."
                 )
-            raise VoiceError(
-                "The selected Piper voice model was not found and no eSpeak "
-                "fallback is available."
+            model = self._ensure_piper_model(model)
+            self._run_checked(
+                [executable, "--model", str(model), "--output_file", str(audio_path)],
+                120,
+                "Piper",
+                input_text=text,
             )
+            if not audio_path.is_file() or audio_path.stat().st_size == 0:
+                raise VoiceError("Piper completed without producing an audio file.")
+            return
 
         executable = shutil.which("espeak-ng") or shutil.which("espeak")
         if not executable:
@@ -307,6 +297,47 @@ class VoiceService:
                 "No local TTS engine found. Install espeak-ng or configure Piper."
             )
         self._synthesize_espeak(executable, text, audio_path, self.config.tts_voice)
+
+    def _ensure_piper_model(self, model: Path) -> Path:
+        if model.is_file():
+            return model
+        voice_name = model.stem
+        if model.suffix != ".onnx" or voice_name.count("-") < 2:
+            raise VoiceError(
+                "The selected Piper voice model was not found. Choose a valid "
+                "Piper .onnx model path in Voice settings."
+            )
+        try:
+            import piper.download_voices  # noqa: F401
+        except ImportError as error:
+            raise VoiceError(
+                "The selected Piper voice is not downloaded. Install piper-tts "
+                "or download the voice model and its .onnx.json file."
+            ) from error
+        try:
+            model.parent.mkdir(parents=True, exist_ok=True)
+            self._run_checked(
+                [
+                    sys.executable,
+                    "-m",
+                    "piper.download_voices",
+                    voice_name,
+                    "--download-dir",
+                    str(model.parent),
+                ],
+                600,
+                "Piper voice download",
+            )
+        except VoiceError as error:
+            raise VoiceError(
+                f"Piper voice {voice_name} is unavailable. Check your internet "
+                f"connection or download it manually: {error}"
+            ) from error
+        if not model.is_file() or not model.with_suffix(".onnx.json").is_file():
+            raise VoiceError(
+                f"Piper voice download did not produce {model.name} and its config."
+            )
+        return model
 
     def _synthesize_espeak(
         self, executable: str, text: str, audio_path: Path, voice: str
