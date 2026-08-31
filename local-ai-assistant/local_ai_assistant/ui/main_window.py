@@ -421,15 +421,28 @@ class MainWindow(QMainWindow):
         if self.chat_worker:
             self.chat_worker.resolve_tool_call(call_id, approved)
 
-    @Slot(str, str, str, bool)
-    def _tool_completed(self, call_id: str, name: str, result: str, success: bool) -> None:
+    @Slot(str, str, str, bool, object)
+    def _tool_completed(
+        self,
+        call_id: str,
+        name: str,
+        result: str,
+        success: bool,
+        images: object,
+    ) -> None:
         bubble = self.active_tool_bubbles.pop(call_id, None)
         prefix = "✓" if success else "✕"
         content = f"{prefix} {name}\n\n{result}"
+        image_paths = (
+            tuple(path for path in images if isinstance(path, str))
+            if isinstance(images, (tuple, list))
+            else ()
+        )
         if bubble:
             bubble.set_content(content)
+            bubble.add_images(image_paths)
         else:
-            self.chat_view.add_message("tool", content)
+            self.chat_view.add_message("tool", content, image_paths)
 
     @Slot()
     def _start_recording(self) -> None:

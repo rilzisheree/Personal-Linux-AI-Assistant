@@ -622,7 +622,7 @@ class ToolManager:
                 ToolManager._prune_screenshots(screenshot_dir, destination)
                 return ToolCallResult(
                     True,
-                    f"Screenshot saved to {destination}.",
+                    f"Screenshot captured and attached to this chat: {destination}.",
                     (str(destination),),
                 )
             detail = result.stderr.strip() or result.stdout.strip()

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -25,7 +27,12 @@ def _make_empty_state() -> QWidget:
 
 
 class MessageBubble(QFrame):
-    def __init__(self, role: str, content: str = "") -> None:
+    def __init__(
+        self,
+        role: str,
+        content: str = "",
+        images: tuple[str, ...] = (),
+    ) -> None:
         super().__init__()
         self.role = role
         object_name = {
@@ -36,13 +43,13 @@ class MessageBubble(QFrame):
         self.setObjectName(object_name)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(6)
+        self.content_layout = QVBoxLayout(self)
+        self.content_layout.setContentsMargins(16, 12, 16, 12)
+        self.content_layout.setSpacing(6)
 
         label = QLabel({"user": "YOU", "tool": "TOOL"}.get(role, "LURA"))
         label.setObjectName("messageRole")
-        layout.addWidget(label)
+        self.content_layout.addWidget(label)
 
         self.body = QTextBrowser()
         self.body.setOpenExternalLinks(True)
@@ -53,7 +60,8 @@ class MessageBubble(QFrame):
         self.body.setFont(QFont("Noto Sans", 14))
         self.body.setMarkdown(content)
         self.body.document().contentsChanged.connect(self._resize_to_content)
-        layout.addWidget(self.body)
+        self.content_layout.addWidget(self.body)
+        self.add_images(images)
 
         self._resize_to_content()
 
@@ -63,6 +71,27 @@ class MessageBubble(QFrame):
 
     def append_content(self, content: str) -> None:
         self.set_content(self.body.toPlainText() + content)
+
+    def add_images(self, image_paths: tuple[str, ...] | list[str]) -> None:
+        for image_path in image_paths:
+            path = Path(image_path).expanduser()
+            pixmap = QPixmap(str(path))
+            if pixmap.isNull():
+                continue
+            image = QLabel()
+            image.setObjectName("messageImage")
+            image.setAlignment(Qt.AlignmentFlag.AlignLeft)
+            image.setPixmap(
+                pixmap.scaled(
+                    620,
+                    420,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+            image.setToolTip(str(path))
+            self.content_layout.addWidget(image)
+        self._resize_to_content()
 
     def _resize_to_content(self) -> None:
         height = int(self.body.document().size().height()) + 12
@@ -86,11 +115,16 @@ class ChatView(QScrollArea):
         self.empty_state = _make_empty_state()
         self.layout.insertWidget(0, self.empty_state)
 
-    def add_message(self, role: str, content: str = "") -> MessageBubble:
+    def add_message(
+        self,
+        role: str,
+        content: str = "",
+        images: tuple[str, ...] = (),
+    ) -> MessageBubble:
         if self.empty_state is not None:
             self.empty_state.deleteLater()
             self.empty_state = None
-        bubble = MessageBubble(role, content)
+        bubble = MessageBubble(role, content, images)
         self.layout.insertWidget(self.layout.count() - 1, bubble)
         self._scroll_to_bottom()
         return bubble
@@ -106,7 +140,7 @@ class ChatView(QScrollArea):
     def set_messages(self, messages: list[ChatMessage]) -> None:
         self.clear_messages()
         for message in messages:
-            self.add_message(message.role, message.content)
+            self.add_message(message.role, message.content, message.images)
 
     def _scroll_to_bottom(self) -> None:
         scrollbar = self.verticalScrollBar()

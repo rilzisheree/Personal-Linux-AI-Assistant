@@ -26,7 +26,7 @@ class ChatWorker(QObject):
     conversation_ready = Signal(object)
     tool_started = Signal(str, str, object, str)
     tool_requested = Signal(str, str, object, str)
-    tool_completed = Signal(str, str, str, bool)
+    tool_completed = Signal(str, str, str, bool, object)
 
     def __init__(
         self,
@@ -105,7 +105,13 @@ class ChatWorker(QObject):
                         result = self.tool_manager.execute(tool_call.name, tool_call.arguments, approved)
                     except ToolConfirmationRequired:
                         result = ToolCallResult(False, "The user did not approve this action.")
-                    self.tool_completed.emit(call_id, tool_call.name, result.content, result.success)
+                    self.tool_completed.emit(
+                        call_id,
+                        tool_call.name,
+                        result.content,
+                        result.success,
+                        result.images,
+                    )
                     messages.append(
                         ChatMessage(
                             "tool",
