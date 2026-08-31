@@ -40,28 +40,33 @@ export class LuraApiError extends Error {
 
 const SESSION_TOKEN_KEY = 'lura_session_token';
 const configuredApiBaseUrl = (import.meta.env.VITE_LURA_API_URL || '').trim().replace(/\/+$/, '');
+let inMemorySessionToken: string | null = null;
 
 function apiUrl(path: string): string {
   return `${configuredApiBaseUrl}${path}`;
 }
 
 function getSessionToken(): string | null {
+  if (inMemorySessionToken) return inMemorySessionToken;
   try {
-    return window.sessionStorage.getItem(SESSION_TOKEN_KEY);
+    inMemorySessionToken = window.sessionStorage.getItem(SESSION_TOKEN_KEY);
+    return inMemorySessionToken;
   } catch {
-    return null;
+    return inMemorySessionToken;
   }
 }
 
 function setSessionToken(token: string): void {
+  inMemorySessionToken = token;
   try {
     window.sessionStorage.setItem(SESSION_TOKEN_KEY, token);
   } catch {
-    // The HttpOnly cookie remains available when session storage is blocked.
+    // The in-memory token keeps the current tab authenticated when storage is blocked.
   }
 }
 
 function clearSessionToken(): void {
+  inMemorySessionToken = null;
   try {
     window.sessionStorage.removeItem(SESSION_TOKEN_KEY);
   } catch {

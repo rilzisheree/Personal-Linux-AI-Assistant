@@ -142,6 +142,8 @@ class ApiTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertEqual(headers["Access-Control-Allow-Origin"], railway_origin)
             self.assertEqual(headers["Access-Control-Allow-Credentials"], "true")
+            self.assertIn("SameSite=None", headers["Set-Cookie"])
+            self.assertIn("Secure", headers["Set-Cookie"])
             self.assertIsInstance(payload, dict)
             session_token = payload["session_token"]
 

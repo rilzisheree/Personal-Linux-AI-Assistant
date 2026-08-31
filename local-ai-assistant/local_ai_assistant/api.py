@@ -284,14 +284,25 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         morsel = cookie.get("lura_session")
         return morsel.value if morsel else None
 
-    @staticmethod
-    def _session_cookie(token: str, expires_at: int) -> str:
-        cookie = f"lura_session={token}; HttpOnly; Path=/; SameSite=Lax"
+    def _session_cookie(self, token: str, expires_at: int) -> str:
+        allowed_origin = os.environ.get("LURA_ALLOWED_ORIGIN", "").strip()
+        request_origin = self.headers.get("Origin", "").strip()
+        cross_origin_https = (
+            bool(allowed_origin)
+            and request_origin == allowed_origin
+            and request_origin.casefold().startswith("https://")
+        )
+        same_site = "None" if cross_origin_https else "Lax"
+        cookie = f"lura_session={token}; HttpOnly; Path=/; SameSite={same_site}"
         if expires_at:
             cookie += f"; Max-Age={SESSION_TTL_SECONDS}"
         else:
             cookie += "; Max-Age=0"
-        if os.environ.get("LURA_COOKIE_SECURE", "").casefold() in {"1", "true", "yes"}:
+        if cross_origin_https or os.environ.get("LURA_COOKIE_SECURE", "").casefold() in {
+            "1",
+            "true",
+            "yes",
+        }:
             cookie += "; Secure"
         return cookie
 
