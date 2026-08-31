@@ -1,4 +1,4 @@
-"""Authenticated HTTP API for remote Lura clients."""
+"""Single-user password-protected HTTP API for Lura clients."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from urllib.parse import unquote, urlsplit
 from .config import DEFAULT_CONTEXT_SIZE, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from .errors import format_ollama_error
 from .ollama import ChatMessage, OllamaClient, OllamaProtocolError
-from .api_store import ApiStore, DuplicateEmailError, SESSION_TTL_SECONDS
+from .api_store import ApiStore, SESSION_TTL_SECONDS
 
 
 MAX_REQUEST_BYTES = 1_000_000
@@ -106,7 +106,9 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                 return
             user = self._require_user()
             if parts == ["api", "me"]:
-                self._send_json({"user": user})
+                self._send_json(
+                    {"user": {"id": "local", "authenticated": True}}
+                )
             elif parts == ["api", "models"]:
                 models = OllamaClient(self._api_server().ollama_url).list_models()
                 self._send_json({"models": models})
@@ -131,8 +133,8 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
             parts = self._path_parts()
             payload = self._json_body()
             if parts == ["api", "auth", "register"]:
-                self._register(payload)
-            elif parts == ["api", "auth", "login"]:
+                raise ApiHttpError(HTTPStatus.NOT_FOUND, "Endpoint not found.")
+            if parts == ["api", "auth", "login"]:
                 self._login(payload)
             elif parts == ["api", "auth", "logout"]:
                 self._logout()
@@ -151,28 +153,20 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         except Exception as error:
             self._handle_error(error)
 
-    def _register(self, payload: dict[str, Any]) -> None:
-        email = payload.get("email")
-        password = payload.get("password")
-        user = self._api_server().store.register(email, password)
-        token, expires_at = self._api_server().store.create_session(user["id"])
-        self._send_json(
-            {"user": user},
-            HTTPStatus.CREATED,
-            {"Set-Cookie": self._session_cookie(token, expires_at)},
-        )
-
     def _login(self, payload: dict[str, Any]) -> None:
-        email = payload.get("email")
         password = payload.get("password")
-        user = self._api_server().store.authenticate(email, password)
-        if user is None:
+        if not self._api_server().store.has_password():
             raise ApiHttpError(
-                HTTPStatus.UNAUTHORIZED, "Email or password is incorrect."
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "The local API password has not been configured.",
             )
-        token, expires_at = self._api_server().store.create_session(user["id"])
+        if not self._api_server().store.verify_password(password):
+            raise ApiHttpError(
+                HTTPStatus.UNAUTHORIZED, "Password is incorrect."
+            )
+        token, expires_at = self._api_server().store.create_session()
         self._send_json(
-            {"user": user},
+            {"authenticated": True},
             headers={"Set-Cookie": self._session_cookie(token, expires_at)},
         )
 
@@ -369,8 +363,6 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
     def _handle_error(self, error: Exception) -> None:
         if isinstance(error, ApiHttpError):
             status, message = error.status, error.message
-        elif isinstance(error, DuplicateEmailError):
-            status, message = HTTPStatus.CONFLICT, str(error)
         elif isinstance(error, KeyError):
             status, message = HTTPStatus.NOT_FOUND, str(error).strip("'")
         elif isinstance(error, ValueError):
@@ -411,6 +403,9 @@ def main() -> int:
         os.environ.get("LURA_API_DATABASE", str(ApiStore.default_path()))
     ).expanduser()
     store = ApiStore(database_path)
+    configured_password = os.environ.get("LURA_API_PASSWORD")
+    if not store.has_password() and configured_password:
+        store.set_password(configured_password)
     server = ApiServer((host, port), store, ollama_url, model)
     print(f"Lura API listening on {host}:{port}")
     try:

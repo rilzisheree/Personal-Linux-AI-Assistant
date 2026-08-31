@@ -16,10 +16,10 @@ still no cloud provider, web UI, or phone client.
 
 ## Authenticated API service (Phase 6)
 
-The optional API service provides authenticated access to conversations without
-exposing the desktop control tools. It uses the same local Ollama endpoint and
-stores accounts, sessions, and user-owned conversations in a separate SQLite
-database.
+The optional API service provides password-protected access to conversations
+without exposing the desktop control tools. It uses the same local Ollama
+endpoint and stores the single local user's sessions and conversations in a
+separate SQLite database.
 
 Start it manually from this directory with:
 
@@ -29,14 +29,17 @@ python -m local_ai_assistant.api
 
 When started manually without `SESSION_SECRET`, Lura creates a random,
 permission-restricted local secret at `~/.config/local-ai-assistant/api-session.secret`.
-For a deployed or shared server, set `SESSION_SECRET` explicitly instead. The
-desktop app starts a localhost API automatically when it opens; set
-`LURA_API_AUTOSTART=0` to disable that behavior.
+For a deployed or shared server, set `SESSION_SECRET` explicitly instead. Set
+`LURA_API_PASSWORD` to initialize the single API password in a headless
+environment. The desktop app prompts for this password on first launch and
+starts a localhost API automatically when it opens; set `LURA_API_AUTOSTART=0`
+to disable that behavior.
 
 The service listens on `PORT` (default `8000`) when started directly. Configure
 these environment variables when needed:
 
-- `SESSION_SECRET` — required, at least 16 characters; never commit it
+- `SESSION_SECRET` — optional locally; at least 16 characters when supplied
+- `LURA_API_PASSWORD` — optional initial password for headless API setup
 - `LURA_OLLAMA_URL` — Ollama base URL, defaulting to `http://localhost:11434`
 - `LURA_MODEL` — default model, defaulting to `qwen3.5:4b`
 - `LURA_API_DATABASE` — optional API SQLite path
@@ -48,7 +51,7 @@ these environment variables when needed:
 
 Available endpoints:
 
-- `POST /api/auth/register` and `POST /api/auth/login`
+- `POST /api/auth/login` with `{ "password": "..." }`
 - `POST /api/auth/logout` and `GET /api/me`
 - `GET /api/conversations` and `POST /api/conversations`
 - `GET /api/conversations/:id`
@@ -56,7 +59,8 @@ Available endpoints:
 - `GET /api/models`
 - `GET /api/health`
 
-Remote API requests only receive chat responses. Desktop tools such as terminal
+There are no email accounts or registration flows. Remote API requests only
+receive chat responses. Desktop tools such as terminal
 commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
 input remain available only inside the trusted desktop app with its existing
 permission dialogs.
@@ -275,5 +279,5 @@ attached to the next Ollama tool message so vision-capable models can inspect
 the captured image.
 
 Phase 4 local voice input/output is implemented through the `MIC` push-to-talk
-button and optional local backends. The future authenticated API and phone web
-client are intentionally not included.
+button and optional local backends. A future phone or web client remains
+intentionally out of scope for the desktop milestone.

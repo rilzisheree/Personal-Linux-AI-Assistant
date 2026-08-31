@@ -11,8 +11,8 @@ server and executes a small set of permission-gated tools.
   desktop app
 - `cd local-ai-assistant && ./run.sh` — launch through the convenience script
 - `cd local-ai-assistant && python3 -m local_ai_assistant.api` — launch the
-  authenticated API service; it creates a local session secret when one is not
-  provided
+  password-protected API service; the desktop app initializes its password on
+  first launch
 - The app expects a local Ollama service at `http://localhost:11434` by default.
   The URL and model are configurable in Settings.
 
@@ -22,7 +22,8 @@ server and executes a small set of permission-gated tools.
 - PySide6 6.7+
 - Ollama HTTP API with newline-delimited streaming
 - Local SQLite persistence for conversations and JSON persistence for settings
-- Dependency-free authenticated HTTP API with server-sent event chat streaming
+- Dependency-free single-user password-protected HTTP API with server-sent event
+  chat streaming
 
 ## Where things live
 
@@ -43,7 +44,7 @@ server and executes a small set of permission-gated tools.
   decision.
 - Conversation history remains local SQLite for the current desktop milestone;
   the first launch imports the previous local JSON format, while a remote API is
-  provides a separate user-owned SQLite store for authenticated clients.
+  provides a separate single-user SQLite store for API clients.
 
 ## Product
 
@@ -64,10 +65,11 @@ server and executes a small set of permission-gated tools.
 ## Gotchas
 
 - Ollama must be installed, running, and have the selected model pulled.
-- The Phase 6 API requires `SESSION_SECRET`, keeps API data separate from the
+- The Phase 6 API uses one local password, keeps API data separate from the
   desktop history database, streams chat over SSE, and intentionally does not
-  expose desktop control tools remotely. The desktop app starts a localhost API
-  automatically unless `LURA_API_AUTOSTART=0`. Phase 3 Linux
+  expose desktop control tools remotely. The desktop app asks for the password
+  on launch and starts a localhost API automatically unless
+  `LURA_API_AUTOSTART=0`. Phase 3 Linux
   integration is implemented through the tool registry: Hyprland window
   control, Wayland/X11 screenshots, bounded local file operations, and
   pointer/keyboard automation. Phase 4 voice is implemented as optional local

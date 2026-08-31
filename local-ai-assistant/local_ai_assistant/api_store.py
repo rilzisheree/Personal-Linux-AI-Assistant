@@ -1,4 +1,4 @@
-"""Authenticated API persistence for users, sessions, and conversations."""
+"""Single-user password, session, and conversation persistence for the API."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import hashlib
 import hmac
 import json
 import os
-import re
 import secrets
 import sqlite3
 import threading
@@ -21,15 +20,10 @@ from .ollama import ChatMessage, ToolCall
 
 
 SESSION_TTL_SECONDS = 60 * 60 * 24 * 30
-EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-class DuplicateEmailError(ValueError):
-    """Raised when an account already exists for an email address."""
 
 
 class ApiStore:
@@ -66,54 +60,55 @@ class ApiStore:
     def default_secret_path() -> Path:
         return Path.home() / ".config" / "local-ai-assistant" / "api-session.secret"
 
-    def register(self, email: str, password: str) -> dict:
-        normalized_email = self._validate_credentials(email, password)[0]
+    def has_password(self) -> bool:
+        with self._connect() as connection:
+            return connection.execute(
+                "SELECT 1 FROM api_auth WHERE id = 1"
+            ).fetchone() is not None
+
+    def set_password(self, password: str) -> None:
+        self._validate_password(password)
         salt = secrets.token_bytes(16).hex()
         password_hash = self._password_hash(password, salt)
         now = _now()
         with self._lock, self._connect() as connection:
             try:
-                cursor = connection.execute(
+                connection.execute(
                     """
-                    INSERT INTO users (email, password_salt, password_hash, created_at)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO api_auth (id, password_salt, password_hash, created_at)
+                    VALUES (1, ?, ?, ?)
                     """,
-                    (normalized_email, salt, password_hash, now),
+                    (salt, password_hash, now),
                 )
             except sqlite3.IntegrityError as error:
-                raise DuplicateEmailError(
-                    "An account with that email already exists."
-                ) from error
-            return {"id": int(cursor.lastrowid), "email": normalized_email}
+                raise ValueError("The local API password is already configured.") from error
 
-    def authenticate(self, email: str, password: str) -> dict | None:
-        normalized_email = self._validate_credentials(email, password)[0]
+    def verify_password(self, password: str) -> bool:
+        if not isinstance(password, str):
+            return False
         with self._connect() as connection:
             row = connection.execute(
                 """
-                SELECT id, email, password_salt, password_hash
-                FROM users
-                WHERE email = ? COLLATE NOCASE
+                SELECT password_salt, password_hash
+                FROM api_auth
+                WHERE id = 1
                 """,
-                (normalized_email,),
             ).fetchone()
         if row is None:
-            return None
+            return False
         expected = self._password_hash(password, row["password_salt"])
-        if not hmac.compare_digest(expected, row["password_hash"]):
-            return None
-        return {"id": int(row["id"]), "email": row["email"]}
+        return hmac.compare_digest(expected, row["password_hash"])
 
-    def create_session(self, user_id: int) -> tuple[str, int]:
+    def create_session(self) -> tuple[str, int]:
         token = secrets.token_urlsafe(32)
         expires_at = int(time.time()) + SESSION_TTL_SECONDS
         with self._lock, self._connect() as connection:
             connection.execute(
                 """
-                INSERT INTO sessions (token_hash, user_id, expires_at)
-                VALUES (?, ?, ?)
+                INSERT INTO api_sessions (token_hash, expires_at)
+                VALUES (?, ?)
                 """,
-                (self._token_hash(token), user_id, expires_at),
+                (self._token_hash(token), expires_at),
             )
         return token, expires_at
 
@@ -124,10 +119,9 @@ class ApiStore:
         with self._connect() as connection:
             row = connection.execute(
                 """
-                SELECT users.id, users.email, sessions.expires_at
-                FROM sessions
-                JOIN users ON users.id = sessions.user_id
-                WHERE sessions.token_hash = ?
+                SELECT expires_at
+                FROM api_sessions
+                WHERE token_hash = ?
                 """,
                 (token_hash,),
             ).fetchone()
@@ -135,17 +129,17 @@ class ApiStore:
                 return None
             if int(row["expires_at"]) <= int(time.time()):
                 connection.execute(
-                    "DELETE FROM sessions WHERE token_hash = ?", (token_hash,)
+                    "DELETE FROM api_sessions WHERE token_hash = ?", (token_hash,)
                 )
                 return None
-            return {"id": int(row["id"]), "email": row["email"]}
+            return {"id": 1}
 
     def delete_session(self, token: str | None) -> None:
         if not token:
             return
         with self._lock, self._connect() as connection:
             connection.execute(
-                "DELETE FROM sessions WHERE token_hash = ?",
+                "DELETE FROM api_sessions WHERE token_hash = ?",
                 (self._token_hash(token),),
             )
 
@@ -308,15 +302,9 @@ class ApiStore:
         return conversation
 
     @staticmethod
-    def _validate_credentials(email: str, password: str) -> tuple[str, str]:
-        if not isinstance(email, str):
-            raise ValueError("Email is required.")
-        normalized_email = email.strip().casefold()
-        if len(normalized_email) > 254 or not EMAIL_PATTERN.fullmatch(normalized_email):
-            raise ValueError("Enter a valid email address.")
+    def _validate_password(password: str) -> None:
         if not isinstance(password, str) or not 8 <= len(password) <= 256:
             raise ValueError("Password must be between 8 and 256 characters.")
-        return normalized_email, password
 
     @staticmethod
     def _password_hash(password: str, salt_hex: str) -> str:
@@ -406,6 +394,18 @@ class ApiStore:
                 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS api_auth (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                password_salt TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS api_sessions (
+                token_hash TEXT PRIMARY KEY,
+                expires_at INTEGER NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS conversations (
                 id TEXT PRIMARY KEY,
                 user_id INTEGER NOT NULL,
@@ -434,5 +434,14 @@ class ApiStore:
             CREATE INDEX IF NOT EXISTS api_messages_conversation_idx
                 ON messages (conversation_id, position);
             """
+        )
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO users (
+                id, email, password_salt, password_hash, created_at
+            )
+            VALUES (1, 'local', '', '', ?)
+            """,
+            (_now(),),
         )
         return connection

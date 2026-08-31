@@ -34,9 +34,12 @@ class FakeOllamaClient:
 
 
 class ApiTests(unittest.TestCase):
+    PASSWORD = "correct horse battery staple"
+
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         store = ApiStore(Path(self.temp_dir.name) / "api.db", "test-session-secret-123")
+        store.set_password(self.PASSWORD)
         self.server = ApiServer(
             ("127.0.0.1", 0),
             store,
@@ -92,25 +95,25 @@ class ApiTests(unittest.TestCase):
     def session_cookie(headers: dict[str, str]) -> str:
         return headers["Set-Cookie"].split(";", 1)[0]
 
-    def register(self, email: str) -> str:
+    def login(self) -> str:
         status, payload, headers = self.request(
             "POST",
-            "/api/auth/register",
-            {"email": email, "password": "correct horse battery staple"},
+            "/api/auth/login",
+            {"password": self.PASSWORD},
         )
-        self.assertEqual(status, 201)
+        self.assertEqual(status, 200)
         self.assertIsInstance(payload, dict)
         return self.session_cookie(headers)
 
-    def test_health_registration_and_session_lifecycle(self) -> None:
+    def test_health_password_login_and_session_lifecycle(self) -> None:
         status, payload, _ = self.request("GET", "/api/health")
         self.assertEqual(status, 200)
         self.assertEqual(payload["ok"], True)
 
-        cookie = self.register("USER@example.com")
+        cookie = self.login()
         status, payload, _ = self.request("GET", "/api/me", cookie=cookie)
         self.assertEqual(status, 200)
-        self.assertEqual(payload["user"]["email"], "user@example.com")
+        self.assertEqual(payload["user"]["id"], "local")
 
         status, payload, _ = self.request(
             "POST",
@@ -124,15 +127,14 @@ class ApiTests(unittest.TestCase):
         self.assertIn("Authentication is required", payload["error"])
 
     @patch("local_ai_assistant.api.OllamaClient", FakeOllamaClient)
-    def test_conversations_stream_and_are_isolated_by_user(self) -> None:
-        first_cookie = self.register("first@example.com")
-        second_cookie = self.register("second@example.com")
+    def test_conversations_stream_and_persist(self) -> None:
+        cookie = self.login()
 
         status, payload, _ = self.request(
             "POST",
             "/api/conversations",
             {"title": "Private chat"},
-            cookie=first_cookie,
+            cookie=cookie,
         )
         self.assertEqual(status, 201)
         conversation_id = payload["conversation"]["id"]
@@ -141,7 +143,7 @@ class ApiTests(unittest.TestCase):
             "POST",
             f"/api/conversations/{conversation_id}/messages",
             {"content": "Say hello"},
-            cookie=first_cookie,
+            cookie=cookie,
         )
         self.assertEqual(status, 200)
         self.assertIn('event: token\ndata: {"content":"Hello"}', payload)
@@ -150,55 +152,29 @@ class ApiTests(unittest.TestCase):
         status, payload, _ = self.request(
             "GET",
             f"/api/conversations/{conversation_id}",
-            cookie=first_cookie,
+            cookie=cookie,
         )
         self.assertEqual(status, 200)
         messages = payload["conversation"]["messages"]
         self.assertEqual([message["role"] for message in messages], ["user", "assistant"])
         self.assertEqual(messages[1]["content"], "Hello from the API")
 
-        status, payload, _ = self.request(
-            "GET",
-            f"/api/conversations/{conversation_id}",
-            cookie=second_cookie,
-        )
-        self.assertEqual(status, 404)
-        self.assertEqual(payload["error"], "Conversation not found.")
-
-    def test_login_and_invalid_requests_are_rejected(self) -> None:
-        self.register("login@example.com")
+    def test_invalid_password_and_account_registration_are_rejected(self) -> None:
         status, payload, headers = self.request(
             "POST",
             "/api/auth/login",
-            {"email": "LOGIN@example.com", "password": "correct horse battery staple"},
-        )
-        self.assertEqual(status, 200)
-        cookie = self.session_cookie(headers)
-        self.assertEqual(payload["user"]["email"], "login@example.com")
-
-        status, payload, _ = self.request(
-            "POST",
-            "/api/auth/login",
-            {"email": "login@example.com", "password": "wrong-password"},
+            {"password": "wrong-password"},
         )
         self.assertEqual(status, 401)
-        self.assertEqual(payload["error"], "Email or password is incorrect.")
+        self.assertEqual(payload["error"], "Password is incorrect.")
 
         status, payload, _ = self.request(
             "POST",
             "/api/auth/register",
-            {"email": "login@example.com", "password": "correct horse battery staple"},
+            {"password": self.PASSWORD},
         )
-        self.assertEqual(status, 409)
-        self.assertIn("already exists", payload["error"])
-
-        status, payload, _ = self.request(
-            "POST",
-            "/api/conversations",
-            {},
-            cookie=cookie,
-        )
-        self.assertEqual(status, 201)
+        self.assertEqual(status, 404)
+        self.assertEqual(payload["error"], "Endpoint not found.")
 
     def test_local_session_secret_is_created_when_environment_secret_is_absent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -208,12 +184,8 @@ class ApiTests(unittest.TestCase):
                     Path(directory) / "api.db",
                     session_secret_path=secret_path,
                 )
-                token, _ = store.create_session(
-                    store.register(
-                        "local@example.com",
-                        "correct horse battery staple",
-                    )["id"]
-                )
+                store.set_password(self.PASSWORD)
+                token, _ = store.create_session()
                 self.assertIsNotNone(store.user_for_session(token))
             self.assertTrue(secret_path.is_file())
             self.assertGreaterEqual(len(secret_path.read_text(encoding="utf-8").strip()), 16)
