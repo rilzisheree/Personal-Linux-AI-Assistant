@@ -64,10 +64,12 @@ There are no email accounts or registration flows. Remote API requests can use
 the allowlisted safe `open_app` tool so the phone can launch an installed
 application on the trusted Linux machine. Telegram can also use app lifecycle
 and window tools (`close_app`, `restart_app`, `list_windows`, `focus_window`,
-`move_window`, and `resize_window`), system status tools, and read-only file
-search/reading. Terminal commands, file mutations, screenshots, keyboard/mouse
-input, and destructive window/file tools remain available only inside the
-trusted desktop app with its existing permission dialogs.
+`move_window`, and `resize_window`), take desktop screenshots, system status
+tools, and read-only file search/reading. Captured screenshots are uploaded
+only to the configured private Telegram chat. Terminal commands, file
+mutations, keyboard/mouse input, and destructive window/file tools remain
+available only inside the trusted desktop app with its existing permission
+dialogs.
 
 ## Telegram phone companion
 

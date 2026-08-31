@@ -9,6 +9,7 @@ safe ``open_app`` tool is exposed remotely.
 from __future__ import annotations
 
 import json
+import mimetypes
 import os
 import threading
 import time
@@ -47,6 +48,7 @@ REMOTE_TOOL_NAMES = frozenset(
         "focus_window",
         "move_window",
         "resize_window",
+        "take_screenshot",
         "search_files",
         "read_file",
         "get_cpu_usage",
@@ -196,6 +198,72 @@ class TelegramClient:
             {"chat_id": chat_id, "message_id": message_id, "text": text},
         )
 
+    def send_photo(
+        self,
+        chat_id: int,
+        photo_path: str,
+        caption: str = "",
+    ) -> dict | None:
+        """Upload a local screenshot to Telegram using multipart form data."""
+        path = Path(photo_path)
+        try:
+            photo = path.read_bytes()
+        except OSError as error:
+            raise TelegramApiError(f"Could not read screenshot: {error}") from error
+
+        boundary = f"----LuraTelegram{time.time_ns():x}"
+        content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        parts = [
+            (
+                f"--{boundary}\r\n"
+                'Content-Disposition: form-data; name="chat_id"\r\n\r\n'
+                f"{chat_id}\r\n"
+            ).encode("utf-8"),
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="photo"; filename="{path.name}"\r\n'
+                f"Content-Type: {content_type}\r\n\r\n"
+            ).encode("utf-8")
+            + photo
+            + b"\r\n",
+        ]
+        if caption:
+            parts.append(
+                (
+                    f"--{boundary}\r\n"
+                    'Content-Disposition: form-data; name="caption"\r\n\r\n'
+                    f"{caption[:1024]}\r\n"
+                ).encode("utf-8")
+            )
+        body = b"".join(parts) + f"--{boundary}--\r\n".encode("utf-8")
+        request = Request(
+            f"{self._base_url}/sendPhoto",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=self.timeout) as response:
+                raw = response.read()
+        except HTTPError as error:
+            detail = self._error_detail(error)
+            raise TelegramApiError(f"Telegram API HTTP {error.code}: {detail}") from error
+        except (URLError, TimeoutError, OSError) as error:
+            raise TelegramApiError("Could not reach the Telegram API.") from error
+
+        try:
+            result = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise TelegramApiError("Telegram returned an invalid response.") from error
+        if not isinstance(result, dict) or result.get("ok") is not True:
+            description = (
+                result.get("description", "Unknown Telegram API error")
+                if isinstance(result, dict)
+                else "Invalid response"
+            )
+            raise TelegramApiError(str(description))
+        return result.get("result") if isinstance(result.get("result"), dict) else None
+
 
 @dataclass(frozen=True)
 class TelegramConfig:
@@ -261,6 +329,7 @@ class LocalAssistant:
         content: str,
         on_chunk: Callable[[str], None] | None = None,
         cancel_event: threading.Event | None = None,
+        on_tool_image: Callable[[str, str], None] | None = None,
     ) -> str:
         messages = self.histories.setdefault(chat_id, [])
         messages.append(ChatMessage("user", content.strip()))
@@ -318,8 +387,16 @@ class LocalAssistant:
                         tool_call.name, tool_call.arguments, approved=True
                     )
                 messages.append(
-                    ChatMessage("tool", result.content, name=tool_call.name)
+                    ChatMessage(
+                        "tool",
+                        result.content,
+                        name=tool_call.name,
+                        images=result.images,
+                    )
                 )
+                if on_tool_image is not None:
+                    for image_path in result.images:
+                        on_tool_image(image_path, result.content)
 
     @staticmethod
     def _trim_history(messages: list[ChatMessage]) -> None:
@@ -472,7 +549,7 @@ def _handle_message(
             "Send a normal message to chat with the local model.\n"
             "Available controls include opening, closing, and restarting apps; "
             "listing, focusing, moving, and resizing windows; checking system "
-            "status; and searching or reading files.\n"
+            "status; taking screenshots; and searching or reading files.\n"
             "Try: Close Firefox on my PC\n\n"
             "/reset clears this Telegram chat's local context.",
         )
@@ -496,6 +573,12 @@ def _handle_message(
                     text,
                     on_chunk=streamer.append,
                     cancel_event=cancel_event,
+                    on_tool_image=lambda image_path, caption: _send_tool_image(
+                        telegram,
+                        chat_id,
+                        image_path,
+                        caption,
+                    ),
                 )
             )
         except Exception as error:
@@ -534,6 +617,20 @@ def _handle_message(
     except Exception as error:
         response = f"Lura could not complete that request: {format_ollama_error(error)}"
         streamer.finish(response)
+
+
+def _send_tool_image(
+    telegram: TelegramClient,
+    chat_id: int,
+    image_path: str,
+    caption: str,
+) -> None:
+    """Send a tool image without failing the model conversation if upload fails."""
+    try:
+        telegram.send_photo(chat_id, image_path, caption)
+    except TelegramApiError:
+        # The tool result remains in the chat even if Telegram rejects the upload.
+        pass
 
 
 class TelegramBotRunner:

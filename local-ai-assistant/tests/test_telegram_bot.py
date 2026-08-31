@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import time
 import unittest
 from unittest.mock import patch
+from unittest.mock import Mock
 
 from local_ai_assistant.telegram_bot import (
     LocalAssistant,
     REMOTE_TOOL_NAMES,
+    TelegramClient,
     TelegramConfig,
     TelegramResponseStreamer,
     _handle_message,
     _message_chunks,
 )
 from local_ai_assistant.ollama import StreamEvent, ToolCall
+from local_ai_assistant.tools import ToolCallResult
 
 
 class FakeTelegram:
@@ -27,6 +31,9 @@ class FakeTelegram:
     def send_chat_action(self, chat_id: int, action: str = "typing") -> None:
         self.actions.append(("action", (chat_id, action)))
 
+    def send_photo(self, chat_id: int, photo_path: str, caption: str = "") -> None:
+        self.actions.append(("photo", (chat_id, photo_path, caption)))
+
     def edit_message_text(self, chat_id: int, message_id: int, text: str) -> None:
         self.actions.append(("edit", (chat_id, message_id, text)))
 
@@ -37,7 +44,14 @@ class FakeAssistant:
         self.reply_calls: list[tuple[int, str]] = []
         self.ollama = FakeOllama()
 
-    def reply(self, chat_id: int, content: str, on_chunk=None, cancel_event=None) -> str:
+    def reply(
+        self,
+        chat_id: int,
+        content: str,
+        on_chunk=None,
+        cancel_event=None,
+        on_tool_image=None,
+    ) -> str:
         self.reply_calls.append((chat_id, content))
         if on_chunk is not None:
             on_chunk("Local ")
@@ -54,7 +68,14 @@ class FakeOllama:
 
 
 class SlowAssistant(FakeAssistant):
-    def reply(self, chat_id: int, content: str, on_chunk=None, cancel_event=None) -> str:
+    def reply(
+        self,
+        chat_id: int,
+        content: str,
+        on_chunk=None,
+        cancel_event=None,
+        on_tool_image=None,
+    ) -> str:
         self.reply_calls.append((chat_id, content))
         if on_chunk is not None:
             on_chunk("Partial reply")
@@ -84,11 +105,26 @@ class ToolAwareOllama:
             yield StreamEvent(content="Firefox closed.", done=True)
 
 
+class ScreenshotOllama(ToolAwareOllama):
+    def stream_chat(self, messages, model, cancel_event=None, tools=None, context_size=None):
+        del messages, model, cancel_event, context_size
+        self.call_count += 1
+        self.tool_names = [tool["function"]["name"] for tool in (tools or [])]
+        if self.call_count == 1:
+            yield StreamEvent(
+                done=True,
+                tool_calls=(ToolCall("take_screenshot", {}),),
+            )
+        else:
+            yield StreamEvent(content="Screenshot sent.", done=True)
+
+
 class TelegramBotTests(unittest.TestCase):
     def test_remote_tools_include_controls_but_not_dangerous_operations(self) -> None:
         self.assertIn("close_app", REMOTE_TOOL_NAMES)
         self.assertIn("restart_app", REMOTE_TOOL_NAMES)
         self.assertIn("list_windows", REMOTE_TOOL_NAMES)
+        self.assertIn("take_screenshot", REMOTE_TOOL_NAMES)
         self.assertIn("get_ram_usage", REMOTE_TOOL_NAMES)
         self.assertIn("read_file", REMOTE_TOOL_NAMES)
         self.assertNotIn("exec", REMOTE_TOOL_NAMES)
@@ -116,6 +152,67 @@ class TelegramBotTests(unittest.TestCase):
             {"app": "firefox"},
             approved=True,
         )
+
+    def test_screenshot_is_uploaded_and_added_to_next_model_turn(self) -> None:
+        config = TelegramConfig(token="not-printed", allowed_user_id=999)
+        assistant = LocalAssistant(config)
+        ollama = ScreenshotOllama()
+        assistant.ollama = ollama
+        images: list[tuple[str, str]] = []
+
+        with patch.object(
+            assistant.tool_manager,
+            "execute",
+            return_value=ToolCallResult(
+                True,
+                "Screenshot captured.",
+                ("/tmp/lura-test-screenshot.png",),
+            ),
+        ) as execute:
+            response = assistant.reply(
+                456,
+                "Take a screenshot",
+                on_tool_image=lambda path, caption: images.append((path, caption)),
+            )
+
+        self.assertEqual(response, "Screenshot sent.")
+        self.assertIn("take_screenshot", ollama.tool_names)
+        self.assertEqual(
+            images,
+            [("/tmp/lura-test-screenshot.png", "Screenshot captured.")],
+        )
+        execute.assert_called_once_with(
+            "take_screenshot",
+            {},
+            approved=True,
+        )
+
+    def test_send_photo_uploads_multipart_image(self) -> None:
+        client = TelegramClient("not-printed")
+        with tempfile.TemporaryDirectory() as directory:
+            image_path = os.path.join(directory, "screen.png")
+            with open(image_path, "wb") as image:
+                image.write(b"png-bytes")
+
+            with patch("local_ai_assistant.telegram_bot.urlopen") as urlopen:
+                response = Mock()
+                response.__enter__ = Mock(return_value=response)
+                response.__exit__ = Mock(return_value=False)
+                response.read.return_value = (
+                    b'{"ok":true,"result":{"message_id":77}}'
+                )
+                urlopen.return_value = response
+
+                result = client.send_photo(456, image_path, "Desktop screenshot")
+
+            request = urlopen.call_args.args[0]
+            self.assertEqual(result, {"message_id": 77})
+            self.assertIn("multipart/form-data; boundary=", request.get_header("Content-type"))
+            self.assertIn(b'name="chat_id"', request.data)
+            self.assertIn(b"456", request.data)
+            self.assertIn(b'name="photo"; filename="screen.png"', request.data)
+            self.assertIn(b"png-bytes", request.data)
+            self.assertIn(b"Desktop screenshot", request.data)
 
     def test_message_chunks_respect_telegram_limit(self) -> None:
         chunks = _message_chunks("x" * 8193)
