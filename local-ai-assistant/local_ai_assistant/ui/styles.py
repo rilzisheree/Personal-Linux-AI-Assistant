@@ -343,6 +343,14 @@ QLabel#welcomeHint, QLabel#unlockSubtitle {
     letter-spacing: 2px;
 }
 
+QLabel#welcomeCountdown {
+    color: #76b6dc;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding-top: 24px;
+}
+
 QLabel#unlockTitle {
     color: #d9efff;
     font-size: 22px;

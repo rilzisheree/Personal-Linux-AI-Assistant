@@ -31,7 +31,11 @@ class UnlockDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
         self._build_ui()
         self._welcome_animation.start()
-        QTimer.singleShot(650, self._show_password_page)
+        self._welcome_seconds_remaining = 2
+        self._welcome_timer = QTimer(self)
+        self._welcome_timer.setInterval(1000)
+        self._welcome_timer.timeout.connect(self._tick_welcome_countdown)
+        self._welcome_timer.start()
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
@@ -55,6 +59,10 @@ class UnlockDialog(QDialog):
         welcome_hint.setObjectName("welcomeHint")
         welcome_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         welcome.addWidget(welcome_hint)
+        self.welcome_countdown = QLabel("OPENING IN 2")
+        self.welcome_countdown.setObjectName("welcomeCountdown")
+        self.welcome_countdown.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        welcome.addWidget(self.welcome_countdown)
         welcome_page = QWidget()
         welcome_page.setLayout(welcome)
         welcome_effect = QGraphicsOpacityEffect(welcome_page)
@@ -117,7 +125,18 @@ class UnlockDialog(QDialog):
         password_page_widget.setLayout(password_page)
         self.pages.addWidget(password_page_widget)
 
+    def _tick_welcome_countdown(self) -> None:
+        self._welcome_seconds_remaining -= 1
+        if self._welcome_seconds_remaining <= 0:
+            self._welcome_timer.stop()
+            self._show_password_page()
+            return
+        self.welcome_countdown.setText(
+            f"OPENING IN {self._welcome_seconds_remaining}"
+        )
+
     def _show_password_page(self) -> None:
+        self._welcome_timer.stop()
         self.pages.setCurrentIndex(1)
         password_page = self.pages.currentWidget()
         if password_page is not None:
