@@ -773,12 +773,14 @@ class MainWindow(QMainWindow):
             self._set_orb_state("error")
 
     def _connection_thread_finished(self) -> None:
-        if self.connection_worker:
-            self.connection_worker.deleteLater()
-        if self.connection_thread:
-            self.connection_thread.deleteLater()
-        self.connection_worker = None
-        self.connection_thread = None
+        finished_thread = self.sender()
+        if finished_thread is self.connection_thread:
+            if self.connection_worker:
+                self.connection_worker.deleteLater()
+            self.connection_worker = None
+            self.connection_thread = None
+        if finished_thread is not None:
+            finished_thread.deleteLater()
 
     def _start_telegram_bot(self) -> None:
         if not self.config.telegram_enabled:
@@ -898,6 +900,8 @@ class MainWindow(QMainWindow):
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
+        if self.connection_thread is not None and self.connection_thread.isRunning():
+            self._cancel_connection_check()
         previous_autostart = self.config.autostart_enabled
         try:
             next_config = dialog.config()
@@ -934,6 +938,20 @@ class MainWindow(QMainWindow):
         self.runtime_status_value.setText("CHECKING")
         self._refresh_connection()
         self._start_telegram_bot()
+
+    def _cancel_connection_check(self) -> None:
+        thread = self.connection_thread
+        worker = self.connection_worker
+        if worker is not None:
+            worker.cancel()
+        if thread is not None and thread.isRunning():
+            thread.quit()
+            if not thread.wait(2000):
+                thread.terminate()
+                thread.wait(1000)
+        if self.connection_thread is thread:
+            self.connection_worker = None
+            self.connection_thread = None
 
     @Slot()
     def _new_chat(self) -> None:

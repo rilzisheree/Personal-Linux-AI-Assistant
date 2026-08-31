@@ -11,6 +11,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
 
@@ -27,6 +28,8 @@ class VoiceService:
         self._process_lock = threading.Lock()
         self._active_process: subprocess.Popen | None = None
         self._last_recorder_command: list[str] = []
+        self._whisper_model: Any | None = None
+        self._whisper_model_name: str | None = None
 
     @staticmethod
     def recordings_directory() -> Path:
@@ -128,8 +131,18 @@ class VoiceService:
         whisper_cpp = shutil.which("whisper-cli") or shutil.which("whisper.cpp")
         if whisper_cpp:
             return self._transcribe_whisper_cpp(whisper_cpp, audio_path)
+        try:
+            import whisper as whisper_module
+        except ImportError:
+            whisper_module = None
+        if whisper_module is not None:
+            return self._transcribe_openai_whisper_module(
+                whisper_module, audio_path
+            )
         raise VoiceError(
-            "No local Whisper backend found. Install the whisper command or whisper.cpp."
+            "No local Whisper backend found. Install openai-whisper in Lura's "
+            "Python environment (`python -m pip install openai-whisper`) or "
+            "install whisper.cpp."
         )
 
     def _transcribe_openai_whisper(self, executable: str, audio_path: Path) -> str:
@@ -156,6 +169,23 @@ class VoiceService:
                     + (f" {result.stderr.strip()[:240]}" if result.stderr else "")
                 )
             return self._read_transcript(text_path)
+
+    def _transcribe_openai_whisper_module(
+        self, whisper_module: Any, audio_path: Path
+    ) -> str:
+        try:
+            if self._whisper_model is None or self._whisper_model_name != self.config.whisper_model:
+                self._whisper_model = whisper_module.load_model(self.config.whisper_model)
+                self._whisper_model_name = self.config.whisper_model
+            options: dict[str, Any] = {"fp16": False}
+            if self.config.whisper_language.casefold() not in {"", "auto"}:
+                options["language"] = self.config.whisper_language
+            result = self._whisper_model.transcribe(str(audio_path), **options)
+        except Exception as error:
+            raise VoiceError(f"Whisper could not transcribe the recording: {error}") from error
+        if not isinstance(result, dict):
+            raise VoiceError("Whisper returned an invalid transcription result.")
+        return self._read_transcript_from_text(str(result.get("text", "")))
 
     def _transcribe_whisper_cpp(self, executable: str, audio_path: Path) -> str:
         model = Path(self.config.whisper_model).expanduser()
@@ -186,6 +216,11 @@ class VoiceService:
             text = path.read_text(encoding="utf-8").strip()
         except (OSError, UnicodeDecodeError) as error:
             raise VoiceError(f"Could not read the transcript: {error}") from error
+        return VoiceService._read_transcript_from_text(text)
+
+    @staticmethod
+    def _read_transcript_from_text(text: str) -> str:
+        text = text.strip()
         if not text:
             raise VoiceError("No speech was detected.")
         return text
