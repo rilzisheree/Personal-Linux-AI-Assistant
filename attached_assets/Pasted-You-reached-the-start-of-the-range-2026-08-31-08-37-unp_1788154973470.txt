@@ -1,0 +1,62 @@
+You reached the start of the range
+2026-08-31 08:37
+unpacking archive1.9 MB12ms
+using build driver nixpacks-v1.41.0
+uploading snapshot955.5 KB20ms
+ 
+╔═══════════════════════ Nixpacks v1.41.0 ═══════════════════════╗
+║────────────────────────────────────────────────────────────────║
+║ install    │ npm install -g corepack@0.24.1 && corepack enable ║
+║            │ pnpm i --frozen-lockfile                          ║
+║ build      │ pnpm --filter @workspace/lura-web run build       ║
+║────────────────────────────────────────────────────────────────║
+║ start      │ pnpm --filter @workspace/lura-web run serve       ║
+╚════════════════════════════════════════════════════════════════╝
+ 
+Saved output to:
+  snapshot-target-unpack
+load build definition from Dockerfile
+123ms
+load .dockerignore
+0ms
+UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)(https://docs.docker.com/go/dockerfile/rule/undefined-var/)
+ details: Variables should be defined before their use
+load build context
+0ms
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d cached
+0ms
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix cached
+0ms
+WORKDIR /app/ cached
+0ms
+COPY . /app/.
+398ms
+RUN pnpm i --frozen-lockfile
+8s
+Done in 6.3s using pnpm v9.15.9
+scheduling build on Metal builder "builder-xwmaod"
+COPY . /app/.
+796ms
+RUN pnpm --filter @workspace/lura-web run build
+1s
+> @workspace/lura-web@0.0.0 build /app/artifacts/lura-web
+> vite build --config vite.config.ts
+You are using Node.js 18.20.5. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+failed to load config from /app/artifacts/lura-web/vite.config.ts
+error during build:
+
+Error: Cannot find native binding. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+    at Object.<anonymous> (/app/node_modules/.pnpm/@tailwindcss+oxide@4.3.3/node_modules/@tailwindcss/oxide/index.js:573:11)
+    at Module._compile (node:internal/modules/cjs/loader:1364:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+    at Module.load (node:internal/modules/cjs/loader:1203:32)
+    at Module._load (node:internal/modules/cjs/loader:1019:12)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:203:29)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadConfigFromBundledFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35996:12)
+    at async bundleAndLoadConfigFile (file:///app/node_modules/.pnpm/vite@7.3.6_@types+node@25.9.5_jiti@2.7.0_lightningcss@1.32.0_tsx@4.23.1_yaml@2.9.0/node_modules/vite/dist/node/chunks/config.js:35884:17)
+/app/artifacts/lura-web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @workspace/lura-web@0.0.0 build: `vite build --config vite.config.ts`
+Exit status 1
+Build Failed: build daemon returned an error < failed to solve: process "/bin/bash -ol pipefail -c pnpm --filter @workspace/lura-web run build" did not complete successfully: exit code: 1 >
