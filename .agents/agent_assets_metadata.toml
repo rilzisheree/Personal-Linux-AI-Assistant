@@ -61,14 +61,14 @@ content_type = "image/png"
 id = "qNawgerHXjaoutcXMAhel"
 uri = "file://screenshots/lura-redesign-preview.png"
 type = "image"
-title = "Lura brighter orb preview"
-description = "Updated 1280×900 render with a brighter cyan core, stronger halo, brighter rim, orbit lines, and state ripples."
+title = "Latest Lura app preview"
+description = "Current 1280×900 Lura desktop view with the brighter orb and Made by Jooie - footer credit."
 logical_id = "7928c5eb-a178-4fe8-8d1f-baaadcbbc031"
-content_hash = "sha256:5618afdb43af64d3688dd315719d9f1e3c4b9f2db0630c569bd24ab3ea9f1639"
-size = 67554
-mtime_ms = 1788177323103
-storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a849d542-82a0-4ae6-a6a4-802d7300b072/7928c5eb-a178-4fe8-8d1f-baaadcbbc031/18765e0e-7e8d-4305-a12e-9d914ea91ca4"
-storage_version_token = "1788177339964671"
+content_hash = "sha256:4164244f2f4a75ca4d8cbf6f188af467024dd1525860aa9a3b41692c84d68fbd"
+size = 68601
+mtime_ms = 1788178190251
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a849d542-82a0-4ae6-a6a4-802d7300b072/7928c5eb-a178-4fe8-8d1f-baaadcbbc031/a57a10e9-0baf-45cb-b93b-18217571c401"
+storage_version_token = "1788178205712686"
 content_type = "image/png"
 
 [[outputs]]
