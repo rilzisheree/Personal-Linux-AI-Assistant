@@ -120,14 +120,14 @@ class CoreWidget(QWidget):
         breath = math.sin(self._phase) * (0.018 + state_strength * 0.04)
         radius = base_radius * (1.0 + breath + (0.035 if self._pressed else 0.0))
         glow_alpha = {
-            "idle": 38,
-            "listening": 82,
-            "thinking": 68,
-            "speaking": 100,
-            "error": 55,
+            "idle": 78,
+            "listening": 132,
+            "thinking": 116,
+            "speaking": 158,
+            "error": 96,
         }[self._state]
         if self._hovered:
-            glow_alpha += 12
+            glow_alpha += 18
 
         self._paint_glow(painter, center, radius, glow_alpha)
         self._paint_orbit(painter, center, radius, state_strength)
@@ -143,8 +143,9 @@ class CoreWidget(QWidget):
         alpha: int,
     ) -> None:
         gradient = QRadialGradient(center, radius * 2.15)
-        gradient.setColorAt(0.0, QColor(32, 107, 169, alpha))
-        gradient.setColorAt(0.42, QColor(11, 54, 93, alpha // 2))
+        gradient.setColorAt(0.0, QColor(44, 154, 221, alpha))
+        gradient.setColorAt(0.34, QColor(20, 91, 145, int(alpha * 0.72)))
+        gradient.setColorAt(0.62, QColor(8, 43, 79, int(alpha * 0.38)))
         gradient.setColorAt(1.0, QColor(0, 8, 18, 0))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(gradient)
@@ -158,8 +159,8 @@ class CoreWidget(QWidget):
         strength: float,
     ) -> None:
         orbit_radius = radius * (1.42 + strength * 0.35)
-        color = QColor(55, 139, 202, 112 if self._state != "idle" else 70)
-        painter.setPen(QPen(color, 1.0))
+        color = QColor(83, 183, 235, 180 if self._state != "idle" else 128)
+        painter.setPen(QPen(color, 1.25))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.save()
         painter.translate(center)
@@ -170,7 +171,7 @@ class CoreWidget(QWidget):
             116 * 16,
         )
         painter.rotate(156)
-        painter.setPen(QPen(QColor(31, 87, 137, 82), 1.0))
+        painter.setPen(QPen(QColor(46, 125, 186, 120), 1.0))
         painter.drawArc(
             QRectF(-orbit_radius * 0.92, -orbit_radius * 0.3, orbit_radius * 1.84, orbit_radius * 0.6),
             194 * 16,
@@ -189,18 +190,20 @@ class CoreWidget(QWidget):
             center - QPointF(radius * 0.25, radius * 0.35),
             radius * 1.25,
         )
-        orb_gradient.setColorAt(0.0, QColor(26, 61, 91, 245))
-        orb_gradient.setColorAt(0.48, QColor(6, 20, 36, 255))
-        orb_gradient.setColorAt(0.82, QColor(2, 9, 19, 255))
+        orb_gradient.setColorAt(0.0, QColor(63, 145, 202, 255))
+        orb_gradient.setColorAt(0.32, QColor(19, 61, 94, 255))
+        orb_gradient.setColorAt(0.58, QColor(6, 23, 42, 255))
+        orb_gradient.setColorAt(0.82, QColor(2, 10, 21, 255))
         orb_gradient.setColorAt(1.0, QColor(0, 3, 10, 255))
-        painter.setPen(QPen(QColor(53, 125, 184, 145), 1.0))
+        painter.setPen(QPen(QColor(91, 190, 237, 220), 1.25))
         painter.setBrush(orb_gradient)
         painter.drawEllipse(center, radius, radius)
 
         inner_radius = radius * (0.66 + strength * 0.08)
         inner = QRadialGradient(center + QPointF(radius * 0.12, radius * 0.1), inner_radius)
-        inner.setColorAt(0.0, QColor(35, 100, 151, 110 + int(strength * 80)))
-        inner.setColorAt(0.58, QColor(8, 34, 60, 105))
+        inner.setColorAt(0.0, QColor(61, 167, 224, 180 + int(strength * 65)))
+        inner.setColorAt(0.52, QColor(12, 61, 101, 145))
+        inner.setColorAt(0.78, QColor(5, 28, 52, 80))
         inner.setColorAt(1.0, QColor(3, 12, 24, 0))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(inner)
@@ -216,19 +219,19 @@ class CoreWidget(QWidget):
                 math.sin(angle) * radius * (0.3 + strength * 0.14),
             )
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(93, 178, 226, 42 + int(strength * 80)))
-            painter.drawEllipse(point, radius * 0.06, radius * 0.06)
+            painter.setBrush(QColor(119, 215, 250, 105 + int(strength * 90)))
+            painter.drawEllipse(point, radius * 0.065, radius * 0.065)
         painter.restore()
 
         rim = QLinearGradient(
             center - QPointF(radius, radius),
             center + QPointF(radius, radius),
         )
-        rim.setColorAt(0.1, QColor(100, 190, 231, 90))
-        rim.setColorAt(0.5, QColor(31, 88, 139, 50))
-        rim.setColorAt(0.9, QColor(3, 18, 35, 140))
+        rim.setColorAt(0.1, QColor(150, 226, 255, 180))
+        rim.setColorAt(0.5, QColor(54, 140, 201, 110))
+        rim.setColorAt(0.9, QColor(5, 30, 56, 180))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(QPen(rim, 1.25))
+        painter.setPen(QPen(rim, 1.5))
         painter.drawEllipse(center, radius * 0.96, radius * 0.96)
 
     def _paint_state_ripples(
@@ -245,6 +248,6 @@ class CoreWidget(QWidget):
             cycle = (self._phase * (0.6 + index * 0.14) + index * 1.9) % (math.pi * 2)
             pulse = (math.sin(cycle) + 1) / 2
             ripple_radius = radius * (1.12 + pulse * (0.28 + strength * 0.28))
-            alpha = max(0, int((1 - pulse) * (38 + strength * 90)))
-            painter.setPen(QPen(QColor(62, 148, 211, alpha), 1.0))
+            alpha = max(0, int((1 - pulse) * (58 + strength * 115)))
+            painter.setPen(QPen(QColor(81, 180, 232, alpha), 1.25))
             painter.drawEllipse(center, ripple_radius, ripple_radius)

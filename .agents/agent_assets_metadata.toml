@@ -56,3 +56,17 @@ mtime_ms = 1788104131704
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:bc9bbd6a-0e4d-409e-96b7-41bdeb05b3ec/75a0ff72-b0c2-41aa-b49c-23d57029abbb/bde5ca2e-6a33-4877-9a9a-20858ef31af4"
 storage_version_token = "1788104490607020"
 content_type = "image/png"
+
+[[outputs]]
+id = "qNawgerHXjaoutcXMAhel"
+uri = "file://screenshots/lura-redesign-preview.png"
+type = "image"
+title = "Lura brighter orb preview"
+description = "Updated 1280×900 render with a brighter cyan core, stronger halo, brighter rim, orbit lines, and state ripples."
+logical_id = "7928c5eb-a178-4fe8-8d1f-baaadcbbc031"
+content_hash = "sha256:5618afdb43af64d3688dd315719d9f1e3c4b9f2db0630c569bd24ab3ea9f1639"
+size = 67554
+mtime_ms = 1788177323103
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a849d542-82a0-4ae6-a6a4-802d7300b072/7928c5eb-a178-4fe8-8d1f-baaadcbbc031/18765e0e-7e8d-4305-a12e-9d914ea91ca4"
+storage_version_token = "1788177339964671"
+content_type = "image/png"
