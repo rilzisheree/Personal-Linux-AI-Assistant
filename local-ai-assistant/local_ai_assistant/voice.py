@@ -36,6 +36,9 @@ class VoiceService:
 
     def recorder_command(self, destination: Path) -> list[str]:
         device = self.config.microphone_device
+        alsa_device = device.casefold().startswith(("hw:", "plughw:", "default"))
+        if alsa_device and shutil.which("arecord"):
+            return self._arecord_command(destination, device)
         if shutil.which("pw-record"):
             command = [
                 "pw-record",
@@ -50,13 +53,16 @@ class VoiceService:
                 command.extend(["--target", device])
             return [*command, str(destination)]
         if shutil.which("arecord"):
-            command = ["arecord", "-q", "-f", "S16_LE", "-r", "16000", "-c", "1"]
-            if device:
-                command.extend(["-D", device])
-            return [*command, str(destination)]
+            return self._arecord_command(destination, device)
         raise VoiceError(
             "No local recorder found. Install PipeWire's pw-record or ALSA arecord."
         )
+
+    def _arecord_command(self, destination: Path, device: str) -> list[str]:
+        command = ["arecord", "-q", "-f", "S16_LE", "-r", "16000", "-c", "1"]
+        if device:
+            command.extend(["-D", device])
+        return [*command, str(destination)]
 
     def start_recorder(self, destination: Path) -> subprocess.Popen:
         command = self.recorder_command(destination)

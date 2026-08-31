@@ -34,6 +34,19 @@ class VoiceServiceTests(unittest.TestCase):
             ],
         )
 
+    def test_alsa_device_uses_arecord_when_pipewire_is_available(self) -> None:
+        service = VoiceService(AppConfig(microphone_device="plughw:2,0"))
+        with patch(
+            "local_ai_assistant.voice.shutil.which",
+            side_effect=lambda name: f"/usr/bin/{name}"
+            if name in {"pw-record", "arecord"}
+            else None,
+        ):
+            command = service.recorder_command(Path("/tmp/recording.wav"))
+        self.assertEqual(command[:2], ["arecord", "-q"])
+        self.assertIn("-D", command)
+        self.assertIn("plughw:2,0", command)
+
     def test_transcribe_reports_missing_local_backend(self) -> None:
         service = VoiceService(AppConfig())
         with tempfile.TemporaryDirectory() as directory:
