@@ -119,6 +119,40 @@ class SettingsDialog(QDialog):
         voice_hint.setStyleSheet("color: #6f8593;")
         layout.addWidget(voice_hint)
 
+        desktop_label = QLabel("Desktop")
+        desktop_label.setStyleSheet("color: #9ba9b5; font-weight: 700;")
+        layout.addWidget(desktop_label)
+
+        desktop_form = QFormLayout()
+        desktop_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.background_mode_enabled = QCheckBox(
+            "Keep running in the system tray when the window is closed"
+        )
+        self.background_mode_enabled.setChecked(config.background_mode_enabled)
+        self.background_mode_enabled.setToolTip(
+            "Closing the window hides Lura instead of stopping its local API. "
+            "Use the tray menu to show it again or quit completely."
+        )
+        self.autostart_enabled = QCheckBox(
+            "Start Lura automatically when I sign in"
+        )
+        self.autostart_enabled.setChecked(config.autostart_enabled)
+        self.autostart_enabled.setToolTip(
+            "Creates a user-level Linux autostart entry. Autostart launches "
+            "Lura hidden in background mode."
+        )
+        desktop_form.addRow("", self.background_mode_enabled)
+        desktop_form.addRow("", self.autostart_enabled)
+        layout.addLayout(desktop_form)
+
+        desktop_hint = QLabel(
+            "Autostart uses your user-level ~/.config/autostart entry and "
+            "does not require administrator access."
+        )
+        desktop_hint.setWordWrap(True)
+        desktop_hint.setStyleSheet("color: #6f8593;")
+        layout.addWidget(desktop_hint)
+
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: #ffaaa7;")
         self.error_label.hide()
@@ -143,6 +177,8 @@ class SettingsDialog(QDialog):
             whisper_language=self.whisper_language_input.text(),
             tts_engine=str(self.tts_engine_input.currentData()),
             tts_voice=self._selected_voice(),
+            background_mode_enabled=self.background_mode_enabled.isChecked(),
+            autostart_enabled=self.autostart_enabled.isChecked(),
         )
 
     def _selected_voice(self) -> str:

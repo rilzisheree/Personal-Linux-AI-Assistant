@@ -40,6 +40,8 @@ class AppConfig:
     whisper_language: str = "auto"
     tts_engine: str = DEFAULT_TTS_ENGINE
     tts_voice: str = DEFAULT_TTS_VOICE
+    background_mode_enabled: bool = False
+    autostart_enabled: bool = False
 
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
@@ -70,6 +72,10 @@ class AppConfig:
             raise ValueError("Voice input setting must be true or false.")
         if not isinstance(self.voice_responses_enabled, bool):
             raise ValueError("Voice response setting must be true or false.")
+        if not isinstance(self.background_mode_enabled, bool):
+            raise ValueError("Background mode setting must be true or false.")
+        if not isinstance(self.autostart_enabled, bool):
+            raise ValueError("Autostart setting must be true or false.")
         if not self.whisper_model:
             raise ValueError("Whisper model cannot be empty.")
         if self.tts_engine not in TTS_ENGINES:
@@ -104,6 +110,12 @@ class AppConfig:
                 whisper_language=str(raw.get("whisper_language", "auto")),
                 tts_engine=str(raw.get("tts_engine", DEFAULT_TTS_ENGINE)),
                 tts_voice=str(raw.get("tts_voice", DEFAULT_TTS_VOICE)),
+                background_mode_enabled=_bool_setting(
+                    raw.get("background_mode_enabled", False), False
+                ),
+                autostart_enabled=_bool_setting(
+                    raw.get("autostart_enabled", False), False
+                ),
             )
         except FileNotFoundError:
             return cls.defaults()

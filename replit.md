@@ -9,12 +9,17 @@ server and executes a small set of permission-gated tools.
   dependency-light tests
 - `cd local-ai-assistant && python3 -m local_ai_assistant.app` — launch the
   desktop app
+- `cd local-ai-assistant && python3 -m local_ai_assistant.app --background` —
+  launch hidden in the system tray when a desktop tray is available
 - `cd local-ai-assistant && ./run.sh` — launch through the convenience script
 - `cd local-ai-assistant && python3 -m local_ai_assistant.api` — launch the
   password-protected API service; the desktop app initializes its password on
   first launch
 - The app expects a local Ollama service at `http://localhost:11434` by default.
   The URL and model are configurable in Settings.
+- Settings includes optional system-tray background mode and user-level Linux
+  autostart. Autostart creates `~/.config/autostart/lura.desktop` and launches
+  Lura with `--background`; both options are disabled by default.
 
 ## Stack
 
@@ -76,6 +81,9 @@ server and executes a small set of permission-gated tools.
   PipeWire/ALSA recording, Whisper/whisper.cpp transcription, and
   Piper/eSpeak-NG playback. Tools and voice report clear unavailable-backend
   errors when the host lacks the required Linux utility.
+- The Phase 7 web companion is `artifacts/lura-web/`; it uses the existing
+  cookie-authenticated HTTP/SSE API and intentionally does not expose desktop
+  control tools remotely.
 
 ## Pointers
 

@@ -40,6 +40,8 @@ class ConfigTests(unittest.TestCase):
                 whisper_language="en",
                 tts_engine="piper",
                 tts_voice="/models/en_US.onnx",
+                background_mode_enabled=True,
+                autostart_enabled=True,
             )
             original.save(path)
             loaded = AppConfig.load(path)
@@ -56,6 +58,8 @@ class ConfigTests(unittest.TestCase):
                 whisper_language="en",
                 tts_engine="piper",
                 tts_voice="/models/en_US.onnx",
+                background_mode_enabled=True,
+                autostart_enabled=True,
             ),
         )
 

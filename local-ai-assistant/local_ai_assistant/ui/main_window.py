@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 
 from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
+from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QComboBox,
     QFileDialog,
     QFrame,
@@ -14,8 +16,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
+    QSystemTrayIcon,
     QVBoxLayout,
     QWidget,
 )
@@ -24,6 +28,7 @@ from ..assistant_core import AssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
+from ..desktop_integration import set_autostart_enabled
 from ..ollama import ChatMessage, OllamaClient
 from ..tools import PermissionLevel, ToolManager
 from ..voice import VoiceService
@@ -70,11 +75,15 @@ class MainWindow(QMainWindow):
         self.active_response = ""
         self.active_tool_bubbles: dict[str, MessageBubble] = {}
         self.available_models: list[str] = []
+        self._quitting = False
+        self.tray_icon: QSystemTrayIcon | None = None
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
         self.setMinimumSize(900, 580)
         self._build_ui()
+        self._setup_tray()
+        self._sync_quit_behavior()
         self.api_server, self.api_thread = start_background_server(
             config.ollama_url,
             config.model,
@@ -84,6 +93,94 @@ class MainWindow(QMainWindow):
         self.chat_view.set_messages(self.messages)
         self._persist_conversations()
         self._refresh_connection()
+
+    def _setup_tray(self) -> None:
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return
+
+        self.tray_icon = QSystemTrayIcon(self._tray_icon(), self)
+        self.tray_icon.setToolTip("Lura — local AI assistant")
+        menu = QMenu(self)
+
+        show_action = QAction("Show Lura", self)
+        show_action.triggered.connect(self._show_from_tray)
+        menu.addAction(show_action)
+
+        hide_action = QAction("Hide Lura", self)
+        hide_action.triggered.connect(self.hide_to_tray)
+        menu.addAction(hide_action)
+        menu.addSeparator()
+
+        quit_action = QAction("Quit Lura", self)
+        quit_action.triggered.connect(self._quit_from_tray)
+        menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(menu)
+        self.tray_icon.activated.connect(self._tray_activated)
+        self.tray_icon.show()
+
+    def _sync_quit_behavior(self) -> None:
+        app = QApplication.instance()
+        if app is not None:
+            app.setQuitOnLastWindowClosed(
+                not (self.config.background_mode_enabled and self.tray_icon is not None)
+            )
+
+    @staticmethod
+    def _tray_icon() -> QIcon:
+        pixmap = QPixmap(32, 32)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setBrush(QColor("#a974ff"))
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.drawEllipse(2, 2, 28, 28)
+        painter.setPen(QColor("#0a0714"))
+        painter.setFont(painter.font())
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "L")
+        painter.end()
+        return QIcon(pixmap)
+
+    @Slot()
+    def _show_from_tray(self) -> None:
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    @Slot()
+    def hide_to_tray(self, silent: bool = False) -> None:
+        if self.tray_icon is None:
+            self.show()
+            if not silent:
+                self.status_label.setText("System tray unavailable")
+            return
+        self.hide()
+        if not silent:
+            self.tray_icon.showMessage(
+                "Lura is still running",
+                "The assistant is available from the system tray.",
+                QSystemTrayIcon.MessageIcon.Information,
+                2500,
+            )
+
+    @Slot()
+    def _quit_from_tray(self) -> None:
+        self._quitting = True
+        self.close()
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+
+    @Slot(QSystemTrayIcon.ActivationReason)
+    def _tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
+        if reason in {
+            QSystemTrayIcon.ActivationReason.Trigger,
+            QSystemTrayIcon.ActivationReason.DoubleClick,
+        }:
+            if self.isVisible():
+                self.hide_to_tray()
+            else:
+                self._show_from_tray()
 
     def _build_ui(self) -> None:
         root = QWidget()
@@ -733,8 +830,20 @@ class MainWindow(QMainWindow):
         dialog = SettingsDialog(self.config, self)
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
-        self.config = dialog.config()
+        previous_autostart = self.config.autostart_enabled
+        next_config = dialog.config()
+        try:
+            set_autostart_enabled(next_config.autostart_enabled)
+        except OSError as error:
+            QMessageBox.warning(
+                self,
+                "Autostart not updated",
+                f"Lura could not update the Linux autostart entry:\n{error}",
+            )
+            next_config.autostart_enabled = previous_autostart
+        self.config = next_config
         self.config.save()
+        self._sync_quit_behavior()
         self.client = OllamaClient(self.config.ollama_url)
         self.service = AssistantService(self.client)
         self.voice_service = VoiceService(self.config)
@@ -843,6 +952,15 @@ class MainWindow(QMainWindow):
         self.status_label.style().polish(self.status_label)
 
     def closeEvent(self, event) -> None:
+        if (
+            not self._quitting
+            and self.config.background_mode_enabled
+            and self.tray_icon is not None
+        ):
+            event.ignore()
+            self.hide_to_tray()
+            return
+
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),
@@ -865,4 +983,6 @@ class MainWindow(QMainWindow):
             self.api_server.server_close()
             if self.api_thread is not None:
                 self.api_thread.join(timeout=2)
+        if self.tray_icon is not None:
+            self.tray_icon.hide()
         event.accept()
