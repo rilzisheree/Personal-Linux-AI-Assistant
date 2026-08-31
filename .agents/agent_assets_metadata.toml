@@ -70,3 +70,17 @@ mtime_ms = 1788177323103
 storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a849d542-82a0-4ae6-a6a4-802d7300b072/7928c5eb-a178-4fe8-8d1f-baaadcbbc031/18765e0e-7e8d-4305-a12e-9d914ea91ca4"
 storage_version_token = "1788177339964671"
 content_type = "image/png"
+
+[[outputs]]
+id = "KNNEc3RR_qpw-NkDhdy8P"
+uri = "file://screenshots/lura-focus-mode.png"
+type = "image"
+title = "Lura focus mode preview"
+description = "Focus mode render: only the orb, LURA name, and the quiet channel quote remain visible. Press Escape to restore the interface."
+logical_id = "ef345a50-8630-495c-8c11-7a0c533ca0fa"
+content_hash = "sha256:9b3c724319618e24e73578b1ea8b43a1e89a86724f37fb53894ba81d9e757b81"
+size = 50095
+mtime_ms = 1788177771931
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:a849d542-82a0-4ae6-a6a4-802d7300b072/ef345a50-8630-495c-8c11-7a0c533ca0fa/e1467c5e-f2c1-4fc6-819c-cb9931abfb45"
+storage_version_token = "1788177789668640"
+content_type = "image/png"

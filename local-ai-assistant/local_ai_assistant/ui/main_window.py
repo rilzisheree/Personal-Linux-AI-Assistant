@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
-from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
+from PySide6.QtGui import QAction, QColor, QIcon, QKeySequence, QPainter, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
         self.active_tool_bubbles: dict[str, MessageBubble] = {}
         self.available_models: list[str] = []
         self._quitting = False
+        self._focus_mode = False
         self.tray_icon: QSystemTrayIcon | None = None
 
         self.setWindowTitle("Lura")
@@ -198,9 +199,9 @@ class MainWindow(QMainWindow):
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
 
-        top_bar = QFrame()
-        top_bar.setObjectName("topBar")
-        top_layout = QHBoxLayout(top_bar)
+        self.top_bar = QFrame()
+        self.top_bar.setObjectName("topBar")
+        top_layout = QHBoxLayout(self.top_bar)
         top_layout.setContentsMargins(24, 16, 24, 16)
         top_layout.setSpacing(14)
 
@@ -253,7 +254,12 @@ class MainWindow(QMainWindow):
         settings_button.setToolTip("Settings")
         settings_button.clicked.connect(self._open_settings)
         top_layout.addWidget(settings_button)
-        root_layout.addWidget(top_bar)
+        self.focus_button = QPushButton("◌")
+        self.focus_button.setObjectName("focusButton")
+        self.focus_button.setToolTip("Focus mode — show only the orb")
+        self.focus_button.clicked.connect(self._toggle_focus_mode)
+        top_layout.insertWidget(top_layout.count() - 1, self.focus_button)
+        root_layout.addWidget(self.top_bar)
 
         stage = QFrame()
         stage.setObjectName("mainStage")
@@ -278,7 +284,15 @@ class MainWindow(QMainWindow):
         self.core_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         stage_layout.addWidget(self.core_status)
 
-        transcript_header = QHBoxLayout()
+        self.core_quote = QLabel("A quiet channel.\nAsk Lura anything.")
+        self.core_quote.setObjectName("coreQuote")
+        self.core_quote.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.core_quote.setWordWrap(True)
+        self.core_quote.hide()
+        stage_layout.addWidget(self.core_quote)
+
+        self.transcript_header = QWidget()
+        transcript_header = QHBoxLayout(self.transcript_header)
         transcript_header.setContentsMargins(0, 14, 0, 0)
         transcript_header.setSpacing(12)
         transcript_label = QLabel("CONVERSATION")
@@ -293,7 +307,7 @@ class MainWindow(QMainWindow):
         export_button.setObjectName("quietButton")
         export_button.clicked.connect(self._export_current_conversation)
         transcript_header.addWidget(export_button)
-        stage_layout.addLayout(transcript_header)
+        stage_layout.addWidget(self.transcript_header)
 
         self.chat_view = ChatView()
         self.chat_view.setObjectName("transcript")
@@ -301,12 +315,12 @@ class MainWindow(QMainWindow):
         self.chat_view.setMaximumWidth(820)
         stage_layout.addWidget(self.chat_view, 1, Qt.AlignmentFlag.AlignHCenter)
 
-        composer = QFrame()
-        composer.setObjectName("composer")
-        composer_layout = QVBoxLayout(composer)
+        self.composer = QFrame()
+        self.composer.setObjectName("composer")
+        composer_layout = QVBoxLayout(self.composer)
         composer_layout.setContentsMargins(0, 10, 0, 0)
         composer_layout.setSpacing(7)
-        composer.setMaximumWidth(820)
+        self.composer.setMaximumWidth(820)
 
         input_row = QHBoxLayout()
         input_row.setSpacing(10)
@@ -342,7 +356,7 @@ class MainWindow(QMainWindow):
         self.composer_hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         self.composer_hint.setObjectName("composerHint")
         composer_layout.addWidget(self.composer_hint)
-        stage_layout.addWidget(composer, 0, Qt.AlignmentFlag.AlignHCenter)
+        stage_layout.addWidget(self.composer, 0, Qt.AlignmentFlag.AlignHCenter)
         stage_layout.addStretch(1)
 
         root_layout.addWidget(stage, 1)
@@ -359,6 +373,9 @@ class MainWindow(QMainWindow):
         self.runtime_status_value = QLabel("CHECKING")
         self.runtime_status_value.setObjectName("runtimeStatusValue")
         self.runtime_status_value.hide()
+        self._focus_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
+        self._focus_shortcut.setContext(Qt.ShortcutContext.WindowShortcut)
+        self._focus_shortcut.activated.connect(self._exit_focus_mode)
 
     @Slot()
     def _send_message(self) -> None:
@@ -1023,6 +1040,30 @@ class MainWindow(QMainWindow):
             "error": "CHANNEL ERROR // CHECK STATUS",
         }
         self.core_status.setText(labels.get(state, labels["idle"]))
+
+    @Slot()
+    def _toggle_focus_mode(self) -> None:
+        self._set_focus_mode(not self._focus_mode)
+
+    @Slot()
+    def _exit_focus_mode(self) -> None:
+        if self._focus_mode:
+            self._set_focus_mode(False)
+
+    def _set_focus_mode(self, enabled: bool) -> None:
+        self._focus_mode = enabled
+        self.top_bar.setVisible(not enabled)
+        self.transcript_header.setVisible(not enabled)
+        self.chat_view.setVisible(not enabled)
+        self.composer.setVisible(not enabled)
+        self.core_status.setVisible(not enabled)
+        self.core_quote.setVisible(enabled)
+        self.focus_button.setToolTip(
+            "Exit focus mode (Escape)" if enabled else "Focus mode — show only the orb"
+        )
+        self.core_widget.setFocus()
+        self.centralWidget().layout().invalidate()
+        self.centralWidget().update()
 
     def closeEvent(self, event) -> None:
         if (

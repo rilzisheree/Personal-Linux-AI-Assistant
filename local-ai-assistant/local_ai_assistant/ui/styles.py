@@ -99,7 +99,7 @@ QPushButton:disabled {
     color: #3d566b;
 }
 
-QPushButton#topAction, QPushButton#settingsButton {
+QPushButton#topAction, QPushButton#settingsButton, QPushButton#focusButton {
     min-width: 30px;
     max-width: 42px;
     min-height: 30px;
@@ -141,6 +141,14 @@ QLabel#coreStatus {
     font-size: 9px;
     letter-spacing: 1px;
     padding: 3px 7px;
+}
+
+QLabel#coreQuote {
+    color: #6e91aa;
+    font-size: 10px;
+    letter-spacing: 1px;
+    line-height: 1.5;
+    padding: 6px 12px;
 }
 
 QScrollArea#transcript {
