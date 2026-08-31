@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import shlex
 import signal
 import subprocess
 import tempfile
@@ -25,6 +26,7 @@ class VoiceService:
         self.config = config
         self._process_lock = threading.Lock()
         self._active_process: subprocess.Popen | None = None
+        self._last_recorder_command: list[str] = []
 
     @staticmethod
     def recordings_directory() -> Path:
@@ -67,6 +69,7 @@ class VoiceService:
 
     def start_recorder(self, destination: Path) -> subprocess.Popen:
         command = self.recorder_command(destination)
+        self._last_recorder_command = command
         try:
             process = subprocess.Popen(
                 command,
@@ -82,16 +85,22 @@ class VoiceService:
 
     def finish_recording(self, process: subprocess.Popen, destination: Path) -> None:
         detail = process.stderr.read().strip() if process.stderr is not None else ""
+        command_text = (
+            shlex.join(self._last_recorder_command)
+            if self._last_recorder_command
+            else "unknown recorder command"
+        )
         if process.returncode not in (0, -signal.SIGINT, -signal.SIGTERM):
             raise VoiceError(
-                f"Microphone recording failed"
-                + (f": {detail[:240]}" if detail else ".")
+                f"Microphone recording failed with exit code {process.returncode}. "
+                f"Command: {command_text}."
+                + (f" Recorder output: {detail[:400]}" if detail else "")
             )
         if not destination.is_file() or destination.stat().st_size < 44:
             raise VoiceError(
                 "The microphone produced no usable audio. Check the selected "
-                "input device."
-                + (f" {detail[:240]}" if detail else "")
+                f"input device. Command: {command_text}."
+                + (f" Recorder output: {detail[:400]}" if detail else "")
             )
 
     @staticmethod
