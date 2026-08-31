@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import subprocess
+import time
 import uuid
 from pathlib import Path
 
@@ -241,7 +242,7 @@ class VoiceRecordWorker(QObject):
                 while process.poll() is None and not self._stop_event.wait(0.1):
                     pass
             else:
-                self._stop_event.wait(self.duration_seconds)
+                self._record_until_silence(process)
             if process.poll() is None:
                 self.service.stop_recorder(process)
             try:
@@ -264,6 +265,41 @@ class VoiceRecordWorker(QObject):
 
     def cancel(self) -> None:
         self.stop()
+
+    def _record_until_silence(self, process: subprocess.Popen) -> None:
+        """Wait for speech, then stop after a short quiet period.
+
+        The duration setting is deliberately a maximum listening window, not
+        a command to record dead air for the full duration.
+        """
+        deadline = time.monotonic() + float(self.duration_seconds or 1)
+        speech_started = False
+        last_voice_at = 0.0
+        offset = 44
+        while process.poll() is None and not self._stop_event.is_set():
+            now = time.monotonic()
+            if now >= deadline:
+                return
+            try:
+                with self.destination.open("rb") as audio:
+                    audio.seek(offset)
+                    samples = audio.read()
+                if len(samples) % 2:
+                    samples = samples[:-1]
+                if samples:
+                    offset += len(samples)
+                    peak = max(
+                        abs(int.from_bytes(samples[index:index + 2], "little", signed=True))
+                        for index in range(0, len(samples), 2)
+                    )
+                    if peak >= 700:
+                        speech_started = True
+                        last_voice_at = now
+            except OSError:
+                pass
+            if speech_started and now - last_voice_at >= 1.2:
+                return
+            self._stop_event.wait(0.1)
 
 
 class WakeWordWorker(QObject):

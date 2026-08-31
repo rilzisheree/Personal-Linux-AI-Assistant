@@ -273,16 +273,27 @@ class VoiceService:
 
     def _synthesize(self, text: str, audio_path: Path) -> None:
         if self.config.tts_engine == "piper":
-            executable = shutil.which("piper")
             model = Path(self.config.tts_voice).expanduser()
-            if not executable:
+            executable = shutil.which("piper")
+            if executable:
+                command_prefix = [executable]
+            else:
+                try:
+                    import piper  # noqa: F401
+                except ImportError as error:
+                    raise VoiceError(
+                        "Piper is not installed. Install piper-tts in the same "
+                        "Python environment Lura uses."
+                    ) from error
+                command_prefix = [sys.executable, "-m", "piper"]
+            if not model.is_file():
+                model = self._ensure_piper_model(model)
+            if not model.is_file():
                 raise VoiceError(
-                    "Piper is not installed. Install piper-tts in the same "
-                    "Python environment Lura uses."
+                    f"The {self._voice_label(model)} Piper model is missing."
                 )
-            model = self._ensure_piper_model(model)
             self._run_checked(
-                [executable, "--model", str(model), "--output_file", str(audio_path)],
+                [*command_prefix, "--model", str(model), "--output_file", str(audio_path)],
                 120,
                 "Piper",
                 input_text=text,
@@ -297,6 +308,13 @@ class VoiceService:
                 "No local TTS engine found. Install espeak-ng or configure Piper."
             )
         self._synthesize_espeak(executable, text, audio_path, self.config.tts_voice)
+
+    @staticmethod
+    def _voice_label(model: Path) -> str:
+        return {
+            "en_GB-alan-medium": "Jarvis",
+            "en_US-amy-medium": "Laura",
+        }.get(model.stem, "selected")
 
     def _ensure_piper_model(self, model: Path) -> Path:
         if model.is_file():
