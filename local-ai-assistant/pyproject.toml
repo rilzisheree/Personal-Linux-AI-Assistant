@@ -14,6 +14,7 @@ dependencies = [
 [project.scripts]
 local-ai-assistant = "local_ai_assistant.app:main"
 local-ai-assistant-api = "local_ai_assistant.api:main"
+lura-telegram = "local_ai_assistant.telegram_bot:main"
 
 [tool.setuptools.packages.find]
 include = ["local_ai_assistant*"]

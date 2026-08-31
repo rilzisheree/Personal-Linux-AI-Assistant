@@ -11,13 +11,14 @@ permission gates. Phase 3 adds Linux integration for Hyprland windows,
 screenshots, local files, and pointer/keyboard input. The interface uses a
 futuristic local-intelligence HUD visual language, with the supplied Lura core
 artwork as its empty-state focus. History is stored in SQLite on the local
-machine only. Voice input and output use optional local host tools; there is
-still no cloud provider, web UI, or phone client.
+machine only. Voice input and output use optional local host tools. An optional
+Railway web companion and a local Telegram phone bridge are documented below;
+the desktop app and Ollama remain local.
 
 ## Authenticated API service (Phase 6)
 
 The optional API service provides password-protected access to conversations
-without exposing the desktop control tools. It uses the same local Ollama
+and the allowlisted safe `open_app` action. It uses the same local Ollama
 endpoint and stores the single local user's sessions and conversations in a
 separate SQLite database.
 
@@ -65,6 +66,41 @@ application on the trusted Linux machine. Desktop tools such as terminal
 commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
 input remain available only inside the trusted desktop app with its existing
 permission dialogs.
+
+## Telegram phone companion
+
+For a simpler phone control channel, Lura includes a Telegram long-polling bot
+that runs directly on the same Linux machine as Ollama. This avoids Railway,
+Cloudflare, browser CORS, and inbound firewall ports. Telegram messages do pass
+through Telegram's servers; this is not an end-to-end encrypted Secret Chat.
+
+The local bot intentionally accepts private messages only from one configured
+Telegram numeric user ID and initially exposes only the safe `open_app` tool.
+The bot token must be stored on the Linux machine, not committed to the
+repository or pasted into chat.
+
+Set these values in the Linux terminal before starting the bot:
+
+```bash
+export TELEGRAM_BOT_TOKEN="token-from-BotFather"
+export TELEGRAM_ALLOWED_USER_ID="your-numeric-telegram-user-id"
+```
+
+Then run:
+
+```bash
+python -m local_ai_assistant.telegram_bot
+```
+
+The bot uses the local `LURA_OLLAMA_URL` and `LURA_MODEL` settings when
+provided. Use `/start`, `/help`, or `/reset` in the Telegram chat. The bot
+must be running in the Linux desktop user's session for `open_app` to launch a
+visible graphical application.
+
+The Replit Telegram connector can authenticate Telegram API calls from this
+workspace, but its credentials are not available to a cloned process running
+on the Linux computer. For the no-tunnel architecture, configure the same bot
+token locally from BotFather.
 
 ## Railway-hosted web companion with a local API
 
