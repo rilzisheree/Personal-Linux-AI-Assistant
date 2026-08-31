@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSystemTrayIcon,
     QVBoxLayout,
     QWidget,
@@ -320,7 +321,12 @@ class MainWindow(QMainWindow):
         composer_layout = QVBoxLayout(self.composer)
         composer_layout.setContentsMargins(0, 10, 0, 0)
         composer_layout.setSpacing(7)
+        self.composer.setMinimumWidth(620)
         self.composer.setMaximumWidth(820)
+        self.composer.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed,
+        )
 
         input_row = QHBoxLayout()
         input_row.setSpacing(10)
