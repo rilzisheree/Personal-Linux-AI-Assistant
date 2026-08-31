@@ -15,10 +15,15 @@ DEFAULT_WHISPER_MODEL = "base"
 DEFAULT_TTS_ENGINE = "espeak-ng"
 DEFAULT_TTS_VOICE = "en-gb+m3"
 TTS_ENGINES = ("disabled", "espeak-ng", "piper")
-TTS_VOICE_PRESETS = (
+ESPEAK_VOICE_PRESETS = (
     ("British · Jarvis-style", "en-gb+m3"),
     ("Female-sounding", "en-gb+f2"),
 )
+PIPER_VOICE_PRESETS = (
+    ("British · Alan (Piper)", "~/Models/piper/en_GB-alan-medium.onnx"),
+    ("Female · Amy (Piper)", "~/Models/piper/en_US-amy-medium.onnx"),
+)
+TTS_VOICE_PRESETS = ESPEAK_VOICE_PRESETS + PIPER_VOICE_PRESETS
 
 
 @dataclass

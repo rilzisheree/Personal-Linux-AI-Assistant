@@ -93,6 +93,19 @@ Jarvis-style character and a female-sounding voice. These are local synthetic
 voices, not an imitation of a specific actor. The Custom voice option accepts
 another eSpeak-NG voice name or a Piper model path.
 
+Piper presets are also available for the British `en_GB-alan-medium` and
+female `en_US-amy-medium` voices. Download each model and its matching `.onnx.json`
+file from the Piper voice repository, then place them at:
+
+```text
+~/Models/piper/en_GB-alan-medium.onnx
+~/Models/piper/en_GB-alan-medium.onnx.json
+~/Models/piper/en_US-amy-medium.onnx
+~/Models/piper/en_US-amy-medium.onnx.json
+```
+
+Choosing either Piper preset switches the TTS engine to Piper automatically.
+
 Settings are stored locally at:
 
 ```text

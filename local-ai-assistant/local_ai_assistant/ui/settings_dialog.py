@@ -99,7 +99,7 @@ class SettingsDialog(QDialog):
         self.tts_voice_input.setCurrentIndex(preset_index)
         if preset_index == len(TTS_VOICE_PRESETS):
             self.custom_voice_input.setText(config.tts_voice)
-        self.tts_voice_input.currentIndexChanged.connect(self._custom_voice_changed)
+        self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
         voice_form.addRow("", self.voice_input_enabled)
         voice_form.addRow("", self.voice_responses_enabled)
         voice_form.addRow("Microphone", self.microphone_input)
@@ -108,7 +108,7 @@ class SettingsDialog(QDialog):
         voice_form.addRow("TTS engine", self.tts_engine_input)
         voice_form.addRow("TTS voice", self.tts_voice_input)
         voice_form.addRow("Custom voice", self.custom_voice_input)
-        self._custom_voice_changed(self.tts_voice_input.currentIndex())
+        self._voice_changed(self.tts_voice_input.currentIndex())
         layout.addLayout(voice_form)
 
         voice_hint = QLabel(
@@ -151,9 +151,12 @@ class SettingsDialog(QDialog):
             return preset
         return self.custom_voice_input.text()
 
-    def _custom_voice_changed(self, index: int) -> None:
-        is_custom = self.tts_voice_input.itemData(index) is None
+    def _voice_changed(self, index: int) -> None:
+        voice = self.tts_voice_input.itemData(index)
+        is_custom = voice is None
         self.custom_voice_input.setEnabled(is_custom)
+        if isinstance(voice, str) and voice.lower().endswith(".onnx"):
+            self.tts_engine_input.setCurrentIndex(self.tts_engine_input.findData("piper"))
 
     def _accept(self) -> None:
         try:
