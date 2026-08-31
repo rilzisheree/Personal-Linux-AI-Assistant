@@ -88,6 +88,11 @@ Use the settings button in the app to change:
 - Whisper model and language
 - Spoken responses, TTS engine, and voice
 
+When using eSpeak-NG, the voice choices include a British male voice with a
+Jarvis-style character and a female-sounding voice. These are local synthetic
+voices, not an imitation of a specific actor. The Custom voice option accepts
+another eSpeak-NG voice name or a Piper model path.
+
 Settings are stored locally at:
 
 ```text

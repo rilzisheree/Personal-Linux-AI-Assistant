@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..config import AppConfig, TTS_ENGINES
+from ..config import AppConfig, TTS_ENGINES, TTS_VOICE_PRESETS
 
 
 class SettingsDialog(QDialog):
@@ -76,8 +76,30 @@ class SettingsDialog(QDialog):
         self.tts_engine_input.setCurrentIndex(
             max(0, self.tts_engine_input.findData(config.tts_engine))
         )
-        self.tts_voice_input = QLineEdit(config.tts_voice)
-        self.tts_voice_input.setPlaceholderText("en-us or /path/to/piper.onnx")
+        self.tts_voice_input = QComboBox()
+        for label, voice in TTS_VOICE_PRESETS:
+            self.tts_voice_input.addItem(label, voice)
+        self.tts_voice_input.addItem("Custom voice / Piper model path", None)
+        self.tts_voice_input.setToolTip(
+            "Choose a local eSpeak-NG voice or select custom for a Piper model path."
+        )
+        self.custom_voice_input = QLineEdit()
+        self.custom_voice_input.setPlaceholderText("e.g. en-us or /path/to/piper.onnx")
+        self.custom_voice_input.setToolTip(
+            "Used only when Custom voice is selected."
+        )
+        preset_index = next(
+            (
+                index
+                for index, (_, voice) in enumerate(TTS_VOICE_PRESETS)
+                if voice == config.tts_voice
+            ),
+            len(TTS_VOICE_PRESETS),
+        )
+        self.tts_voice_input.setCurrentIndex(preset_index)
+        if preset_index == len(TTS_VOICE_PRESETS):
+            self.custom_voice_input.setText(config.tts_voice)
+        self.tts_voice_input.currentIndexChanged.connect(self._custom_voice_changed)
         voice_form.addRow("", self.voice_input_enabled)
         voice_form.addRow("", self.voice_responses_enabled)
         voice_form.addRow("Microphone", self.microphone_input)
@@ -85,6 +107,8 @@ class SettingsDialog(QDialog):
         voice_form.addRow("Language", self.whisper_language_input)
         voice_form.addRow("TTS engine", self.tts_engine_input)
         voice_form.addRow("TTS voice", self.tts_voice_input)
+        voice_form.addRow("Custom voice", self.custom_voice_input)
+        self._custom_voice_changed(self.tts_voice_input.currentIndex())
         layout.addLayout(voice_form)
 
         voice_hint = QLabel(
@@ -118,8 +142,18 @@ class SettingsDialog(QDialog):
             whisper_model=self.whisper_model_input.text(),
             whisper_language=self.whisper_language_input.text(),
             tts_engine=str(self.tts_engine_input.currentData()),
-            tts_voice=self.tts_voice_input.text(),
+            tts_voice=self._selected_voice(),
         )
+
+    def _selected_voice(self) -> str:
+        preset = self.tts_voice_input.currentData()
+        if isinstance(preset, str):
+            return preset
+        return self.custom_voice_input.text()
+
+    def _custom_voice_changed(self, index: int) -> None:
+        is_custom = self.tts_voice_input.itemData(index) is None
+        self.custom_voice_input.setEnabled(is_custom)
 
     def _accept(self) -> None:
         try:
