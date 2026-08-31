@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 import unittest
 from unittest.mock import patch
 
@@ -31,13 +32,32 @@ class FakeAssistant:
     def __init__(self) -> None:
         self.histories: dict[int, list[object]] = {}
         self.reply_calls: list[tuple[int, str]] = []
+        self.ollama = FakeOllama()
 
-    def reply(self, chat_id: int, content: str, on_chunk=None) -> str:
+    def reply(self, chat_id: int, content: str, on_chunk=None, cancel_event=None) -> str:
         self.reply_calls.append((chat_id, content))
         if on_chunk is not None:
             on_chunk("Local ")
             on_chunk("reply")
         return "Local reply"
+
+
+class FakeOllama:
+    def __init__(self) -> None:
+        self.cancelled = False
+
+    def cancel_active_request(self) -> None:
+        self.cancelled = True
+
+
+class SlowAssistant(FakeAssistant):
+    def reply(self, chat_id: int, content: str, on_chunk=None, cancel_event=None) -> str:
+        self.reply_calls.append((chat_id, content))
+        if on_chunk is not None:
+            on_chunk("Partial reply")
+        while cancel_event is None or not cancel_event.is_set():
+            time.sleep(0.01)
+        return "Partial reply"
 
 
 class TelegramBotTests(unittest.TestCase):
@@ -116,6 +136,24 @@ class TelegramBotTests(unittest.TestCase):
         self.assertEqual(telegram.actions[-2][0], "edit")
         self.assertEqual(len(telegram.actions[-2][1][2]), 4096)
         self.assertEqual(telegram.actions[-1], ("message", (456, "x")))
+
+    def test_slow_generation_is_stopped_before_reply_deadline(self) -> None:
+        telegram = FakeTelegram()
+        assistant = SlowAssistant()
+        message = {
+            "from": {"id": 999},
+            "chat": {"id": 456, "type": "private"},
+            "text": "Slow request",
+        }
+
+        with patch("local_ai_assistant.telegram_bot.TELEGRAM_REPLY_TIMEOUT", 0.05):
+            started = time.monotonic()
+            _handle_message(telegram, assistant, 999, message)
+            elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.5)
+        self.assertTrue(assistant.ollama.cancelled)
+        self.assertIn("stopped after 0 seconds", telegram.actions[-1][1][2])
 
 
 if __name__ == "__main__":
