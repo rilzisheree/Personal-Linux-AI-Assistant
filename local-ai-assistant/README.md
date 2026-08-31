@@ -14,6 +14,45 @@ artwork as its empty-state focus. History is stored in SQLite on the local
 machine only. Voice input and output use optional local host tools; there is
 still no cloud provider, web UI, or phone client.
 
+## Authenticated API service (Phase 6)
+
+The optional API service provides authenticated access to conversations without
+exposing the desktop control tools. It uses the same local Ollama endpoint and
+stores accounts, sessions, and user-owned conversations in a separate SQLite
+database.
+
+Start it from this directory with:
+
+```bash
+SESSION_SECRET='use-a-long-random-value' python -m local_ai_assistant.api
+```
+
+The service listens on `PORT` (default `8000`). Configure these environment
+variables when needed:
+
+- `SESSION_SECRET` — required, at least 16 characters; never commit it
+- `LURA_OLLAMA_URL` — Ollama base URL, defaulting to `http://localhost:11434`
+- `LURA_MODEL` — default model, defaulting to `qwen3.5:4b`
+- `LURA_API_DATABASE` — optional API SQLite path
+- `LURA_API_HOST` — bind address, defaulting to `0.0.0.0`
+- `LURA_ALLOWED_ORIGIN` — optional exact browser origin for credentialed CORS
+- `LURA_COOKIE_SECURE` — set to `1` when HTTPS is guaranteed
+
+Available endpoints:
+
+- `POST /api/auth/register` and `POST /api/auth/login`
+- `POST /api/auth/logout` and `GET /api/me`
+- `GET /api/conversations` and `POST /api/conversations`
+- `GET /api/conversations/:id`
+- `POST /api/conversations/:id/messages` — server-sent events with streamed tokens
+- `GET /api/models`
+- `GET /api/health`
+
+Remote API requests only receive chat responses. Desktop tools such as terminal
+commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
+input remain available only inside the trusted desktop app with its existing
+permission dialogs.
+
 ## Requirements
 
 - Linux with Python 3.10 or newer
