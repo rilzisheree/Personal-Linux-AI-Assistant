@@ -99,7 +99,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     );
   }
 
-  if (response.status === 401 || response.status === 403) {
+  const isLoginRequest = path === '/api/auth/login';
+  if ((response.status === 401 || response.status === 403) && !isLoginRequest) {
     clearSessionToken();
     throw new LuraApiError('Your Lura session has expired. Please sign in again.', response.status, 'unauthorized');
   }
@@ -111,7 +112,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // The service may return an empty or non-JSON error body.
     }
-    throw new LuraApiError(detail || `Lura returned an error (${response.status}).`, response.status);
+    if (isLoginRequest) clearSessionToken();
+    throw new LuraApiError(
+      detail || `Lura returned an error (${response.status}).`,
+      response.status,
+      response.status === 401 || response.status === 403 ? 'unauthorized' : 'bad-response',
+    );
   }
 
   try {
