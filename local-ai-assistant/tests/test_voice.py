@@ -86,11 +86,29 @@ class VoiceServiceTests(unittest.TestCase):
                 side_effect=lambda name: "/usr/bin/piper" if name == "piper" else None,
             ), patch(
                 "local_ai_assistant.voice.subprocess.run",
-                return_value=Mock(returncode=0, stdout="", stderr=""),
+                side_effect=lambda command, **kwargs: (
+                    Path(command[command.index("--output_file") + 1]).write_bytes(b"RIFF"),
+                    Mock(returncode=0, stdout="", stderr=""),
+                )[1],
             ) as run_mock:
                 service._synthesize("Hello locally", Path(directory) / "out.wav")
         self.assertEqual(run_mock.call_args.kwargs["input"], "Hello locally")
         self.assertEqual(run_mock.call_args.args[0][0], "/usr/bin/piper")
+
+    def test_piper_requires_an_output_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            model = Path(directory) / "voice.onnx"
+            model.write_bytes(b"model")
+            service = VoiceService(AppConfig(tts_engine="piper", tts_voice=str(model)))
+            with patch(
+                "local_ai_assistant.voice.shutil.which",
+                side_effect=lambda name: "/usr/bin/piper" if name == "piper" else None,
+            ), patch(
+                "local_ai_assistant.voice.subprocess.run",
+                return_value=Mock(returncode=0, stdout="", stderr=""),
+            ):
+                with self.assertRaisesRegex(VoiceError, "without producing"):
+                    service._synthesize("Hello locally", Path(directory) / "out.wav")
 
 
 if __name__ == "__main__":

@@ -249,6 +249,8 @@ class VoiceService:
                 "Piper",
                 input_text=text,
             )
+            if not audio_path.is_file() or audio_path.stat().st_size == 0:
+                raise VoiceError("Piper completed without producing an audio file.")
             return
 
         executable = shutil.which("espeak-ng") or shutil.which("espeak")

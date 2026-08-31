@@ -605,7 +605,8 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _speech_failed(self, message: str) -> None:
-        self._set_voice_status("VOICE OUTPUT UNAVAILABLE")
+        self._set_voice_status(f"VOICE ERROR // {message[:220]}")
+        self.status_label.setText("Voice output unavailable")
         self.status_label.setToolTip(message)
 
     def _speech_thread_finished(self) -> None:
