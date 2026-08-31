@@ -148,8 +148,7 @@ local use continues to work with the HttpOnly cookie.
 - A local Ollama model, with `qwen3.5:4b` as the default
 - For voice input: PipeWire `pw-record` or ALSA `arecord`, plus a local
   Whisper CLI (`whisper` or `whisper-cli`)
-- For voice output: `espeak-ng` plus `pw-play`/`aplay`, or Piper with a local
-  voice model
+- For voice output: Piper (`piper-tts`) plus `pw-play`/`aplay`
 
 The NVIDIA RTX 4060 and Intel i5-12400F do not require any special code
 configuration. Ollama chooses the available acceleration; verify that Ollama
@@ -177,10 +176,9 @@ If your distribution manages Python packages externally, use a user
 environment or the virtual environment above instead of installing PySide6
 into the system Python.
 
-Voice backends are intentionally host-provided because Whisper and Piper model
-downloads are large and model licensing varies. No voice backend is contacted
-over the network by Lura. Text chat remains usable when these optional
-commands are not installed.
+Whisper and Piper model downloads are large, so the Python packages are
+installed by the project but the model files are downloaded only when needed.
+Text chat remains usable when voice tools are unavailable.
 
 ## Prepare Ollama
 
@@ -214,23 +212,20 @@ Use the settings button in the app to change:
 - Whisper model and language
 - Spoken responses, TTS engine, and voice
 
-When using eSpeak-NG, the voice choices include a British male voice with a
-Jarvis-style character and a female-sounding voice. These are local synthetic
-voices, not an imitation of a specific actor. The Custom voice option accepts
-another eSpeak-NG voice name or a Piper model path.
+Voice responses provide exactly two local Piper choices:
 
-Piper presets are also available for the British `en_GB-alan-medium` and
-female `en_US-amy-medium` voices. Download each model and its matching `.onnx.json`
-file from the Piper voice repository, then place them at:
+- **Jarvis** — `en_GB-alan-medium`
+- **Laura** — `en_US-amy-medium`
+
+On first use, Lura downloads the selected model and its matching `.onnx.json`
+file into:
 
 ```text
-~/Models/piper/en_GB-alan-medium.onnx
-~/Models/piper/en_GB-alan-medium.onnx.json
-~/Models/piper/en_US-amy-medium.onnx
-~/Models/piper/en_US-amy-medium.onnx.json
+~/.local/share/lura/piper/
 ```
 
-Choosing either Piper preset switches the TTS engine to Piper automatically.
+Choosing either voice uses Piper directly; Lura no longer silently substitutes
+eSpeak when Piper or its model is unavailable.
 
 Settings are stored locally at:
 

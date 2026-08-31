@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 import signal
+import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -53,7 +54,9 @@ class VoiceServiceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             audio = Path(directory) / "recording.wav"
             audio.write_bytes(b"RIFF" + b"\0" * 42)
-            with patch("local_ai_assistant.voice.shutil.which", return_value=None):
+            with patch("local_ai_assistant.voice.shutil.which", return_value=None), patch.dict(
+                sys.modules, {"whisper": None}
+            ):
                 with self.assertRaisesRegex(VoiceError, "No local Whisper backend"):
                     service.transcribe(audio)
 
