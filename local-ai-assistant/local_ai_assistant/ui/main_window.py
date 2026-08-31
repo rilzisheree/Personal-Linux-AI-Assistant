@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
         self.voice_transcription_worker: VoiceTranscriptionWorker | None = None
         self.speech_thread: QThread | None = None
         self.speech_worker: SpeechWorker | None = None
+        self.last_voice_error: str | None = None
         self.active_assistant_bubble: MessageBubble | None = None
         self.active_response = ""
         self.active_tool_bubbles: dict[str, MessageBubble] = {}
@@ -433,6 +434,7 @@ class MainWindow(QMainWindow):
             or self.voice_transcription_worker is not None
         ):
             return
+        self.last_voice_error = None
         destination = self.voice_service.new_recording_path()
         self.voice_record_thread = QThread(self)
         self.voice_record_worker = VoiceRecordWorker(self.voice_service, destination)
@@ -448,11 +450,11 @@ class MainWindow(QMainWindow):
         self._set_voice_status("STARTING MICROPHONE…")
         self.message_input.setEnabled(False)
         self.send_button.setEnabled(False)
-        self.mic_button.setEnabled(False)
 
     @Slot()
     def _recording_started(self) -> None:
         self.mic_button.setText("STOP")
+        self.mic_button.setEnabled(True)
         self.mic_button.setProperty("recording", True)
         self.mic_button.style().unpolish(self.mic_button)
         self.mic_button.style().polish(self.mic_button)
@@ -461,6 +463,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _stop_recording(self) -> None:
         if self.voice_record_worker is not None:
+            self.mic_button.setEnabled(False)
             self.voice_record_worker.stop()
             self._set_voice_status("PROCESSING LOCAL AUDIO…")
 
@@ -490,8 +493,9 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
-        self._set_voice_status(f"VOICE ERROR // {message[:180]}")
+        self.last_voice_error = message
         self._set_voice_idle()
+        self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_status("error")
         self.status_label.setText("Voice input unavailable")
         self.status_label.setToolTip(message)
@@ -505,6 +509,8 @@ class MainWindow(QMainWindow):
         self.voice_record_thread = None
         if self.voice_transcription_worker is None:
             self._set_voice_idle()
+            if self.last_voice_error:
+                self._set_voice_status(f"VOICE ERROR // {self.last_voice_error[:180]}")
 
     @Slot(str, str)
     def _transcription_finished(self, text: str, audio_path: str) -> None:
