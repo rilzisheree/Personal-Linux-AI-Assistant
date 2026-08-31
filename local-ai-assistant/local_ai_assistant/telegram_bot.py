@@ -28,6 +28,8 @@ TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 TELEGRAM_POLL_TIMEOUT = 30
 TELEGRAM_RETRY_DELAY = 5
 TELEGRAM_STREAM_UPDATE_INTERVAL = 1.0
+TELEGRAM_REQUEST_TIMEOUT = 10.0
+TELEGRAM_REPLY_TIMEOUT = 25.0
 MAX_TOOL_ROUNDS = 4
 MAX_HISTORY_MESSAGES = 40
 DEFAULT_OLLAMA_TIMEOUT = 120.0
@@ -73,7 +75,12 @@ class TelegramClient:
         self._response: object | None = None
         self._response_lock = threading.Lock()
 
-    def call(self, method: str, payload: dict | None = None) -> object:
+    def call(
+        self,
+        method: str,
+        payload: dict | None = None,
+        timeout: float | None = None,
+    ) -> object:
         body = json.dumps(payload or {}).encode("utf-8")
         request = Request(
             f"{self._base_url}/{method}",
@@ -82,7 +89,7 @@ class TelegramClient:
             method="POST",
         )
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            with urlopen(request, timeout=timeout or self.timeout) as response:
                 with self._response_lock:
                     self._response = response
                 try:
@@ -141,6 +148,7 @@ class TelegramClient:
                 "timeout": TELEGRAM_POLL_TIMEOUT,
                 "allowed_updates": ["message"],
             },
+            timeout=TELEGRAM_POLL_TIMEOUT + 10,
         )
         if not isinstance(result, list):
             raise TelegramApiError("Telegram returned invalid updates.")
@@ -227,6 +235,7 @@ class LocalAssistant:
         chat_id: int,
         content: str,
         on_chunk: Callable[[str], None] | None = None,
+        cancel_event: threading.Event | None = None,
     ) -> str:
         messages = self.histories.setdefault(chat_id, [])
         messages.append(ChatMessage("user", content.strip()))
@@ -234,11 +243,14 @@ class LocalAssistant:
         tool_rounds = 0
 
         while True:
+            if cancel_event is not None and cancel_event.is_set():
+                return "".join(response_parts).strip()
             cycle_parts: list[str] = []
             tool_calls: list[ToolCall] = []
             for event in self.ollama.stream_chat(
                 messages,
                 self.config.model,
+                cancel_event=cancel_event,
                 tools=self.remote_tools,
                 context_size=self.config.context_size,
             ):
@@ -311,6 +323,7 @@ class TelegramResponseStreamer:
         self._last_update_at = 0.0
         self._last_published_text = ""
         self._updates_disabled = False
+        self._lock = threading.Lock()
 
     def start(self) -> None:
         result = self.telegram.send_message(self.chat_id, "Lura is thinking…")
@@ -321,12 +334,37 @@ class TelegramResponseStreamer:
     def append(self, chunk: str) -> None:
         if not chunk:
             return
-        self.text += chunk
-        self._publish(force=False)
+        with self._lock:
+            if self._updates_disabled:
+                return
+            self.text += chunk
+            self._publish(force=False)
 
     def finish(self, text: str) -> None:
+        with self._lock:
+            self._finish_locked(text)
+
+    def finish_timeout(self, text: str) -> None:
+        """Replace the placeholder with a bounded-time partial-result notice."""
+        with self._lock:
+            self._updates_disabled = True
+            self.text = text
+            if self.message_id is None:
+                self.telegram.send_message(self.chat_id, text)
+                return
+            try:
+                self.telegram.edit_message_text(
+                    self.chat_id,
+                    self.message_id,
+                    _message_chunks(text)[0],
+                )
+            except TelegramApiError:
+                self.telegram.send_message(self.chat_id, text)
+
+    def _finish_locked(self, text: str) -> None:
         self.text = text
-        if self.message_id is None or self._updates_disabled:
+        self._updates_disabled = True
+        if self.message_id is None:
             self.telegram.send_message(self.chat_id, text)
             return
 
@@ -345,7 +383,6 @@ class TelegramResponseStreamer:
             # The model response is more important than a failed live edit.
             # Try delivering it as a normal message instead.
             self.message_id = None
-            self._updates_disabled = True
             self.telegram.send_message(self.chat_id, text)
 
     def _publish(self, force: bool) -> None:
@@ -424,12 +461,56 @@ def _handle_message(
 
     telegram.send_chat_action(chat_id)
     streamer = TelegramResponseStreamer(telegram, chat_id)
+    cancel_event = threading.Event()
+    reply_result: list[str] = []
+    reply_error: list[Exception] = []
+
+    def generate_reply() -> None:
+        try:
+            reply_result.append(
+                assistant.reply(
+                    chat_id,
+                    text,
+                    on_chunk=streamer.append,
+                    cancel_event=cancel_event,
+                )
+            )
+        except Exception as error:
+            reply_error.append(error)
+
     try:
         streamer.start()
-        response = assistant.reply(chat_id, text, on_chunk=streamer.append)
+        reply_thread = threading.Thread(target=generate_reply, daemon=True)
+        reply_thread.start()
+        reply_thread.join(TELEGRAM_REPLY_TIMEOUT)
+        if reply_thread.is_alive():
+            cancel_event.set()
+            assistant.ollama.cancel_active_request()
+            partial = streamer.text.strip()
+            if partial:
+                response = (
+                    f"{partial}\n\n"
+                    f"Generation stopped after {int(TELEGRAM_REPLY_TIMEOUT)} seconds."
+                )
+            else:
+                response = (
+                    "I could not finish that request within "
+                    f"{int(TELEGRAM_REPLY_TIMEOUT)} seconds. Try a shorter message "
+                    "or send /reset and try again."
+                )
+            streamer.finish_timeout(response)
+            return
+        if reply_error:
+            response = (
+                "Lura could not complete that request: "
+                f"{format_ollama_error(reply_error[0])}"
+            )
+        else:
+            response = reply_result[0] if reply_result else "I did not receive a response from Ollama."
+        streamer.finish(response)
     except Exception as error:
         response = f"Lura could not complete that request: {format_ollama_error(error)}"
-    streamer.finish(response)
+        streamer.finish(response)
 
 
 class TelegramBotRunner:
@@ -438,7 +519,7 @@ class TelegramBotRunner:
     def __init__(self, config: TelegramConfig) -> None:
         self.config = config
         self.telegram = TelegramClient(
-            config.token, timeout=TELEGRAM_POLL_TIMEOUT + 10
+            config.token, timeout=TELEGRAM_REQUEST_TIMEOUT
         )
         self.assistant = LocalAssistant(config)
         self._stop_event = threading.Event()
