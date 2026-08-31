@@ -193,6 +193,7 @@ class MainWindow(QMainWindow):
 
     def _build_ui(self) -> None:
         root = QWidget()
+        root.setObjectName("appRoot")
         root_layout = QVBoxLayout(root)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.setSpacing(0)
@@ -200,14 +201,14 @@ class MainWindow(QMainWindow):
         top_bar = QFrame()
         top_bar.setObjectName("topBar")
         top_layout = QHBoxLayout(top_bar)
-        top_layout.setContentsMargins(14, 10, 14, 10)
-        top_layout.setSpacing(10)
+        top_layout.setContentsMargins(24, 16, 24, 16)
+        top_layout.setSpacing(14)
 
         identity = QVBoxLayout()
-        identity.setSpacing(2)
-        mark = QLabel("L.U.R.A.")
+        identity.setSpacing(1)
+        mark = QLabel("LURA")
         mark.setObjectName("appMark")
-        subtitle = QLabel("LOCAL USER RUNTIME ASSISTANT")
+        subtitle = QLabel("LOCAL INTELLIGENCE")
         subtitle.setObjectName("appSubtitle")
         identity.addWidget(mark)
         identity.addWidget(subtitle)
@@ -227,220 +228,100 @@ class MainWindow(QMainWindow):
         )
         top_layout.addWidget(self.telegram_status_label)
 
-        self.clock_label = QLabel()
-        self.clock_label.setObjectName("topMeta")
-        top_layout.addWidget(self.clock_label)
-        self.clock_timer = QTimer(self)
-        self.clock_timer.timeout.connect(self._update_clock)
-        self.clock_timer.start(1000)
-        self._update_clock()
-
         self.model_selector = QComboBox()
+        self.model_selector.setObjectName("modelSelector")
         self.model_selector.setMinimumWidth(150)
         self.model_selector.setToolTip("Model used for the next message")
         self.model_selector.addItem(self.config.model)
         top_layout.addWidget(self.model_selector)
 
-        settings_button = QPushButton("Settings")
+        self.history_list = QComboBox()
+        self.history_list.setObjectName("sessionSelector")
+        self.history_list.setMinimumWidth(160)
+        self.history_list.setToolTip("Switch conversation")
+        self.history_list.currentIndexChanged.connect(self._conversation_selected)
+        top_layout.addWidget(self.history_list)
+
+        new_chat_button = QPushButton("+")
+        new_chat_button.setObjectName("topAction")
+        new_chat_button.setToolTip("New conversation")
+        new_chat_button.clicked.connect(self._new_chat)
+        top_layout.addWidget(new_chat_button)
+
+        settings_button = QPushButton("···")
         settings_button.setObjectName("settingsButton")
-        settings_button.setToolTip("Configure Ollama")
+        settings_button.setToolTip("Settings")
         settings_button.clicked.connect(self._open_settings)
         top_layout.addWidget(settings_button)
         root_layout.addWidget(top_bar)
 
-        body = QWidget()
-        body_layout = QHBoxLayout(body)
-        body_layout.setContentsMargins(10, 10, 10, 10)
-        body_layout.setSpacing(10)
+        stage = QFrame()
+        stage.setObjectName("mainStage")
+        stage_layout = QVBoxLayout(stage)
+        stage_layout.setContentsMargins(24, 20, 24, 18)
+        stage_layout.setSpacing(10)
+        stage_layout.addStretch(1)
 
-        left_rail = QWidget()
-        left_rail.setObjectName("leftRail")
-        left_rail.setFixedWidth(235)
-        left_layout = QVBoxLayout(left_rail)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(8)
-
-        def make_card(title: str, eyebrow: str) -> tuple[QFrame, QVBoxLayout]:
-            card = QFrame()
-            card.setObjectName("panelCard")
-            card_layout = QVBoxLayout(card)
-            card_layout.setContentsMargins(10, 9, 10, 10)
-            card_layout.setSpacing(7)
-            heading = QHBoxLayout()
-            heading.setSpacing(5)
-            title_label = QLabel(title)
-            title_label.setObjectName("cardTitle")
-            heading.addWidget(title_label)
-            heading.addStretch(1)
-            eyebrow_label = QLabel(eyebrow)
-            eyebrow_label.setObjectName("cardEyebrow")
-            heading.addWidget(eyebrow_label)
-            card_layout.addLayout(heading)
-            return card, card_layout
-
-        def add_value_row(layout: QVBoxLayout, label: str, value: str) -> QLabel:
-            row = QHBoxLayout()
-            row.setSpacing(4)
-            key_label = QLabel(label)
-            key_label.setObjectName("cardKey")
-            value_label = QLabel(value)
-            value_label.setObjectName("cardValue")
-            row.addWidget(key_label)
-            row.addStretch(1)
-            row.addWidget(value_label)
-            layout.addLayout(row)
-            return value_label
-
-        stats_card, stats_layout = make_card("System Stats", "LOCAL")
-        add_value_row(stats_layout, "MODEL", self.config.model)
-        add_value_row(stats_layout, "MODE", "STREAM")
-        add_value_row(stats_layout, "STORE", "PRIVATE")
-        left_layout.addWidget(stats_card)
-
-        runtime_card, runtime_layout = make_card("Runtime", "HOST")
-        add_value_row(runtime_layout, "ENDPOINT", "11434")
-        self.runtime_status_value = add_value_row(runtime_layout, "STATUS", "CHECKING")
-        add_value_row(runtime_layout, "CHANNEL", "OLLAMA")
-        left_layout.addWidget(runtime_card)
-
-        camera_card, camera_layout = make_card("Vision Input", "SENSOR")
-        camera_preview = QFrame()
-        camera_preview.setObjectName("cameraPreview")
-        camera_preview_layout = QVBoxLayout(camera_preview)
-        camera_preview_layout.setContentsMargins(8, 12, 8, 12)
-        camera_status = QLabel("ON-DEMAND")
-        camera_status.setObjectName("cameraStatus")
-        camera_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        camera_preview_layout.addWidget(camera_status)
-        camera_layout.addWidget(camera_preview)
-        camera_note = QLabel("Local screenshot capture ready")
-        camera_note.setObjectName("cardNote")
-        camera_note.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        camera_layout.addWidget(camera_note)
-        left_layout.addWidget(camera_card)
-
-        lighting_card, lighting_layout = make_card("Custom Lighting", "LURA")
-        swatches = QHBoxLayout()
-        swatches.setSpacing(6)
-        for color in ("#11b6e8", "#31708a", "#6a4ca2", "#182a42"):
-            swatch = QFrame()
-            swatch.setObjectName("colorSwatch")
-            swatch.setStyleSheet(f"background: {color};")
-            swatches.addWidget(swatch)
-        lighting_layout.addLayout(swatches)
-        lighting_note = QLabel("CORE PALETTE // ACTIVE")
-        lighting_note.setObjectName("cardNote")
-        lighting_layout.addWidget(lighting_note)
-        left_layout.addWidget(lighting_card)
-        left_layout.addStretch(1)
-        body_layout.addWidget(left_rail)
-
-        center_stage = QFrame()
-        center_stage.setObjectName("centerStage")
-        center_layout = QVBoxLayout(center_stage)
-        center_layout.setContentsMargins(10, 10, 10, 10)
-        center_layout.setSpacing(7)
-        center_layout.addStretch(1)
         self.core_widget = CoreWidget()
-        self.core_widget.setFixedSize(240, 240)
-        center_layout.addWidget(self.core_widget, 0, Qt.AlignmentFlag.AlignCenter)
-        core_name = QLabel("L.U.R.A.")
-        core_name.setObjectName("coreName")
-        core_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        center_layout.addWidget(core_name)
-        core_status = QLabel("●  Local mode active")
-        core_status.setObjectName("coreStatus")
-        core_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        center_layout.addWidget(core_status)
-        center_layout.addStretch(1)
-        core_actions = QHBoxLayout()
-        core_actions.setSpacing(8)
-        new_core_button = QPushButton("＋")
-        new_core_button.setObjectName("coreAction")
-        new_core_button.setToolTip("New chat")
-        new_core_button.clicked.connect(self._new_chat)
-        focus_button = QPushButton("⌕")
-        focus_button.setObjectName("coreAction")
-        focus_button.setToolTip("Focus message input")
-        focus_button.clicked.connect(lambda: self.message_input.setFocus())
-        settings_core_button = QPushButton("▣")
-        settings_core_button.setObjectName("coreAction")
-        settings_core_button.setToolTip("Configure Ollama")
-        settings_core_button.clicked.connect(self._open_settings)
-        for button in (new_core_button, focus_button, settings_core_button):
-            core_actions.addWidget(button)
-        center_layout.addLayout(core_actions)
-        body_layout.addWidget(center_stage, 1)
+        self.core_widget.setFixedSize(310, 310)
+        self.core_widget.pressed.connect(self._start_recording)
+        self.core_widget.released.connect(self._stop_recording)
+        stage_layout.addWidget(self.core_widget, 0, Qt.AlignmentFlag.AlignCenter)
 
-        conversation_panel = QFrame()
-        conversation_panel.setObjectName("conversationPanel")
-        conversation_panel.setMinimumWidth(365)
-        conversation_panel.setMaximumWidth(460)
-        conversation_layout = QVBoxLayout(conversation_panel)
-        conversation_layout.setContentsMargins(10, 10, 10, 10)
-        conversation_layout.setSpacing(8)
+        self.core_name = QLabel("LURA")
+        self.core_name.setObjectName("coreName")
+        self.core_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        stage_layout.addWidget(self.core_name)
 
-        conversation_header = QHBoxLayout()
-        conversation_identity = QVBoxLayout()
-        conversation_identity.setSpacing(1)
-        conversation_title = QLabel("Conversation")
-        conversation_title.setObjectName("conversationTitle")
-        conversation_identity.addWidget(conversation_title)
-        conversation_subtitle = QLabel("PRIVATE CHANNEL // LURA")
-        conversation_subtitle.setObjectName("conversationSubtitle")
-        conversation_identity.addWidget(conversation_subtitle)
-        conversation_header.addLayout(conversation_identity, 1)
+        self.core_status = QLabel("READY // HOLD TO SPEAK")
+        self.core_status.setObjectName("coreStatus")
+        self.core_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        stage_layout.addWidget(self.core_status)
+
+        transcript_header = QHBoxLayout()
+        transcript_header.setContentsMargins(0, 14, 0, 0)
+        transcript_header.setSpacing(12)
+        transcript_label = QLabel("CONVERSATION")
+        transcript_label.setObjectName("sectionLabel")
+        transcript_header.addWidget(transcript_label)
+        transcript_header.addStretch(1)
         clear_button = QPushButton("Clear")
-        clear_button.setObjectName("panelButton")
+        clear_button.setObjectName("quietButton")
         clear_button.clicked.connect(self._clear_current_conversation)
-        conversation_header.addWidget(clear_button)
+        transcript_header.addWidget(clear_button)
         export_button = QPushButton("Export")
-        export_button.setObjectName("panelButton")
+        export_button.setObjectName("quietButton")
         export_button.clicked.connect(self._export_current_conversation)
-        conversation_header.addWidget(export_button)
-        conversation_layout.addLayout(conversation_header)
-
-        session_row = QHBoxLayout()
-        session_label = QLabel("SESSION")
-        session_label.setObjectName("cardEyebrow")
-        session_row.addWidget(session_label)
-        self.history_list = QComboBox()
-        self.history_list.setObjectName("sessionSelector")
-        self.history_list.currentIndexChanged.connect(self._conversation_selected)
-        session_row.addWidget(self.history_list, 1)
-        new_chat_button = QPushButton("New")
-        new_chat_button.setObjectName("panelButton")
-        new_chat_button.clicked.connect(self._new_chat)
-        session_row.addWidget(new_chat_button)
-        conversation_layout.addLayout(session_row)
+        transcript_header.addWidget(export_button)
+        stage_layout.addLayout(transcript_header)
 
         self.chat_view = ChatView()
-        conversation_layout.addWidget(self.chat_view, 1)
+        self.chat_view.setObjectName("transcript")
+        self.chat_view.setMinimumHeight(150)
+        self.chat_view.setMaximumWidth(820)
+        stage_layout.addWidget(self.chat_view, 1, Qt.AlignmentFlag.AlignHCenter)
 
         composer = QFrame()
         composer.setObjectName("composer")
         composer_layout = QVBoxLayout(composer)
-        composer_layout.setContentsMargins(0, 2, 0, 0)
-        composer_layout.setSpacing(6)
-        self.composer_hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
-        self.composer_hint.setObjectName("composerHint")
-        composer_layout.addWidget(self.composer_hint)
+        composer_layout.setContentsMargins(0, 10, 0, 0)
+        composer_layout.setSpacing(7)
+        composer.setMaximumWidth(820)
 
         input_row = QHBoxLayout()
-        input_row.setSpacing(6)
+        input_row.setSpacing(10)
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Type a message…")
+        self.message_input.setObjectName("messageInput")
+        self.message_input.setPlaceholderText("Ask Lura anything…")
         self.message_input.setClearButtonEnabled(True)
         self.message_input.returnPressed.connect(self._send_message)
         input_row.addWidget(self.message_input, 1)
 
-        self.mic_button = QPushButton("MIC")
+        # Keep the existing worker-facing attribute, but make the old control
+        # invisible. The orb now owns the same press/release recording signals.
+        self.mic_button = QPushButton(root)
+        self.mic_button.setVisible(False)
         self.mic_button.setObjectName("micButton")
-        self.mic_button.setToolTip("Hold to record a local voice message")
-        self.mic_button.pressed.connect(self._start_recording)
-        self.mic_button.released.connect(self._stop_recording)
-        self.mic_button.setEnabled(self.config.voice_input_enabled)
-        input_row.addWidget(self.mic_button)
 
         self.stop_button = QPushButton("×")
         self.stop_button.setObjectName("stopButton")
@@ -457,11 +338,27 @@ class MainWindow(QMainWindow):
         self.send_button.clicked.connect(self._send_message)
         input_row.addWidget(self.send_button)
         composer_layout.addLayout(input_row)
-        conversation_layout.addWidget(composer)
-        body_layout.addWidget(conversation_panel)
-        root_layout.addWidget(body, 1)
+
+        self.composer_hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        self.composer_hint.setObjectName("composerHint")
+        composer_layout.addWidget(self.composer_hint)
+        stage_layout.addWidget(composer, 0, Qt.AlignmentFlag.AlignHCenter)
+        stage_layout.addStretch(1)
+
+        root_layout.addWidget(stage, 1)
 
         self.setCentralWidget(root)
+
+        self.clock_label = QLabel()
+        self.clock_label.setObjectName("topMeta")
+        self.clock_timer = QTimer(self)
+        self.clock_timer.timeout.connect(self._update_clock)
+        self.clock_timer.start(1000)
+        self._update_clock()
+
+        self.runtime_status_value = QLabel("CHECKING")
+        self.runtime_status_value.setObjectName("runtimeStatusValue")
+        self.runtime_status_value.hide()
 
     @Slot()
     def _send_message(self) -> None:
@@ -475,6 +372,7 @@ class MainWindow(QMainWindow):
         self.message_input.clear()
         self.active_response = ""
         self.active_assistant_bubble = self.chat_view.add_message("assistant", "")
+        self._set_orb_state("thinking")
         self._set_generating(True)
 
         self.chat_thread = QThread(self)
@@ -574,8 +472,10 @@ class MainWindow(QMainWindow):
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
         ):
+            self._set_orb_state("idle")
             return
         self.last_voice_error = None
+        self._set_orb_state("listening")
         destination = self.voice_service.new_recording_path()
         self.voice_record_thread = QThread(self)
         self.voice_record_worker = VoiceRecordWorker(self.voice_service, destination)
@@ -594,6 +494,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _recording_started(self) -> None:
+        self._set_orb_state("listening")
         self.mic_button.setText("STOP")
         self.mic_button.setEnabled(True)
         self.mic_button.setProperty("recording", True)
@@ -604,12 +505,16 @@ class MainWindow(QMainWindow):
     @Slot()
     def _stop_recording(self) -> None:
         if self.voice_record_worker is not None:
+            self._set_orb_state("thinking")
             self.mic_button.setEnabled(False)
             self.voice_record_worker.stop()
             self._set_voice_status("PROCESSING LOCAL AUDIO…")
+        else:
+            self._set_orb_state("idle")
 
     @Slot(str)
     def _recording_finished(self, audio_path: str) -> None:
+        self._set_orb_state("thinking")
         self._set_voice_status("TRANSCRIBING WITH LOCAL WHISPER…")
         self.voice_transcription_thread = QThread(self)
         self.voice_transcription_worker = VoiceTranscriptionWorker(
@@ -635,6 +540,7 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
         self.last_voice_error = message
+        self._set_orb_state("error")
         self._set_voice_idle()
         self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_status("error")
@@ -697,6 +603,8 @@ class MainWindow(QMainWindow):
         self.message_input.setEnabled(self.chat_worker is None)
         self.send_button.setEnabled(self.chat_worker is None)
         self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        if self.chat_worker is None and self.speech_worker is None:
+            self._set_orb_state("idle")
 
     def _set_voice_status(self, message: str) -> None:
         self.composer_hint.setText(message)
@@ -708,7 +616,9 @@ class MainWindow(QMainWindow):
             or not response.strip()
             or self.speech_worker is not None
         ):
+            self._set_orb_state("idle")
             return
+        self._set_orb_state("speaking")
         self.speech_thread = QThread(self)
         self.speech_worker = SpeechWorker(self.voice_service, response)
         self.speech_worker.moveToThread(self.speech_thread)
@@ -723,10 +633,12 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _speech_finished(self) -> None:
+        self._set_orb_state("idle")
         self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
 
     @Slot(str)
     def _speech_failed(self, message: str) -> None:
+        self._set_orb_state("error")
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self.status_label.setText("Voice output unavailable")
         self.status_label.setToolTip(message)
@@ -747,6 +659,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str, str)
     def _chat_failed(self, message: str, kind: str) -> None:
+        self._set_orb_state("idle" if kind == "cancelled" else "error")
         if kind == "cancelled":
             if self.active_assistant_bubble and self.active_response:
                 self.active_assistant_bubble.set_content(self.active_response + "\n\n*Generation stopped.*")
@@ -772,6 +685,8 @@ class MainWindow(QMainWindow):
         self._set_voice_idle()
 
     def _set_generating(self, generating: bool) -> None:
+        if generating:
+            self._set_orb_state("thinking")
         self.send_button.setEnabled(not generating)
         self.stop_button.setEnabled(generating)
         self.stop_button.setVisible(generating)
@@ -826,6 +741,8 @@ class MainWindow(QMainWindow):
         self.status_label.setToolTip(message)
         self.runtime_status_value.setText("OFFLINE")
         self._set_status("error")
+        if self.chat_worker is None:
+            self._set_orb_state("error")
 
     def _connection_thread_finished(self) -> None:
         if self.connection_worker:
@@ -1093,6 +1010,19 @@ class MainWindow(QMainWindow):
         self.status_label.setProperty("status", status)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
+
+    def _set_orb_state(self, state: str) -> None:
+        self.core_widget.set_state(state)
+        labels = {
+            "idle": "READY // HOLD TO SPEAK"
+            if self.config.voice_input_enabled
+            else "READY // TYPE TO SPEAK",
+            "listening": "LISTENING // RELEASE TO SEND",
+            "thinking": "THINKING // LOCAL MODEL",
+            "speaking": "SPEAKING // LOCAL VOICE",
+            "error": "CHANNEL ERROR // CHECK STATUS",
+        }
+        self.core_status.setText(labels.get(state, labels["idle"]))
 
     def closeEvent(self, event) -> None:
         if (

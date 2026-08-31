@@ -1,0 +1,706 @@
+# Lura — Complete UI Redesign
+
+I want you to completely redesign the **existing Linux app UI from 0**.
+
+## ⚠️ CRITICAL RULE
+
+**THIS TASK IS DESIGN/UI ONLY.**
+
+Do NOT modify, remove, rewrite, or break:
+
+* Ollama integration
+* AI/model logic
+* tool calling
+* terminal execution
+* application control
+* file tools
+* voice processing/backend
+* WebSocket/API logic
+* database
+* permissions
+* existing functionality
+* existing assistant behavior
+
+You are redesigning the **visual experience and frontend only**.
+
+If something needs to be changed to connect the new UI to an existing function, preserve the existing function and only adapt the UI to it.
+
+Do not implement new backend functionality in this task.
+
+---
+
+# Design Direction
+
+The app should feel like a **futuristic personal AI assistant**, inspired by a very clean sci-fi/JARVIS-style interface.
+
+It should NOT look like a generic ChatGPT clone.
+
+It should feel:
+
+* premium
+* futuristic
+* minimal
+* cinematic
+* elegant
+* mysterious
+* extremely clean
+* responsive
+* alive
+
+The interface should have **very few visible elements**.
+
+The main focus of the application is the AI itself.
+
+---
+
+# Color System
+
+The entire application should be approximately:
+
+**90% black**
+**10% very dark blue**
+
+Primary background:
+
+* near-black
+* almost pure black
+
+Secondary colors:
+
+* extremely dark navy
+* subtle dark blue
+* blue glow
+
+Avoid:
+
+* bright blue UI everywhere
+* gradients covering the entire screen
+* colorful UI
+* purple
+* red
+* green
+* excessive borders
+* excessive cards
+
+Blue should mainly appear as a **subtle glow/accent**, not as the primary UI color.
+
+The application should feel predominantly black.
+
+---
+
+# 1. Startup / Welcome Screen
+
+When the application launches, do NOT immediately show the main interface.
+
+Create a cinematic animated startup screen.
+
+The screen should be almost entirely black.
+
+Center the content.
+
+Display:
+
+**"Welcome, Sir."**
+
+The text should appear with a smooth, elegant animation.
+
+Possible animation:
+
+```text
+black screen
+    ↓
+subtle fade in
+    ↓
+"Welcome, Sir."
+    ↓
+slight glow
+    ↓
+smooth transition to password screen
+```
+
+The animation should be fast and polished.
+
+Do not make it cheesy or overly dramatic.
+
+Use smooth easing.
+
+---
+
+# 2. Password Screen
+
+After the welcome animation, transition into a minimal password screen.
+
+Keep the screen almost completely black.
+
+Center:
+
+```text
+Enter Password
+```
+
+Then a minimal password input.
+
+The input should NOT look like a generic HTML/login form.
+
+Make it futuristic and minimal.
+
+For example:
+
+```text
+              Enter Password
+
+              • • • • • •
+```
+
+Use subtle animation when typing.
+
+Pressing Enter should continue into the main application using the **existing authentication/password functionality**.
+
+Do NOT change the authentication backend.
+
+Only redesign its UI.
+
+---
+
+# 3. Main Interface
+
+After authentication, the interface should become extremely minimal.
+
+The main focus should be a single animated orb.
+
+## AI Orb
+
+Place a large orb in the center of the screen.
+
+The orb should be approximately:
+
+* black
+* very dark blue
+* subtle blue glow
+* soft edges
+* cinematic lighting
+
+It should look like an **AI entity**, not a simple circle.
+
+The orb should have subtle animated movement.
+
+For example:
+
+* slow breathing/pulsing
+* subtle internal movement
+* soft light shifting
+* tiny changes in shape
+* subtle blue energy around the edges
+* very slow rotation-like movement
+
+Keep the animation elegant.
+
+Do NOT make it look like a flashy gaming RGB effect.
+
+---
+
+# 4. Orb States
+
+The orb should visually react to what the assistant is doing.
+
+Create different visual states.
+
+## Idle
+
+When nothing is happening:
+
+```text
+slow breathing animation
+very subtle blue glow
+minimal movement
+```
+
+The orb should feel alive but calm.
+
+---
+
+## Listening
+
+When the user is holding the orb to speak:
+
+```text
+orb expands slightly
+blue glow becomes stronger
+animation becomes more responsive
+```
+
+The orb should clearly communicate:
+
+**"I'm listening."**
+
+---
+
+## Thinking
+
+When the AI is processing:
+
+```text
+internal movement increases
+subtle waves/ripples
+slightly stronger glow
+```
+
+Do not use a generic loading spinner.
+
+The orb itself should communicate processing.
+
+---
+
+## Speaking
+
+This is VERY important.
+
+When the AI is talking, the orb should become significantly more animated.
+
+The orb should react dynamically to the AI's speech.
+
+Possible effects:
+
+* pulsing
+* expanding/contracting
+* subtle waves
+* glow intensity changing
+* internal energy movement
+* slight distortion
+* responsive movement based on speech amplitude if available
+
+The user should be able to immediately tell:
+
+**"Lura is speaking."**
+
+The animation should feel organic rather than like a visualizer with obvious bars.
+
+---
+
+# 5. Hold-to-Talk
+
+REMOVE the traditional microphone button.
+
+There should be **NO microphone button** in the main interface.
+
+Instead:
+
+## Hold the orb to talk.
+
+Interaction:
+
+```text
+Mouse down on orb
+        ↓
+Listening begins
+        ↓
+Orb changes to listening state
+        ↓
+User speaks
+        ↓
+Mouse released
+        ↓
+Recording stops
+        ↓
+AI processes request
+```
+
+The orb itself is the microphone control.
+
+Make this interaction feel natural.
+
+The orb should visually react immediately when pressed.
+
+---
+
+# 6. Chat Interface
+
+The chat should exist **under the orb**.
+
+Do NOT use a traditional ChatGPT-style sidebar.
+
+Do NOT make giant message cards.
+
+Do NOT fill the screen with chat bubbles.
+
+Instead, create a minimal conversation area underneath the orb.
+
+Example:
+
+```text
+                 ◉
+             AI ORB
+
+
+       You
+       Open Firefox.
+
+
+       Lura
+       Opening Firefox.
+
+
+       You
+       What's my GPU usage?
+```
+
+Keep the messages subtle.
+
+User messages and AI messages should be visually distinguishable without huge colored bubbles.
+
+Use:
+
+* small typography
+* lots of spacing
+* subtle opacity
+* smooth appearance animations
+
+The conversation should feel like part of the assistant rather than a separate chat application.
+
+---
+
+# 7. Text Input
+
+Keep a text input available for users who don't want to use voice.
+
+Place it near the bottom.
+
+It should be extremely minimal.
+
+Something similar to:
+
+```text
+        Ask Lura anything...
+```
+
+No huge rectangular input box.
+
+Use a subtle dark surface or barely visible border.
+
+Press Enter to send.
+
+---
+
+# 8. Wake Word System UI
+
+Add a new setting:
+
+## Wake Word
+
+Default:
+
+**Lura**
+
+The user must be able to change it.
+
+Examples:
+
+```text
+Wake Word
+
+● Enabled
+
+Wake word:
+[Lura]
+```
+
+The setting should allow:
+
+* enable/disable wake word
+* change wake word
+
+Do NOT hard-code the UI to only display Lura.
+
+The backend implementation should remain untouched in this design task.
+
+If wake-word functionality already exists, connect the new setting to the existing functionality.
+
+If it doesn't exist yet, ONLY create the UI/settings design for it.
+
+Do not implement the backend in this task.
+
+---
+
+# 9. Wake Word Behavior UI
+
+The intended experience is:
+
+```text
+Assistant idle
+        ↓
+Listening for wake word
+        ↓
+"Lura"
+        ↓
+Assistant wakes
+        ↓
+User can speak
+        ↓
+15-second active listening period
+        ↓
+No more speech
+        ↓
+Return to wake-word listening
+```
+
+The assistant should NOT require the user to say "Lura" before every single sentence.
+
+After waking up, it should remain active for approximately **15 seconds**.
+
+During this 15-second period, the UI should clearly show that the assistant is actively listening.
+
+The orb should reflect this state.
+
+After the period expires, return to the normal idle/wake-word state.
+
+Again:
+
+**Do not implement backend changes during this redesign.**
+
+Only make sure the UI has appropriate states for this behavior.
+
+---
+
+# 10. Wake Word Visual State
+
+When wake-word mode is active, show a very subtle indication somewhere in the interface.
+
+For example:
+
+```text
+Listening for "Lura"
+```
+
+But keep it extremely subtle.
+
+Do NOT put a giant "LISTENING" label on screen.
+
+The orb itself should communicate most of the state.
+
+---
+
+# 11. Settings
+
+Create a modern settings interface.
+
+It should NOT look like a generic settings window.
+
+Use a clean dark panel with sections.
+
+Suggested sections:
+
+### Assistant
+
+* Assistant name
+* Wake word
+* Wake word enabled
+* Active listening duration
+
+### Voice
+
+* Voice enabled
+* Voice selection
+* Speech recognition settings
+* Response volume
+
+### AI
+
+* Model
+* Ollama connection
+* AI settings
+
+### Appearance
+
+* Theme
+* Orb animation intensity
+* UI animation intensity
+
+### Security
+
+* Password
+* Authentication settings
+
+Do not change the underlying functionality.
+
+Only redesign the settings UI and expose existing/new UI options where appropriate.
+
+---
+
+# 12. Animations
+
+Animations are extremely important.
+
+Use smooth animations everywhere.
+
+Avoid:
+
+* instant state changes
+* harsh transitions
+* excessive bouncing
+* cartoonish effects
+
+Use:
+
+* fade
+* blur
+* scale
+* glow
+* opacity
+* smooth easing
+* subtle movement
+
+The application should feel **fluid**.
+
+---
+
+# 13. Window Design
+
+The application should feel like a modern standalone desktop application.
+
+Prefer:
+
+* dark background
+* subtle rounded corners where appropriate
+* minimal chrome
+* clean spacing
+* no unnecessary borders
+* no clutter
+
+If the environment supports it, make the main window feel immersive.
+
+---
+
+# 14. Overall Layout
+
+The main screen should roughly follow:
+
+```text
+┌──────────────────────────────────────────────┐
+│                                              │
+│                                              │
+│                    ◉                         │
+│                 LURA ORB                     │
+│                                              │
+│                                              │
+│          You: Open Firefox                   │
+│                                              │
+│          Lura: Done.                         │
+│                                              │
+│                                              │
+│                                              │
+│       Ask Lura anything...                   │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+The orb should remain the visual centerpiece.
+
+---
+
+# 15. Responsive Behavior
+
+The interface should adapt smoothly to different window sizes.
+
+The orb should scale appropriately.
+
+The chat should never overlap the orb.
+
+The input should remain accessible.
+
+Do not create a UI that only works at one fixed resolution.
+
+---
+
+# 16. Design Philosophy
+
+The key idea is:
+
+**Less UI. More presence.**
+
+I don't want:
+
+```text
+Sidebar
+Buttons everywhere
+Cards everywhere
+Menus everywhere
+Huge chat bubbles
+Traditional microphone button
+Traditional dashboard
+```
+
+I want:
+
+```text
+BLACK SCREEN
+
+        AI ORB
+
+     conversation
+
+       input
+```
+
+The AI orb is the identity of the application.
+
+It should feel like I'm interacting with an actual AI presence.
+
+---
+
+# 17. Final Visual Target
+
+Imagine opening the app:
+
+```text
+Black screen.
+
+"Welcome, Sir."
+
+Smooth transition.
+
+Password.
+
+Authenticate.
+
+Screen fades.
+
+A dark blue/black orb slowly appears.
+
+It breathes softly.
+
+The chat is underneath it.
+
+No microphone button.
+
+I hold the orb.
+
+It reacts and begins listening.
+
+I release it.
+
+The orb changes into its thinking state.
+
+Then it starts speaking.
+
+The orb becomes alive and reacts to its voice.
+
+When finished, it returns to its calm idle state.
+```
+
+That is the overall experience I want.
+
+## Most Important Requirement
+
+**Do not redesign the backend.**
+
+**Do not rewrite functionality.**
+
+**Do not modify Ollama integration.**
+
+**Do not modify tools.**
+
+**Do not modify authentication logic.**
+
+**Do not modify voice processing.**
+
+Only redesign the application UI/UX and animations, and prepare the interface for the wake-word states described above.

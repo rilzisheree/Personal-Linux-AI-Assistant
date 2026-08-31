@@ -1,11 +1,11 @@
-"""Conversation rendering widgets."""
+"""Minimal transcript rendering for the orb-centered experience."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtGui import QColor, QFont, QPixmap
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -20,13 +20,15 @@ from ..ollama import ChatMessage
 
 
 def _make_empty_state() -> QWidget:
-    state = QLabel("NO TRANSMISSION YET\n\nAsk Lura something to begin.")
+    state = QLabel("A quiet channel.\n\nAsk Lura anything.")
     state.setObjectName("emptyState")
     state.setAlignment(Qt.AlignmentFlag.AlignCenter)
     return state
 
 
 class MessageBubble(QFrame):
+    """A lightweight transcript row, intentionally not a chat card."""
+
     def __init__(
         self,
         role: str,
@@ -35,19 +37,15 @@ class MessageBubble(QFrame):
     ) -> None:
         super().__init__()
         self.role = role
-        object_name = {
-            "assistant": "assistantBubble",
-            "tool": "toolBubble",
-            "user": "userBubble",
-        }.get(role, "assistantBubble")
-        self.setObjectName(object_name)
+        self.setObjectName("messageRow")
+        self.setProperty("role", role)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.content_layout = QVBoxLayout(self)
-        self.content_layout.setContentsMargins(16, 12, 16, 12)
-        self.content_layout.setSpacing(6)
+        self.content_layout.setContentsMargins(8, 7, 8, 7)
+        self.content_layout.setSpacing(3)
 
-        label = QLabel({"user": "YOU", "tool": "TOOL"}.get(role, "LURA"))
+        label = QLabel({"user": "YOU", "tool": "SYSTEM"}.get(role, "LURA"))
         label.setObjectName("messageRole")
         self.content_layout.addWidget(label)
 
@@ -57,12 +55,11 @@ class MessageBubble(QFrame):
         self.body.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.body.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.body.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        self.body.setFont(QFont("Noto Sans", 14))
+        self.body.setFont(QFont("Noto Sans", 13))
         self.body.setMarkdown(content)
         self.body.document().contentsChanged.connect(self._resize_to_content)
         self.content_layout.addWidget(self.body)
         self.add_images(images)
-
         self._resize_to_content()
 
     def set_content(self, content: str) -> None:
@@ -83,8 +80,8 @@ class MessageBubble(QFrame):
             image.setAlignment(Qt.AlignmentFlag.AlignLeft)
             image.setPixmap(
                 pixmap.scaled(
-                    620,
-                    420,
+                    700,
+                    440,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
@@ -94,9 +91,9 @@ class MessageBubble(QFrame):
         self._resize_to_content()
 
     def _resize_to_content(self) -> None:
-        height = int(self.body.document().size().height()) + 12
-        self.body.setMinimumHeight(max(32, height))
-        self.body.setMaximumHeight(max(32, height))
+        height = int(self.body.document().size().height()) + 10
+        self.body.setMinimumHeight(max(28, height))
+        self.body.setMaximumHeight(max(28, height))
 
 
 class ChatView(QScrollArea):
@@ -104,11 +101,12 @@ class ChatView(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         self.container = QWidget()
         self.layout = QVBoxLayout(self.container)
-        self.layout.setContentsMargins(12, 12, 12, 12)
-        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(2)
         self.layout.addStretch(1)
         self.setWidget(self.container)
 
