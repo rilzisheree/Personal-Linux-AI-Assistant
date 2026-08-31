@@ -44,6 +44,13 @@ class AppConfig:
     autostart_enabled: bool = False
     telegram_enabled: bool = False
     telegram_allowed_user_id: str = ""
+    assistant_name: str = "Lura"
+    wake_word_enabled: bool = False
+    wake_word: str = "Lura"
+    active_listening_duration: int = 15
+    theme: str = "obsidian"
+    orb_intensity: int = 65
+    animation_intensity: int = 70
 
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
@@ -56,6 +63,9 @@ class AppConfig:
         self.tts_engine = self.tts_engine.strip().lower()
         self.tts_voice = self.tts_voice.strip()
         self.telegram_allowed_user_id = str(self.telegram_allowed_user_id).strip()
+        self.assistant_name = self.assistant_name.strip() or "Lura"
+        self.wake_word = self.wake_word.strip() or self.assistant_name
+        self.theme = self.theme.strip().lower()
         self.validate()
 
     def validate(self) -> None:
@@ -81,6 +91,26 @@ class AppConfig:
             raise ValueError("Autostart setting must be true or false.")
         if not isinstance(self.telegram_enabled, bool):
             raise ValueError("Telegram setting must be true or false.")
+        if not isinstance(self.wake_word_enabled, bool):
+            raise ValueError("Wake-word setting must be true or false.")
+        if (
+            isinstance(self.active_listening_duration, bool)
+            or not isinstance(self.active_listening_duration, int)
+            or not 1 <= self.active_listening_duration <= 60
+        ):
+            raise ValueError("Active listening duration must be between 1 and 60 seconds.")
+        if self.theme not in {"obsidian"}:
+            raise ValueError("Theme must be obsidian.")
+        for value, label in (
+            (self.orb_intensity, "Orb intensity"),
+            (self.animation_intensity, "Motion intensity"),
+        ):
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or not 1 <= value <= 100
+            ):
+                raise ValueError(f"{label} must be between 1 and 100.")
         if self.telegram_allowed_user_id:
             try:
                 if int(self.telegram_allowed_user_id) <= 0:
@@ -138,6 +168,19 @@ class AppConfig:
                 ),
                 telegram_allowed_user_id=str(
                     raw.get("telegram_allowed_user_id", "")
+                ),
+                assistant_name=str(raw.get("assistant_name", "Lura")),
+                wake_word_enabled=_bool_setting(
+                    raw.get("wake_word_enabled", False), False
+                ),
+                wake_word=str(raw.get("wake_word", "Lura")),
+                active_listening_duration=_int_setting(
+                    raw.get("active_listening_duration", 15), 15
+                ),
+                theme=str(raw.get("theme", "obsidian")),
+                orb_intensity=_int_setting(raw.get("orb_intensity", 65), 65),
+                animation_intensity=_int_setting(
+                    raw.get("animation_intensity", 70), 70
                 ),
             )
         except FileNotFoundError:

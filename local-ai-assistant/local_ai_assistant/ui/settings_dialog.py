@@ -50,7 +50,7 @@ class SettingsDialog(QDialog):
         tabs = QTabWidget()
         tabs.setObjectName("settingsTabs")
         layout.addWidget(tabs, 1)
-        tabs.addTab(self._assistant_page(), "Assistant")
+        tabs.addTab(self._assistant_page(config), "Assistant")
         tabs.addTab(self._voice_page(config), "Voice")
         tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
         tabs.addTab(self._security_page(), "Security")
@@ -94,21 +94,21 @@ class SettingsDialog(QDialog):
         form.setVerticalSpacing(10)
         return group, form
 
-    def _assistant_page(self) -> QWidget:
+    def _assistant_page(self, config: AppConfig) -> QWidget:
         page, layout = self._page_layout(
             "Assistant presence",
             "These presentation controls prepare the orb and wake-word experience.",
         )
         group, form = self._group("ASSISTANT")
-        self.assistant_name_input = QLineEdit("Lura")
+        self.assistant_name_input = QLineEdit(config.assistant_name)
         self.assistant_name_input.setPlaceholderText("Lura")
         self.wake_word_enabled = QCheckBox("Enable wake-word listening")
-        self.wake_word_enabled.setChecked(False)
-        self.wake_word_input = QLineEdit("Lura")
+        self.wake_word_enabled.setChecked(config.wake_word_enabled)
+        self.wake_word_input = QLineEdit(config.wake_word)
         self.wake_word_input.setPlaceholderText("Lura")
         self.active_listening_duration = QSpinBox()
         self.active_listening_duration.setRange(1, 60)
-        self.active_listening_duration.setValue(15)
+        self.active_listening_duration.setValue(config.active_listening_duration)
         self.active_listening_duration.setSuffix(" seconds")
         form.addRow("Assistant name", self.assistant_name_input)
         form.addRow("", self.wake_word_enabled)
@@ -119,13 +119,16 @@ class SettingsDialog(QDialog):
         appearance, appearance_form = self._group("APPEARANCE")
         self.theme_input = QComboBox()
         self.theme_input.addItem("Obsidian / blue glow", "obsidian")
+        self.theme_input.setCurrentIndex(
+            max(0, self.theme_input.findData(config.theme))
+        )
         self.orb_intensity_input = QSpinBox()
         self.orb_intensity_input.setRange(1, 100)
-        self.orb_intensity_input.setValue(65)
+        self.orb_intensity_input.setValue(config.orb_intensity)
         self.orb_intensity_input.setSuffix("%")
         self.animation_intensity_input = QSpinBox()
         self.animation_intensity_input.setRange(1, 100)
-        self.animation_intensity_input.setValue(70)
+        self.animation_intensity_input.setValue(config.animation_intensity)
         self.animation_intensity_input.setSuffix("%")
         appearance_form.addRow("Theme", self.theme_input)
         appearance_form.addRow("Orb intensity", self.orb_intensity_input)
@@ -311,6 +314,13 @@ class SettingsDialog(QDialog):
             autostart_enabled=self.autostart_enabled.isChecked(),
             telegram_enabled=self.telegram_enabled.isChecked(),
             telegram_allowed_user_id=self.telegram_user_id_input.text(),
+            assistant_name=self.assistant_name_input.text(),
+            wake_word_enabled=self.wake_word_enabled.isChecked(),
+            wake_word=self.wake_word_input.text(),
+            active_listening_duration=self.active_listening_duration.value(),
+            theme=str(self.theme_input.currentData()),
+            orb_intensity=self.orb_intensity_input.value(),
+            animation_intensity=self.animation_intensity_input.value(),
         )
 
     def telegram_token(self) -> str:

@@ -12,7 +12,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .config import AppConfig
+from .config import AppConfig, DEFAULT_TTS_VOICE
 
 
 class VoiceError(RuntimeError):
@@ -239,27 +239,45 @@ class VoiceService:
         if self.config.tts_engine == "piper":
             executable = shutil.which("piper")
             model = Path(self.config.tts_voice).expanduser()
+            if executable and model.is_file():
+                self._run_checked(
+                    [executable, "--model", str(model), "--output_file", str(audio_path)],
+                    120,
+                    "Piper",
+                    input_text=text,
+                )
+                if not audio_path.is_file() or audio_path.stat().st_size == 0:
+                    raise VoiceError("Piper completed without producing an audio file.")
+                return
+
+            fallback = shutil.which("espeak-ng") or shutil.which("espeak")
+            if fallback:
+                self._synthesize_espeak(
+                    fallback, text, audio_path, DEFAULT_TTS_VOICE
+                )
+                return
             if not executable:
-                raise VoiceError("Piper is not installed. Install piper or choose espeak-ng.")
-            if not model.is_file():
-                raise VoiceError("Piper needs a local voice model file path in Voice settings.")
-            self._run_checked(
-                [executable, "--model", str(model), "--output_file", str(audio_path)],
-                120,
-                "Piper",
-                input_text=text,
+                raise VoiceError(
+                    "Piper is not installed and no eSpeak fallback is available. "
+                    "Install Piper or eSpeak-NG."
+                )
+            raise VoiceError(
+                "The selected Piper voice model was not found and no eSpeak "
+                "fallback is available."
             )
-            if not audio_path.is_file() or audio_path.stat().st_size == 0:
-                raise VoiceError("Piper completed without producing an audio file.")
-            return
 
         executable = shutil.which("espeak-ng") or shutil.which("espeak")
         if not executable:
             raise VoiceError(
                 "No local TTS engine found. Install espeak-ng or configure Piper."
             )
+        self._synthesize_espeak(executable, text, audio_path, self.config.tts_voice)
+
+    def _synthesize_espeak(
+        self, executable: str, text: str, audio_path: Path, voice: str
+    ) -> None:
         self._run_checked(
-            [executable, "-w", str(audio_path), "-v", self.config.tts_voice, "--", text],
+            [executable, "-w", str(audio_path), "-v", voice, "--", text],
             120,
             "eSpeak",
         )

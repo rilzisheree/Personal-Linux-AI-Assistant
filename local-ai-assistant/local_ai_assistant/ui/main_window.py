@@ -899,37 +899,31 @@ class MainWindow(QMainWindow):
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
         previous_autostart = self.config.autostart_enabled
-        next_config = dialog.config()
-        token = dialog.telegram_token()
-        if next_config.telegram_enabled and not token and not load_telegram_token():
-            QMessageBox.warning(
-                self,
-                "Telegram token required",
-                "Add the Telegram bot token before enabling Telegram.",
-            )
-            return
-        if token:
-            try:
-                save_telegram_token(token)
-            except (OSError, ValueError) as error:
+        try:
+            next_config = dialog.config()
+            token = dialog.telegram_token()
+            if next_config.telegram_enabled and not token and not load_telegram_token():
                 QMessageBox.warning(
                     self,
-                    "Telegram token not saved",
-                    f"Lura could not save the Telegram token:\n{error}",
+                    "Telegram token required",
+                    "Add the Telegram bot token before enabling Telegram.",
                 )
                 return
-        try:
+            if token:
+                save_telegram_token(token)
             set_autostart_enabled(next_config.autostart_enabled)
-        except OSError as error:
+            next_config.save()
+        except (OSError, ValueError, TypeError) as error:
             QMessageBox.warning(
                 self,
-                "Autostart not updated",
-                f"Lura could not update the Linux autostart entry:\n{error}",
+                "Settings not saved",
+                f"Lura could not apply these settings:\n{error}",
             )
-            next_config.autostart_enabled = previous_autostart
+            return
+        if next_config.autostart_enabled != previous_autostart:
+            self.config.autostart_enabled = next_config.autostart_enabled
         self._stop_telegram_bot()
         self.config = next_config
-        self.config.save()
         self._sync_quit_behavior()
         self.client = OllamaClient(self.config.ollama_url)
         self.service = AssistantService(self.client)
