@@ -18,7 +18,7 @@ server and executes a small set of permission-gated tools.
 - Python 3.10+
 - PySide6 6.7+
 - Ollama HTTP API with newline-delimited streaming
-- Local JSON persistence for conversations and settings
+- Local SQLite persistence for conversations and JSON persistence for settings
 
 ## Where things live
 
@@ -37,8 +37,9 @@ server and executes a small set of permission-gated tools.
   is never parsed as fake JSON.
 - Every non-safe tool is blocked until the Qt UI receives an explicit Allow
   decision.
-- Conversation history remains local JSON for the current desktop milestone;
-  SQLite and a remote API are later phases from the original handoff.
+- Conversation history remains local SQLite for the current desktop milestone;
+  the first launch imports the previous local JSON format, while a remote API is
+  still a later phase from the original handoff.
 
 ## Product
 

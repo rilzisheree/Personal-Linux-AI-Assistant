@@ -10,7 +10,7 @@ started with New chat. Phase 2 adds Ollama-native tool calls with explicit
 permission gates. Phase 3 adds Linux integration for Hyprland windows,
 screenshots, local files, and pointer/keyboard input. The interface uses a
 futuristic local-intelligence HUD visual language, with the supplied Lura core
-artwork as its empty-state focus. History is stored as JSON on the local
+artwork as its empty-state focus. History is stored in SQLite on the local
 machine only. Voice input and output use optional local host tools; there is
 still no cloud provider, web UI, or phone client.
 
@@ -113,10 +113,11 @@ Settings are stored locally at:
 ```
 
 The Ollama and voice preferences are stored locally. No credentials or prompts
-are written to the settings file. Conversation history is stored separately at
-`$XDG_DATA_HOME/local-ai-assistant/conversations.json`, or
-`~/.local/share/local-ai-assistant/conversations.json` when `XDG_DATA_HOME` is
-not set.
+are written to the settings file. Conversation history is stored in SQLite at
+`$XDG_DATA_HOME/local-ai-assistant/conversations.db`, or
+`~/.local/share/local-ai-assistant/conversations.db` when `XDG_DATA_HOME` is
+not set. On first launch after upgrading, an existing `conversations.json` file
+is imported automatically and left untouched as a fallback copy.
 
 The context size is a local model setting, not a cloud account quota. It limits
 how much conversation history and tool context Ollama sends to the model in one

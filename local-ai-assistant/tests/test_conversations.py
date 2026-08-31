@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,7 +25,7 @@ class ConversationTests(unittest.TestCase):
 
     def test_save_and_load_round_trip(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            store = ConversationStore(Path(directory) / "history.json")
+            store = ConversationStore(Path(directory) / "history.db")
             conversation = Conversation.create()
             conversation.update_messages(
                 [ChatMessage("user", "Hello"), ChatMessage("assistant", "Hi there")]
@@ -59,7 +60,7 @@ class ConversationTests(unittest.TestCase):
 
     def test_tool_call_messages_round_trip(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            store = ConversationStore(Path(directory) / "history.json")
+            store = ConversationStore(Path(directory) / "history.db")
             conversation = Conversation.create()
             conversation.update_messages(
                 [
