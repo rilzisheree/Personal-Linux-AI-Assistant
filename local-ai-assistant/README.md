@@ -59,8 +59,9 @@ Available endpoints:
 - `GET /api/models`
 - `GET /api/health`
 
-There are no email accounts or registration flows. Remote API requests only
-receive chat responses. Desktop tools such as terminal
+There are no email accounts or registration flows. Remote API requests can use
+the allowlisted safe `open_app` tool so the phone can launch an installed
+application on the trusted Linux machine. Desktop tools such as terminal
 commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
 input remain available only inside the trusted desktop app with its existing
 permission dialogs.

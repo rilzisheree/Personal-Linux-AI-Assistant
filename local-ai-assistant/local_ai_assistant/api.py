@@ -16,9 +16,12 @@ from .config import DEFAULT_CONTEXT_SIZE, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
 from .errors import format_ollama_error
 from .ollama import ChatMessage, OllamaClient, OllamaProtocolError
 from .api_store import ApiStore, SESSION_TTL_SECONDS
+from .tools import PermissionLevel, ToolCallResult, ToolManager
 
 
 MAX_REQUEST_BYTES = 1_000_000
+MAX_REMOTE_TOOL_ROUNDS = 4
+REMOTE_TOOL_NAMES = frozenset({"open_app"})
 
 
 class ApiHttpError(Exception):
@@ -222,39 +225,97 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         cancel_event = threading.Event()
         response_parts: list[str] = []
         client = OllamaClient(self._api_server().ollama_url)
+        tool_manager = ToolManager()
+        remote_tools = [
+            schema
+            for schema in tool_manager.definitions_for_ollama()
+            if schema.get("function", {}).get("name") in REMOTE_TOOL_NAMES
+        ]
+        messages = list(conversation.messages)
+        tool_rounds = 0
         try:
             self._write_sse("started", {"conversation_id": conversation_id})
-            for event in client.stream_chat(
-                conversation.messages,
-                model.strip(),
-                cancel_event,
-                tools=[],
-                context_size=self._api_server().context_size,
-            ):
-                if event.tool_calls:
-                    raise OllamaProtocolError(
-                        "Remote tool execution is disabled; use the trusted desktop app "
-                        "for local tools."
+            while True:
+                cycle_response: list[str] = []
+                tool_calls = []
+                for event in client.stream_chat(
+                    messages,
+                    model.strip(),
+                    cancel_event,
+                    tools=remote_tools,
+                    context_size=self._api_server().context_size,
+                ):
+                    if event.content:
+                        cycle_response.append(event.content)
+                        response_parts.append(event.content)
+                        self._write_sse("token", {"content": event.content})
+                    tool_calls.extend(event.tool_calls)
+                    if event.done:
+                        break
+
+                if cancel_event.is_set():
+                    return
+                if not tool_calls:
+                    response = "".join(response_parts)
+                    if response:
+                        store.append_message(
+                            user_id,
+                            conversation_id,
+                            ChatMessage("assistant", response),
+                        )
+                    self._write_sse(
+                        "done",
+                        {
+                            "conversation_id": conversation_id,
+                            "message": response,
+                        },
                     )
-                if event.content:
-                    response_parts.append(event.content)
-                    self._write_sse("token", {"content": event.content})
-                if event.done:
-                    break
-            response = "".join(response_parts)
-            if response:
-                store.append_message(
-                    user_id,
-                    conversation_id,
-                    ChatMessage("assistant", response),
+                    return
+
+                tool_rounds += 1
+                if tool_rounds > MAX_REMOTE_TOOL_ROUNDS:
+                    raise OllamaProtocolError(
+                        f"Stopped after {MAX_REMOTE_TOOL_ROUNDS} remote tool rounds."
+                    )
+
+                messages.append(
+                    ChatMessage("assistant", "".join(cycle_response), tuple(tool_calls))
                 )
-            self._write_sse(
-                "done",
-                {
-                    "conversation_id": conversation_id,
-                    "message": response,
-                },
-            )
+                for tool_call in tool_calls:
+                    if tool_call.name not in REMOTE_TOOL_NAMES:
+                        result = ToolCallResult(
+                            False,
+                            f"Remote tool '{tool_call.name}' is not enabled.",
+                        )
+                    elif (
+                        tool_manager.permission_for(
+                            tool_call.name, tool_call.arguments
+                        )
+                        != PermissionLevel.SAFE
+                    ):
+                        result = ToolCallResult(
+                            False,
+                            f"Remote tool '{tool_call.name}' requires local approval.",
+                        )
+                    else:
+                        result = tool_manager.execute(
+                            tool_call.name, tool_call.arguments, approved=True
+                        )
+                    self._write_sse(
+                        "tool",
+                        {
+                            "name": tool_call.name,
+                            "success": result.success,
+                            "message": result.content,
+                        },
+                    )
+                    messages.append(
+                        ChatMessage(
+                            "tool",
+                            result.content,
+                            name=tool_call.name,
+                        )
+                    )
         except (BrokenPipeError, ConnectionResetError):
             cancel_event.set()
         except Exception as error:

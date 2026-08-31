@@ -12,7 +12,8 @@ from unittest.mock import patch
 
 from local_ai_assistant.api import ApiServer
 from local_ai_assistant.api_store import ApiStore
-from local_ai_assistant.ollama import StreamEvent
+from local_ai_assistant.ollama import StreamEvent, ToolCall
+from local_ai_assistant.tools import ToolCallResult
 
 
 class FakeOllamaClient:
@@ -26,10 +27,34 @@ class FakeOllamaClient:
         assert messages
         assert model == "qwen3.5:4b"
         assert not cancel_event.is_set()
-        assert tools == []
+        assert len(tools) == 1
+        assert tools[0]["function"]["name"] == "open_app"
         assert context_size == 8192
         yield StreamEvent(content="Hello")
         yield StreamEvent(content=" from the API")
+        yield StreamEvent(done=True)
+
+
+class RemoteToolOllamaClient:
+    calls = 0
+
+    def __init__(self, _url: str, timeout: float = 8.0) -> None:
+        self.timeout = timeout
+
+    def stream_chat(self, messages, model, cancel_event, tools, context_size):
+        assert messages
+        assert model == "qwen3.5:4b"
+        assert not cancel_event.is_set()
+        assert len(tools) == 1
+        assert tools[0]["function"]["name"] == "open_app"
+        if type(self).calls == 0:
+            type(self).calls += 1
+            yield StreamEvent(
+                tool_calls=(ToolCall("open_app", {"app": "firefox"}, "call-1"),)
+            )
+            yield StreamEvent(done=True)
+            return
+        yield StreamEvent(content="Firefox opened.")
         yield StreamEvent(done=True)
 
 
@@ -205,6 +230,36 @@ class ApiTests(unittest.TestCase):
         messages = payload["conversation"]["messages"]
         self.assertEqual([message["role"] for message in messages], ["user", "assistant"])
         self.assertEqual(messages[1]["content"], "Hello from the API")
+
+    @patch("local_ai_assistant.api.OllamaClient", RemoteToolOllamaClient)
+    @patch(
+        "local_ai_assistant.api.ToolManager.execute",
+        return_value=ToolCallResult(True, "firefox opened."),
+    )
+    def test_remote_open_app_tool_round_trip(self, _execute) -> None:
+        RemoteToolOllamaClient.calls = 0
+        cookie = self.login()
+        status, payload, _ = self.request(
+            "POST",
+            "/api/conversations",
+            {"title": "Remote tools"},
+            cookie=cookie,
+        )
+        self.assertEqual(status, 201)
+        conversation_id = payload["conversation"]["id"]
+
+        status, payload, _ = self.request(
+            "POST",
+            f"/api/conversations/{conversation_id}/messages",
+            {"content": "Open Firefox on my computer."},
+            cookie=cookie,
+        )
+        self.assertEqual(status, 200)
+        self.assertIn(
+            'event: tool\ndata: {"name":"open_app","success":true,"message":"firefox opened."}',
+            payload,
+        )
+        self.assertIn('"message":"Firefox opened."', payload)
 
     def test_invalid_password_and_account_registration_are_rejected(self) -> None:
         status, payload, headers = self.request(
