@@ -14,6 +14,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -26,6 +27,7 @@ from .tools import PermissionLevel, ToolCallResult, ToolManager
 TELEGRAM_MAX_MESSAGE_LENGTH = 4096
 TELEGRAM_POLL_TIMEOUT = 30
 TELEGRAM_RETRY_DELAY = 5
+TELEGRAM_STREAM_UPDATE_INTERVAL = 1.0
 MAX_TOOL_ROUNDS = 4
 MAX_HISTORY_MESSAGES = 40
 DEFAULT_OLLAMA_TIMEOUT = 120.0
@@ -147,9 +149,19 @@ class TelegramClient:
     def send_chat_action(self, chat_id: int, action: str = "typing") -> None:
         self.call("sendChatAction", {"chat_id": chat_id, "action": action})
 
-    def send_message(self, chat_id: int, text: str) -> None:
+    def send_message(self, chat_id: int, text: str) -> dict | None:
+        first_message: dict | None = None
         for chunk in _message_chunks(text):
-            self.call("sendMessage", {"chat_id": chat_id, "text": chunk})
+            result = self.call("sendMessage", {"chat_id": chat_id, "text": chunk})
+            if first_message is None and isinstance(result, dict):
+                first_message = result
+        return first_message
+
+    def edit_message_text(self, chat_id: int, message_id: int, text: str) -> None:
+        self.call(
+            "editMessageText",
+            {"chat_id": chat_id, "message_id": message_id, "text": text},
+        )
 
 
 @dataclass(frozen=True)
@@ -210,7 +222,12 @@ class LocalAssistant:
         ]
         self.histories: dict[int, list[ChatMessage]] = {}
 
-    def reply(self, chat_id: int, content: str) -> str:
+    def reply(
+        self,
+        chat_id: int,
+        content: str,
+        on_chunk: Callable[[str], None] | None = None,
+    ) -> str:
         messages = self.histories.setdefault(chat_id, [])
         messages.append(ChatMessage("user", content.strip()))
         response_parts: list[str] = []
@@ -228,6 +245,8 @@ class LocalAssistant:
                 if event.content:
                     cycle_parts.append(event.content)
                     response_parts.append(event.content)
+                    if on_chunk is not None:
+                        on_chunk(event.content)
                 tool_calls.extend(event.tool_calls)
                 if event.done:
                     break
@@ -274,6 +293,81 @@ class LocalAssistant:
     def _trim_history(messages: list[ChatMessage]) -> None:
         if len(messages) > MAX_HISTORY_MESSAGES:
             del messages[:-MAX_HISTORY_MESSAGES]
+
+
+class TelegramResponseStreamer:
+    """Show an Ollama response in Telegram while it is still generating.
+
+    Telegram does not support a streaming response body. A placeholder message
+    is sent immediately and then edited at a safe cadence while Ollama emits
+    tokens. The final edit also handles Telegram's 4096-character limit.
+    """
+
+    def __init__(self, telegram: TelegramClient, chat_id: int) -> None:
+        self.telegram = telegram
+        self.chat_id = chat_id
+        self.message_id: int | None = None
+        self.text = ""
+        self._last_update_at = 0.0
+        self._last_published_text = ""
+        self._updates_disabled = False
+
+    def start(self) -> None:
+        result = self.telegram.send_message(self.chat_id, "Lura is thinking…")
+        if isinstance(result, dict) and isinstance(result.get("message_id"), int):
+            self.message_id = result["message_id"]
+            self._last_update_at = time.monotonic()
+
+    def append(self, chunk: str) -> None:
+        if not chunk:
+            return
+        self.text += chunk
+        self._publish(force=False)
+
+    def finish(self, text: str) -> None:
+        self.text = text
+        if self.message_id is None or self._updates_disabled:
+            self.telegram.send_message(self.chat_id, text)
+            return
+
+        chunks = _message_chunks(text)
+        try:
+            if chunks[0] != self._last_published_text:
+                self.telegram.edit_message_text(
+                    self.chat_id,
+                    self.message_id,
+                    chunks[0],
+                )
+                self._last_published_text = chunks[0]
+            for chunk in chunks[1:]:
+                self.telegram.send_message(self.chat_id, chunk)
+        except TelegramApiError:
+            # The model response is more important than a failed live edit.
+            # Try delivering it as a normal message instead.
+            self.message_id = None
+            self._updates_disabled = True
+            self.telegram.send_message(self.chat_id, text)
+
+    def _publish(self, force: bool) -> None:
+        if self.message_id is None or self._updates_disabled:
+            return
+        now = time.monotonic()
+        if (
+            not force
+            and now - self._last_update_at < TELEGRAM_STREAM_UPDATE_INTERVAL
+        ):
+            return
+        visible_text = self.text[:TELEGRAM_MAX_MESSAGE_LENGTH] or "Lura is thinking…"
+        try:
+            self.telegram.edit_message_text(
+                self.chat_id,
+                self.message_id,
+                visible_text,
+            )
+            self._last_published_text = visible_text
+            self._last_update_at = now
+        except TelegramApiError:
+            self._updates_disabled = True
 
 
 def _message_chunks(text: str) -> list[str]:
@@ -329,11 +423,13 @@ def _handle_message(
         return
 
     telegram.send_chat_action(chat_id)
+    streamer = TelegramResponseStreamer(telegram, chat_id)
     try:
-        response = assistant.reply(chat_id, text)
+        streamer.start()
+        response = assistant.reply(chat_id, text, on_chunk=streamer.append)
     except Exception as error:
         response = f"Lura could not complete that request: {format_ollama_error(error)}"
-    telegram.send_message(chat_id, response)
+    streamer.finish(response)
 
 
 class TelegramBotRunner:

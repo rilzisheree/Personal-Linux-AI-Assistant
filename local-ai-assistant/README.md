@@ -73,6 +73,8 @@ For a simpler phone control channel, Lura includes a Telegram long-polling bot
 that runs directly on the same Linux machine as Ollama. This avoids Railway,
 Cloudflare, browser CORS, and inbound firewall ports. Telegram messages do pass
 through Telegram's servers; this is not an end-to-end encrypted Secret Chat.
+Responses are sent immediately as a thinking message and updated while Ollama
+generates the answer, rather than waiting for the full response to finish.
 
 The local bot intentionally accepts private messages only from one configured
 Telegram numeric user ID and initially exposes only the safe `open_app` tool.
