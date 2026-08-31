@@ -65,6 +65,15 @@ class VoiceServiceTests(unittest.TestCase):
         process.send_signal.assert_called_once_with(signal.SIGINT)
         process.terminate.assert_not_called()
 
+    def test_finish_accepts_pw_record_exit_one_with_valid_wav(self) -> None:
+        service = VoiceService(AppConfig())
+        process = Mock(returncode=1)
+        process.stderr.read.return_value = "recording.wav"
+        with tempfile.TemporaryDirectory() as directory:
+            audio = Path(directory) / "recording.wav"
+            audio.write_bytes(b"RIFF" + b"\0" * 100)
+            service.finish_recording(process, audio)
+
     def test_piper_receives_response_text_on_stdin(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             model = Path(directory) / "voice.onnx"

@@ -90,13 +90,20 @@ class VoiceService:
             if self._last_recorder_command
             else "unknown recorder command"
         )
-        if process.returncode not in (0, -signal.SIGINT, -signal.SIGTERM):
+        audio_is_valid = destination.is_file() and destination.stat().st_size >= 44
+        stopped_with_signal = process.returncode in (
+            0,
+            1,
+            -signal.SIGINT,
+            -signal.SIGTERM,
+        )
+        if not stopped_with_signal or (process.returncode == 1 and not audio_is_valid):
             raise VoiceError(
                 f"Microphone recording failed with exit code {process.returncode}. "
                 f"Command: {command_text}."
                 + (f" Recorder output: {detail[:400]}" if detail else "")
             )
-        if not destination.is_file() or destination.stat().st_size < 44:
+        if not audio_is_valid:
             raise VoiceError(
                 "The microphone produced no usable audio. Check the selected "
                 f"input device. Command: {command_text}."
