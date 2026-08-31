@@ -42,7 +42,7 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
-packages = ["dbus", "ffmpeg-full", "fontconfig", "libglvnd", "libxcrypt", "libxkbcommon", "zstd", "ffmpeg"]
+packages = ["dbus", "ffmpeg", "ffmpeg-full", "fontconfig", "libglvnd", "libxcrypt", "libxkbcommon", "zstd"]
 
 [[ports]]
 localPort = 8000

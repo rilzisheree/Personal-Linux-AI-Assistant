@@ -5,4 +5,5 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
     "openai-whisper>=20250625",
+    "piper-tts>=1.7.0",
 ]
