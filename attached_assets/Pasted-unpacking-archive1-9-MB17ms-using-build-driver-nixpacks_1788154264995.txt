@@ -1,0 +1,54 @@
+unpacking archive1.9 MB17ms
+using build driver nixpacks-v1.41.0
+uploading snapshot940.7 KB29ms
+ 
+╔════════════════════ Nixpacks v1.41.0 ════════════════════╗
+║ setup      │ nodejs_18, pnpm-9_x, openssl                ║
+║──────────────────────────────────────────────────────────║
+║ install    │ pnpm i --frozen-lockfile                    ║
+║──────────────────────────────────────────────────────────║
+║ build      │ pnpm --filter @workspace/lura-web run build ║
+║──────────────────────────────────────────────────────────║
+║ start      │ pnpm --filter @workspace/lura-web run serve ║
+╚══════════════════════════════════════════════════════════╝
+ 
+ 
+Saved output to:
+  snapshot-target-unpack
+load build definition from Dockerfile
+1ms
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+354ms
+load .dockerignore
+0ms
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "LURA_API_PASSWORD") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ARG "SESSION_SECRET") (line 11)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "LURA_API_PASSWORD") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "SESSION_SECRET") (line 12)(https://docs.docker.com/go/dockerfile/rule/secrets-used-in-arg-or-env/)
+ details: Sensitive data should not be used in the ARG or ENV commands
+UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 18)(https://docs.docker.com/go/dockerfile/rule/undefined-var/)
+ details: Variables should be defined before their use
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+23ms
+load build context
+0ms
+WORKDIR /app/ cached
+0ms
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+232ms
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+34s
+61 store paths deleted, 560.93 MiB freed
+scheduling build on Metal builder "builder-xwmaod"
+COPY . /app/.
+283ms
+RUN pnpm i --frozen-lockfile
+959ms
+Scope: all 9 workspace projects
+ ERR_PNPM_LOCKFILE_CONFIG_MISMATCH  Cannot proceed with the frozen installation. The current "overrides" configuration doesn't match the value found in the lockfile
+
+Update your lockfile using "pnpm install --no-frozen-lockfile"
+Build Failed: build daemon returned an error < failed to solve: process "/bin/bash -ol pipefail -c pnpm i --frozen-lockfile" did not complete successfully: exit code: 1 >
