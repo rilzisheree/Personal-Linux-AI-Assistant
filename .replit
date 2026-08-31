@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "python-3.12", "web"]
+modules = ["python-3.12", "nodejs-20", "web"]
 
 [deployment]
 router = "application"
@@ -43,3 +43,7 @@ timeoutMs = 20000
 [nix]
 channel = "stable-25_05"
 packages = ["dbus", "fontconfig", "libglvnd", "libxcrypt", "libxkbcommon", "zstd"]
+
+[[ports]]
+localPort = 8000
+externalPort = 80
