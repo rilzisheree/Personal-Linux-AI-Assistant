@@ -45,6 +45,7 @@ from ..workers import (
     TelegramBotWorker,
     VoiceRecordWorker,
     VoiceTranscriptionWorker,
+    WakeWordWorker,
 )
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
@@ -77,6 +78,8 @@ class MainWindow(QMainWindow):
         self.voice_record_worker: VoiceRecordWorker | None = None
         self.voice_transcription_thread: QThread | None = None
         self.voice_transcription_worker: VoiceTranscriptionWorker | None = None
+        self.wake_word_thread: QThread | None = None
+        self.wake_word_worker: WakeWordWorker | None = None
         self.speech_thread: QThread | None = None
         self.speech_worker: SpeechWorker | None = None
         self.last_voice_error: str | None = None
@@ -87,6 +90,8 @@ class MainWindow(QMainWindow):
         self._quitting = False
         self._focus_mode = False
         self.tray_icon: QSystemTrayIcon | None = None
+        self._wake_command_recording = False
+        self._wake_command_pending = False
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -104,6 +109,7 @@ class MainWindow(QMainWindow):
         self._persist_conversations()
         self._refresh_connection()
         self._start_telegram_bot()
+        self._start_wake_word_listener()
 
     def _setup_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -493,20 +499,26 @@ class MainWindow(QMainWindow):
             self.chat_view.add_message("tool", content, image_paths)
 
     @Slot()
-    def _start_recording(self) -> None:
+    def _start_recording(self, automatic: bool = False) -> None:
         if (
             not self.config.voice_input_enabled
             or self.chat_worker is not None
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
+            or self.wake_word_worker is not None
         ):
             self._set_orb_state("idle")
             return
         self.last_voice_error = None
+        self._wake_command_recording = automatic
         self._set_orb_state("listening")
         destination = self.voice_service.new_recording_path()
         self.voice_record_thread = QThread(self)
-        self.voice_record_worker = VoiceRecordWorker(self.voice_service, destination)
+        self.voice_record_worker = VoiceRecordWorker(
+            self.voice_service,
+            destination,
+            self.config.active_listening_duration if automatic else None,
+        )
         self.voice_record_worker.moveToThread(self.voice_record_thread)
         self.voice_record_thread.started.connect(self.voice_record_worker.run)
         self.voice_record_worker.started.connect(self._recording_started)
@@ -591,6 +603,23 @@ class MainWindow(QMainWindow):
     def _transcription_finished(self, text: str, audio_path: str) -> None:
         self._remove_recording(audio_path)
         self._set_voice_idle()
+        if self.config.wake_word_enabled and not self._wake_command_recording:
+            wake_word = self.config.wake_word.casefold()
+            lowered = text.casefold()
+            if wake_word not in lowered:
+                self._set_voice_status(
+                    f"WAKE WORD REQUIRED // SAY {self.config.wake_word}"
+                )
+                self._start_wake_word_listener()
+                return
+            start = lowered.find(wake_word)
+            text = text[start + len(wake_word):].strip(" ,.!?:;-")
+            if not text:
+                self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
+                self._wake_command_pending = True
+                self._start_pending_wake_command()
+                return
+        self._wake_command_recording = False
         self.message_input.setText(text)
         self._send_message()
 
@@ -598,9 +627,12 @@ class MainWindow(QMainWindow):
     def _transcription_failed(self, message: str, audio_path: str) -> None:
         self._remove_recording(audio_path)
         self._set_voice_idle()
+        self._wake_command_recording = False
         self._set_status("error")
         self.status_label.setText("Voice transcription failed")
         self.status_label.setToolTip(message)
+        if self.config.wake_word_enabled:
+            self._start_wake_word_listener()
 
     def _transcription_thread_finished(self) -> None:
         if self.voice_transcription_worker:
@@ -630,12 +662,66 @@ class MainWindow(QMainWindow):
         )
         self.message_input.setEnabled(self.chat_worker is None)
         self.send_button.setEnabled(self.chat_worker is None)
-        self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        if self.config.wake_word_enabled:
+            self._set_voice_status(
+                f"WAKE LISTENING // SAY {self.config.wake_word}"
+            )
+        else:
+            self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         if self.chat_worker is None and self.speech_worker is None:
             self._set_orb_state("idle")
 
     def _set_voice_status(self, message: str) -> None:
         self.composer_hint.setText(message)
+
+    def _start_wake_word_listener(self) -> None:
+        if (
+            not self.config.wake_word_enabled
+            or not self.config.voice_input_enabled
+            or self.wake_word_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+            or self.chat_worker is not None
+        ):
+            return
+        self.wake_word_thread = QThread(self)
+        self.wake_word_worker = WakeWordWorker(
+            self.voice_service,
+            self.config.wake_word,
+        )
+        self.wake_word_worker.moveToThread(self.wake_word_thread)
+        self.wake_word_thread.started.connect(self.wake_word_worker.run)
+        self.wake_word_worker.detected.connect(self._wake_word_detected)
+        self.wake_word_worker.failed.connect(self._wake_word_failed)
+        self.wake_word_worker.detected.connect(self.wake_word_thread.quit)
+        self.wake_word_worker.failed.connect(self.wake_word_thread.quit)
+        self.wake_word_thread.finished.connect(self._wake_word_thread_finished)
+        self.wake_word_thread.start()
+        self._set_voice_status(f"WAKE LISTENING // SAY {self.config.wake_word}")
+
+    @Slot()
+    def _wake_word_detected(self) -> None:
+        self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
+        self._wake_command_pending = True
+
+    @Slot(str)
+    def _wake_word_failed(self, message: str) -> None:
+        self._set_voice_status(f"WAKE LISTENER ERROR // {message[:180]}")
+        self.status_label.setToolTip(message)
+
+    def _wake_word_thread_finished(self) -> None:
+        if self.wake_word_worker:
+            self.wake_word_worker.deleteLater()
+        if self.wake_word_thread:
+            self.wake_word_thread.deleteLater()
+        self.wake_word_worker = None
+        self.wake_word_thread = None
+        self._start_pending_wake_command()
+
+    def _start_pending_wake_command(self) -> None:
+        if self._wake_command_pending and self.wake_word_worker is None:
+            self._wake_command_pending = False
+            QTimer.singleShot(0, lambda: self._start_recording(automatic=True))
 
     def _speak_response(self, response: str) -> None:
         if (
@@ -678,6 +764,7 @@ class MainWindow(QMainWindow):
             self.speech_thread.deleteLater()
         self.speech_worker = None
         self.speech_thread = None
+        self._start_wake_word_listener()
 
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
@@ -1126,6 +1213,7 @@ class MainWindow(QMainWindow):
             (self.connection_thread, self.connection_worker),
             (self.voice_record_thread, self.voice_record_worker),
             (self.voice_transcription_thread, self.voice_transcription_worker),
+            (self.wake_word_thread, self.wake_word_worker),
             (self.speech_thread, self.speech_worker),
             (self.telegram_thread, self.telegram_worker),
         )

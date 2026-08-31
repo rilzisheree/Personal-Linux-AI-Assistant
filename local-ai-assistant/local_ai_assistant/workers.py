@@ -217,10 +217,16 @@ class VoiceRecordWorker(QObject):
     finished = Signal(str)
     failed = Signal(str)
 
-    def __init__(self, service: VoiceService, destination: Path) -> None:
+    def __init__(
+        self,
+        service: VoiceService,
+        destination: Path,
+        duration_seconds: int | None = None,
+    ) -> None:
         super().__init__()
         self.service = service
         self.destination = destination
+        self.duration_seconds = duration_seconds
         self._stop_event = threading.Event()
         self._process: subprocess.Popen | None = None
 
@@ -231,8 +237,11 @@ class VoiceRecordWorker(QObject):
             process = self.service.start_recorder(self.destination)
             self._process = process
             self.started.emit()
-            while process.poll() is None and not self._stop_event.wait(0.1):
-                pass
+            if self.duration_seconds is None:
+                while process.poll() is None and not self._stop_event.wait(0.1):
+                    pass
+            else:
+                self._stop_event.wait(self.duration_seconds)
             if process.poll() is None:
                 self.service.stop_recorder(process)
             try:
@@ -255,6 +264,74 @@ class VoiceRecordWorker(QObject):
 
     def cancel(self) -> None:
         self.stop()
+
+
+class WakeWordWorker(QObject):
+    """Continuously inspect short local audio chunks for the wake phrase."""
+
+    detected = Signal()
+    failed = Signal(str)
+
+    def __init__(
+        self,
+        service: VoiceService,
+        wake_word: str,
+        chunk_seconds: float = 3.0,
+    ) -> None:
+        super().__init__()
+        self.service = service
+        self.wake_word = wake_word.casefold().strip()
+        self.chunk_seconds = chunk_seconds
+        self._stop_event = threading.Event()
+        self._process: subprocess.Popen | None = None
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            while not self._stop_event.is_set():
+                audio_path = self.service.new_recording_path()
+                try:
+                    process = self.service.start_recorder(audio_path)
+                    self._process = process
+                    if self._stop_event.wait(self.chunk_seconds):
+                        self.service.stop_recorder(process)
+                        try:
+                            process.wait(timeout=3)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait()
+                        return
+                    self.service.stop_recorder(process)
+                    try:
+                        process.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
+                    self.service.finish_recording(process, audio_path)
+                    transcript = self.service.transcribe(audio_path).casefold()
+                    if self.wake_word and self.wake_word in transcript:
+                        self.detected.emit()
+                        return
+                except VoiceError as error:
+                    # An empty chunk is normal while waiting. A missing
+                    # recorder/Whisper backend is not, and should be visible.
+                    if "No speech was detected" not in str(error):
+                        self.failed.emit(str(error))
+                        return
+                finally:
+                    self._process = None
+                    try:
+                        audio_path.unlink()
+                    except OSError:
+                        pass
+        except Exception as error:
+            self.failed.emit(str(error))
+
+    def cancel(self) -> None:
+        self._stop_event.set()
+        process = self._process
+        if process is not None and process.poll() is None:
+            self.service.stop_recorder(process)
 
 
 class VoiceTranscriptionWorker(QObject):
