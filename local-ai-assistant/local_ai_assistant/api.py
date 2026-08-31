@@ -166,7 +166,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
             )
         token, expires_at = self._api_server().store.create_session()
         self._send_json(
-            {"authenticated": True},
+            {"authenticated": True, "session_token": token},
             headers={"Set-Cookie": self._session_cookie(token, expires_at)},
         )
 
@@ -353,8 +353,9 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
 
     def _add_cors_headers(self) -> None:
         allowed_origin = os.environ.get("LURA_ALLOWED_ORIGIN", "").strip()
-        if allowed_origin:
-            self.send_header("Access-Control-Allow-Origin", allowed_origin)
+        request_origin = self.headers.get("Origin", "").strip()
+        if allowed_origin and request_origin == allowed_origin:
+            self.send_header("Access-Control-Allow-Origin", request_origin)
             self.send_header("Access-Control-Allow-Credentials", "true")
             self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")

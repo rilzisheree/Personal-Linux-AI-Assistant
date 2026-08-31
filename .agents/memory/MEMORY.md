@@ -1,3 +1,4 @@
 - [Headless Qt runtime](qt-runtime.md) — PySide6 smoke tests need the native Qt libraries declared in `.replit` on this workspace.
 - [PipeWire recorder exit status](pipewire-recorder.md) — `pw-record` can return exit code 1 after a user stop while still producing a valid WAV; validate the file before failing.
 - [Local Piper setup](local-piper-setup.md) — On Arch, install `piper-tts` inside Lura’s `.venv`; system Python is protected by PEP 668.
+- [Railway local API bridge](railway-local-api.md) — A Railway HTTPS frontend needs a secure tunnel to a local API; cross-origin sessions use a bearer-token fallback.

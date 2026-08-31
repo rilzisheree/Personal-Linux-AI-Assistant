@@ -65,6 +65,34 @@ commands, file mutations, screenshots, Hyprland control, and keyboard/mouse
 input remain available only inside the trusted desktop app with its existing
 permission dialogs.
 
+## Railway-hosted web companion with a local API
+
+The web companion in `artifacts/lura-web` can be hosted as a static Railway
+service while the API and Ollama remain on your Linux computer. The repository
+root includes `railway.json` with the build and start commands. In the Railway
+service, set:
+
+- `BASE_PATH=/`
+- `VITE_LURA_API_URL=https://your-secure-tunnel.example`
+
+`VITE_LURA_API_URL` is the API origin only; do not append `/api`. Railway cannot
+reach `localhost` on your computer, so the local API must be reachable through
+an HTTPS tunnel or private network gateway. Do not expose the raw API port to
+the public internet.
+
+When the Railway origin is known, run the local API with an exact CORS origin:
+
+```bash
+LURA_ALLOWED_ORIGIN=https://your-app.up.railway.app \
+LURA_COOKIE_SECURE=1 \
+python -m local_ai_assistant.api
+```
+
+Use a strong `SESSION_SECRET` and `LURA_API_PASSWORD` for any API reachable
+through a tunnel. The web client uses the API's expiring browser session
+token for cross-origin requests and keeps it in session storage; same-origin
+local use continues to work with the HttpOnly cookie.
+
 ## Requirements
 
 - Linux with Python 3.10 or newer

@@ -38,17 +38,53 @@ export class LuraApiError extends Error {
   }
 }
 
+const SESSION_TOKEN_KEY = 'lura_session_token';
+const configuredApiBaseUrl = (import.meta.env.VITE_LURA_API_URL || '').trim().replace(/\/+$/, '');
+
+function apiUrl(path: string): string {
+  return `${configuredApiBaseUrl}${path}`;
+}
+
+function getSessionToken(): string | null {
+  try {
+    return window.sessionStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setSessionToken(token: string): void {
+  try {
+    window.sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+  } catch {
+    // The HttpOnly cookie remains available when session storage is blocked.
+  }
+}
+
+function clearSessionToken(): void {
+  try {
+    window.sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  } catch {
+    // There is nothing else to clear when session storage is blocked.
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response;
+  const headers = new Headers(init?.headers);
+  headers.set('Accept', 'application/json');
+  if (init?.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  const sessionToken = getSessionToken();
+  if (sessionToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${sessionToken}`);
+  }
   try {
-    response = await fetch(path, {
+    response = await fetch(apiUrl(path), {
       credentials: 'include',
       ...init,
-      headers: {
-        Accept: 'application/json',
-        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-        ...init?.headers,
-      },
+      headers,
     });
   } catch {
     throw new LuraApiError(
@@ -59,6 +95,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (response.status === 401 || response.status === 403) {
+    clearSessionToken();
     throw new LuraApiError('Your Lura session has expired. Please sign in again.', response.status, 'unauthorized');
   }
   if (!response.ok) {
@@ -83,15 +120,21 @@ export function getHealth() {
   return request<HealthResponse>('/api/health');
 }
 
-export function login(password: string) {
-  return request<{ authenticated: true }>('/api/auth/login', {
+export async function login(password: string) {
+  const result = await request<{ authenticated: true; session_token?: string }>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ password }),
   });
+  if (result.session_token) setSessionToken(result.session_token);
+  return result;
 }
 
-export function logout() {
-  return request<{ ok: true }>('/api/auth/logout', { method: 'POST' });
+export async function logout() {
+  try {
+    return await request<{ ok: true }>('/api/auth/logout', { method: 'POST' });
+  } finally {
+    clearSessionToken();
+  }
 }
 
 export function getMe() {
@@ -130,11 +173,17 @@ export async function streamMessage(
   signal?: AbortSignal,
 ) {
   let response: Response;
+  const headers = new Headers({
+    Accept: 'text/event-stream',
+    'Content-Type': 'application/json',
+  });
+  const sessionToken = getSessionToken();
+  if (sessionToken) headers.set('Authorization', `Bearer ${sessionToken}`);
   try {
-    response = await fetch(`/api/conversations/${encodeURIComponent(id)}/messages`, {
+    response = await fetch(apiUrl(`/api/conversations/${encodeURIComponent(id)}/messages`), {
       method: 'POST',
       credentials: 'include',
-      headers: { Accept: 'text/event-stream', 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
       signal,
     });
@@ -144,6 +193,7 @@ export async function streamMessage(
   }
 
   if (response.status === 401 || response.status === 403) {
+    clearSessionToken();
     throw new LuraApiError('Your Lura session has expired. Please sign in again.', response.status, 'unauthorized');
   }
   if (!response.ok || !response.body) {

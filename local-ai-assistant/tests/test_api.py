@@ -63,6 +63,8 @@ class ApiTests(unittest.TestCase):
         path: str,
         payload: dict | None = None,
         cookie: str | None = None,
+        authorization: str | None = None,
+        origin: str | None = None,
     ) -> tuple[int, dict | str, dict[str, str]]:
         body = json.dumps(payload).encode("utf-8") if payload is not None else None
         request = Request(
@@ -71,6 +73,8 @@ class ApiTests(unittest.TestCase):
             headers={
                 **({"Content-Type": "application/json"} if body else {}),
                 **({"Cookie": cookie} if cookie else {}),
+                **({"Authorization": authorization} if authorization else {}),
+                **({"Origin": origin} if origin else {}),
             },
             method=method,
         )
@@ -125,6 +129,47 @@ class ApiTests(unittest.TestCase):
         status, payload, _ = self.request("GET", "/api/me", cookie=cookie)
         self.assertEqual(status, 401)
         self.assertIn("Authentication is required", payload["error"])
+
+    def test_bearer_sessions_and_credentialed_cors(self) -> None:
+        railway_origin = "https://lura-web.example"
+        with patch.dict(os.environ, {"LURA_ALLOWED_ORIGIN": railway_origin}):
+            status, payload, headers = self.request(
+                "POST",
+                "/api/auth/login",
+                {"password": self.PASSWORD},
+                origin=railway_origin,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(headers["Access-Control-Allow-Origin"], railway_origin)
+            self.assertEqual(headers["Access-Control-Allow-Credentials"], "true")
+            self.assertIsInstance(payload, dict)
+            session_token = payload["session_token"]
+
+            status, payload, headers = self.request(
+                "GET",
+                "/api/me",
+                authorization=f"Bearer {session_token}",
+                origin=railway_origin,
+            )
+            self.assertEqual(status, 200)
+            self.assertEqual(payload["user"]["authenticated"], True)
+            self.assertEqual(headers["Access-Control-Allow-Origin"], railway_origin)
+
+            status, _, headers = self.request(
+                "OPTIONS",
+                "/api/me",
+                origin=railway_origin,
+            )
+            self.assertEqual(status, 204)
+            self.assertEqual(headers["Access-Control-Allow-Origin"], railway_origin)
+
+            status, _, headers = self.request(
+                "GET",
+                "/api/health",
+                origin="https://not-allowed.example",
+            )
+            self.assertEqual(status, 200)
+            self.assertNotIn("Access-Control-Allow-Origin", headers)
 
     @patch("local_ai_assistant.api.OllamaClient", FakeOllamaClient)
     def test_conversations_stream_and_persist(self) -> None:
