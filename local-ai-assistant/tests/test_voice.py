@@ -110,14 +110,9 @@ class VoiceServiceTests(unittest.TestCase):
                 with self.assertRaisesRegex(VoiceError, "without producing"):
                     service._synthesize("Hello locally", Path(directory) / "out.wav")
 
-    def test_piper_falls_back_to_espeak_when_piper_is_unavailable(self) -> None:
+    def test_piper_does_not_fall_back_to_espeak(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "out.wav"
-
-            def fake_run(command, **kwargs):
-                output.write_bytes(b"RIFF")
-                return Mock(returncode=0, stdout="", stderr="")
-
             service = VoiceService(
                 AppConfig(tts_engine="piper", tts_voice="~/missing.onnx")
             )
@@ -126,15 +121,10 @@ class VoiceServiceTests(unittest.TestCase):
                 side_effect=lambda name: (
                     "/usr/bin/espeak-ng" if name == "espeak-ng" else None
                 ),
-            ), patch(
-                "local_ai_assistant.voice.subprocess.run",
-                side_effect=fake_run,
             ) as run_mock:
-                service._synthesize("Hello locally", output)
-
-        command = run_mock.call_args.args[0]
-        self.assertEqual(command[0], "/usr/bin/espeak-ng")
-        self.assertEqual(command[4], "en-gb+m3")
+                with self.assertRaisesRegex(VoiceError, "Piper is not installed"):
+                    service._synthesize("Hello locally", output)
+                run_mock.assert_called_once_with("piper")
 
 
 if __name__ == "__main__":

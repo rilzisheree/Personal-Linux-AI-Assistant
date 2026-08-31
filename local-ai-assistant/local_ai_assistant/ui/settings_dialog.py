@@ -181,7 +181,7 @@ class SettingsDialog(QDialog):
                 for index, (_, voice) in enumerate(TTS_VOICE_PRESETS)
                 if voice == config.tts_voice
             ),
-            len(TTS_VOICE_PRESETS),
+            0,
         )
         self.tts_voice_input.setCurrentIndex(preset_index)
         self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
