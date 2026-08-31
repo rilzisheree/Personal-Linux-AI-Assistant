@@ -64,6 +64,7 @@ class MainWindow(QMainWindow):
         self.api_thread = None
         self.telegram_thread: QThread | None = None
         self.telegram_worker: TelegramBotWorker | None = None
+        self._telegram_restart_pending = False
         self.conversation_store = ConversationStore()
         self.conversations = self.conversation_store.load()
         if not self.conversations:
@@ -74,6 +75,7 @@ class MainWindow(QMainWindow):
         self.chat_worker: ChatWorker | None = None
         self.connection_thread: QThread | None = None
         self.connection_worker: ConnectionWorker | None = None
+        self._connection_refresh_pending = False
         self.voice_record_thread: QThread | None = None
         self.voice_record_worker: VoiceRecordWorker | None = None
         self.voice_transcription_thread: QThread | None = None
