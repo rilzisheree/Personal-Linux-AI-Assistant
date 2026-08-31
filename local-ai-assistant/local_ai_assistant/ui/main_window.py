@@ -219,6 +219,14 @@ class MainWindow(QMainWindow):
         self.status_label.setProperty("status", "checking")
         top_layout.addWidget(self.status_label)
 
+        self.telegram_status_label = QLabel("TELEGRAM OFF")
+        self.telegram_status_label.setObjectName("telegramStatusLabel")
+        self.telegram_status_label.setProperty("status", "disabled")
+        self.telegram_status_label.setToolTip(
+            "Telegram phone control is disabled in Settings."
+        )
+        top_layout.addWidget(self.telegram_status_label)
+
         self.clock_label = QLabel()
         self.clock_label.setObjectName("topMeta")
         top_layout.addWidget(self.clock_label)
@@ -829,14 +837,20 @@ class MainWindow(QMainWindow):
 
     def _start_telegram_bot(self) -> None:
         if not self.config.telegram_enabled:
-            self.status_label.setToolTip("Telegram: disabled")
+            self._set_telegram_badge(
+                "TELEGRAM OFF",
+                "disabled",
+                "Telegram phone control is disabled in Settings.",
+            )
             return
         if self.telegram_worker is not None:
             return
         token = load_telegram_token()
         if not token:
-            self.status_label.setToolTip(
-                "Telegram: open Settings and add your BotFather token."
+            self._set_telegram_badge(
+                "TELEGRAM SETUP",
+                "error",
+                "Open Settings and add your BotFather token.",
             )
             return
         try:
@@ -848,9 +862,18 @@ class MainWindow(QMainWindow):
                 context_size=self.config.ollama_context_size,
             )
         except (TypeError, ValueError) as error:
-            self.status_label.setToolTip(f"Telegram configuration error: {error}")
+            self._set_telegram_badge(
+                "TELEGRAM ERROR",
+                "error",
+                f"Telegram configuration error: {error}",
+            )
             return
 
+        self._set_telegram_badge(
+            "TELEGRAM CONNECTING",
+            "checking",
+            "Connecting to Telegram…",
+        )
         self.telegram_thread = QThread(self)
         self.telegram_worker = TelegramBotWorker(telegram_config)
         self.telegram_worker.moveToThread(self.telegram_thread)
@@ -864,15 +887,35 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _telegram_connected(self, username: str) -> None:
-        self.status_label.setToolTip(f"Telegram: connected as @{username}")
+        self._set_telegram_badge(
+            "TELEGRAM ON",
+            "connected",
+            f"Connected to Telegram as @{username}.",
+        )
 
     @Slot(str)
     def _telegram_status(self, message: str) -> None:
-        self.status_label.setToolTip(f"Telegram: {message}")
+        self._set_telegram_badge("TELEGRAM ON", "connected", f"Telegram: {message}")
 
     @Slot(str)
     def _telegram_failed(self, message: str) -> None:
-        self.status_label.setToolTip(f"Telegram error: {message}")
+        self._set_telegram_badge(
+            "TELEGRAM ERROR",
+            "error",
+            f"Telegram error: {message}",
+        )
+
+    def _set_telegram_badge(
+        self,
+        text: str,
+        status: str,
+        tooltip: str,
+    ) -> None:
+        self.telegram_status_label.setText(text)
+        self.telegram_status_label.setProperty("status", status)
+        self.telegram_status_label.setToolTip(tooltip)
+        self.telegram_status_label.style().unpolish(self.telegram_status_label)
+        self.telegram_status_label.style().polish(self.telegram_status_label)
 
     def _telegram_thread_finished(self) -> None:
         if self.telegram_worker:

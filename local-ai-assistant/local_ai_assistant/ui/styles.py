@@ -47,6 +47,25 @@ QLabel#statusLabel[status="error"] {
     border-color: #8b5060;
     color: #ff9db5;
 }
+QLabel#telegramStatusLabel {
+    border: 1px solid #34495a;
+    border-radius: 10px;
+    color: #7891a0;
+    padding: 4px 8px;
+    font-size: 10px;
+}
+QLabel#telegramStatusLabel[status="connected"] {
+    border-color: #26795f;
+    color: #8edcb7;
+}
+QLabel#telegramStatusLabel[status="checking"] {
+    border-color: #20566d;
+    color: #78bfd4;
+}
+QLabel#telegramStatusLabel[status="error"] {
+    border-color: #8b5060;
+    color: #ff9db5;
+}
 QWidget#leftRail {
     background: transparent;
 }

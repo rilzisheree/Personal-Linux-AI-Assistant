@@ -294,13 +294,20 @@ def _handle_message(
     assistant: LocalAssistant,
     allowed_user_id: int,
     message: dict,
+    on_status=None,
 ) -> None:
     sender = message.get("from")
     chat = message.get("chat")
     text = message.get("text")
     if not isinstance(sender, dict) or not isinstance(chat, dict) or not isinstance(text, str):
         return
-    if sender.get("id") != allowed_user_id or chat.get("type") != "private":
+    if chat.get("type") != "private":
+        return
+    if sender.get("id") != allowed_user_id:
+        if on_status is not None:
+            on_status(
+                "Ignored a private Telegram message from a different user ID."
+            )
         return
     chat_id = chat.get("id")
     if not isinstance(chat_id, int):
@@ -374,6 +381,7 @@ class TelegramBotRunner:
                             self.assistant,
                             self.config.allowed_user_id,
                             message,
+                            on_status=on_status,
                         )
             except TelegramApiError:
                 if self._stop_event.is_set():
