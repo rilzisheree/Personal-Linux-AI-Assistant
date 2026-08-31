@@ -19,13 +19,19 @@ from ..config import AppConfig, TTS_ENGINES, TTS_VOICE_PRESETS
 
 
 class SettingsDialog(QDialog):
-    def __init__(self, config: AppConfig, parent=None) -> None:
+    def __init__(
+        self,
+        config: AppConfig,
+        parent=None,
+        *,
+        telegram_token_present: bool = False,
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setMinimumWidth(460)
 
         layout = QVBoxLayout(self)
-        intro = QLabel("Configure the local Ollama connection.")
+        intro = QLabel("Configure Lura's local services and preferences.")
         intro.setStyleSheet("color: #9ba9b5;")
         layout.addWidget(intro)
 
@@ -153,6 +159,46 @@ class SettingsDialog(QDialog):
         desktop_hint.setStyleSheet("color: #6f8593;")
         layout.addWidget(desktop_hint)
 
+        telegram_label = QLabel("Telegram")
+        telegram_label.setStyleSheet("color: #9ba9b5; font-weight: 700;")
+        layout.addWidget(telegram_label)
+
+        telegram_form = QFormLayout()
+        telegram_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.telegram_enabled = QCheckBox("Enable Telegram phone control")
+        self.telegram_enabled.setChecked(config.telegram_enabled)
+        self.telegram_enabled.setToolTip(
+            "Runs the Telegram listener inside Lura so your phone can send "
+            "messages and safe local actions to this PC."
+        )
+        self.telegram_token_input = QLineEdit()
+        self.telegram_token_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.telegram_token_input.setPlaceholderText(
+            "Saved securely — leave blank to keep it"
+            if telegram_token_present
+            else "Paste a BotFather token"
+        )
+        self.telegram_token_input.setToolTip(
+            "Stored in a local permission-restricted file, never in settings.json."
+        )
+        self.telegram_user_id_input = QLineEdit(config.telegram_allowed_user_id)
+        self.telegram_user_id_input.setPlaceholderText("e.g. 5606923881")
+        self.telegram_user_id_input.setToolTip(
+            "Your numeric Telegram user ID from @userinfobot."
+        )
+        telegram_form.addRow("", self.telegram_enabled)
+        telegram_form.addRow("Bot token", self.telegram_token_input)
+        telegram_form.addRow("Your user ID", self.telegram_user_id_input)
+        layout.addLayout(telegram_form)
+
+        telegram_hint = QLabel(
+            "Use @BotFather for the bot token and @userinfobot for your numeric "
+            "user ID. Lura accepts private messages from that ID only."
+        )
+        telegram_hint.setWordWrap(True)
+        telegram_hint.setStyleSheet("color: #6f8593;")
+        layout.addWidget(telegram_hint)
+
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: #ffaaa7;")
         self.error_label.hide()
@@ -179,7 +225,12 @@ class SettingsDialog(QDialog):
             tts_voice=self._selected_voice(),
             background_mode_enabled=self.background_mode_enabled.isChecked(),
             autostart_enabled=self.autostart_enabled.isChecked(),
+            telegram_enabled=self.telegram_enabled.isChecked(),
+            telegram_allowed_user_id=self.telegram_user_id_input.text(),
         )
+
+    def telegram_token(self) -> str:
+        return self.telegram_token_input.text().strip()
 
     def _selected_voice(self) -> str:
         preset = self.tts_voice_input.currentData()

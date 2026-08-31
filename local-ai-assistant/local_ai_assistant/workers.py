@@ -12,6 +12,7 @@ from PySide6.QtCore import QObject, Signal, Slot
 from .assistant_core import AssistantService
 from .errors import OllamaCancelledError, format_ollama_error
 from .ollama import ChatMessage, OllamaClient, ToolCall
+from .telegram_bot import TelegramBotRunner, TelegramConfig
 from .tools import PermissionLevel, ToolManager, ToolCallResult, ToolConfirmationRequired
 from .voice import VoiceError, VoiceService
 
@@ -175,6 +176,38 @@ class ConnectionWorker(QObject):
 
     def cancel(self) -> None:
         self.client.cancel_active_request()
+
+
+class TelegramBotWorker(QObject):
+    """Run the Telegram long-polling bridge away from the Qt UI thread."""
+
+    connected = Signal(str)
+    status = Signal(str)
+    failed = Signal(str)
+    stopped = Signal()
+
+    def __init__(self, config: TelegramConfig) -> None:
+        super().__init__()
+        self.config = config
+        self.runner: TelegramBotRunner | None = None
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            self.runner = TelegramBotRunner(self.config)
+            self.runner.run(
+                on_connected=self.connected.emit,
+                on_status=self.status.emit,
+            )
+        except Exception as error:
+            if self.runner is None or not self.runner._stop_event.is_set():
+                self.failed.emit(format_ollama_error(error))
+        finally:
+            self.stopped.emit()
+
+    def cancel(self) -> None:
+        if self.runner is not None:
+            self.runner.stop()
 
 
 class VoiceRecordWorker(QObject):

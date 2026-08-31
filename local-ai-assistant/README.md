@@ -77,7 +77,9 @@ through Telegram's servers; this is not an end-to-end encrypted Secret Chat.
 The local bot intentionally accepts private messages only from one configured
 Telegram numeric user ID and initially exposes only the safe `open_app` tool.
 The bot token must be stored on the Linux machine, not committed to the
-repository or pasted into chat.
+repository or pasted into chat. The desktop app can save the token and start
+the listener from Settings; enabling Lura's existing autostart option starts
+the Telegram listener as well.
 
 Set these values in the Linux terminal before starting the bot:
 

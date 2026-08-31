@@ -42,6 +42,8 @@ class AppConfig:
     tts_voice: str = DEFAULT_TTS_VOICE
     background_mode_enabled: bool = False
     autostart_enabled: bool = False
+    telegram_enabled: bool = False
+    telegram_allowed_user_id: str = ""
 
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
@@ -53,6 +55,7 @@ class AppConfig:
         self.whisper_language = self.whisper_language.strip() or "auto"
         self.tts_engine = self.tts_engine.strip().lower()
         self.tts_voice = self.tts_voice.strip()
+        self.telegram_allowed_user_id = str(self.telegram_allowed_user_id).strip()
         self.validate()
 
     def validate(self) -> None:
@@ -76,6 +79,20 @@ class AppConfig:
             raise ValueError("Background mode setting must be true or false.")
         if not isinstance(self.autostart_enabled, bool):
             raise ValueError("Autostart setting must be true or false.")
+        if not isinstance(self.telegram_enabled, bool):
+            raise ValueError("Telegram setting must be true or false.")
+        if self.telegram_allowed_user_id:
+            try:
+                if int(self.telegram_allowed_user_id) <= 0:
+                    raise ValueError
+            except ValueError as error:
+                raise ValueError(
+                    "Telegram user ID must be a positive numeric Telegram ID."
+                ) from error
+        if self.telegram_enabled and not self.telegram_allowed_user_id:
+            raise ValueError(
+                "Enter your Telegram numeric user ID before enabling Telegram."
+            )
         if not self.whisper_model:
             raise ValueError("Whisper model cannot be empty.")
         if self.tts_engine not in TTS_ENGINES:
@@ -115,6 +132,12 @@ class AppConfig:
                 ),
                 autostart_enabled=_bool_setting(
                     raw.get("autostart_enabled", False), False
+                ),
+                telegram_enabled=_bool_setting(
+                    raw.get("telegram_enabled", False), False
+                ),
+                telegram_allowed_user_id=str(
+                    raw.get("telegram_allowed_user_id", "")
                 ),
             )
         except FileNotFoundError:

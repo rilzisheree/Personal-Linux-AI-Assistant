@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -26,7 +28,31 @@ TELEGRAM_POLL_TIMEOUT = 30
 TELEGRAM_RETRY_DELAY = 5
 MAX_TOOL_ROUNDS = 4
 MAX_HISTORY_MESSAGES = 40
+DEFAULT_OLLAMA_TIMEOUT = 120.0
 REMOTE_TOOL_NAMES = frozenset({"open_app"})
+TELEGRAM_TOKEN_PATH = (
+    Path.home() / ".config" / "local-ai-assistant" / "telegram-bot.token"
+)
+
+
+def load_telegram_token() -> str:
+    try:
+        return TELEGRAM_TOKEN_PATH.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        return ""
+    except OSError as error:
+        raise RuntimeError(f"Could not read the Telegram token file: {error}") from error
+
+
+def save_telegram_token(token: str) -> None:
+    token = token.strip()
+    if not token:
+        raise ValueError("Telegram bot token cannot be empty.")
+    TELEGRAM_TOKEN_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = TELEGRAM_TOKEN_PATH.with_suffix(".tmp")
+    temporary_path.write_text(token + "\n", encoding="utf-8")
+    temporary_path.chmod(0o600)
+    temporary_path.replace(TELEGRAM_TOKEN_PATH)
 
 
 class TelegramApiError(RuntimeError):
@@ -42,6 +68,8 @@ class TelegramClient:
             raise ValueError("TELEGRAM_BOT_TOKEN is required.")
         self._base_url = f"https://api.telegram.org/bot{token}"
         self.timeout = timeout
+        self._response: object | None = None
+        self._response_lock = threading.Lock()
 
     def call(self, method: str, payload: dict | None = None) -> object:
         body = json.dumps(payload or {}).encode("utf-8")
@@ -53,7 +81,13 @@ class TelegramClient:
         )
         try:
             with urlopen(request, timeout=self.timeout) as response:
-                raw = response.read()
+                with self._response_lock:
+                    self._response = response
+                try:
+                    raw = response.read()
+                finally:
+                    with self._response_lock:
+                        self._response = None
         except HTTPError as error:
             detail = self._error_detail(error)
             raise TelegramApiError(f"Telegram API HTTP {error.code}: {detail}") from error
@@ -68,6 +102,14 @@ class TelegramClient:
             description = result.get("description", "Unknown Telegram API error") if isinstance(result, dict) else "Invalid response"
             raise TelegramApiError(str(description))
         return result.get("result")
+
+    def cancel_active_request(self) -> None:
+        with self._response_lock:
+            response = self._response
+        if response is not None:
+            close = getattr(response, "close", None)
+            if close is not None:
+                close()
 
     @staticmethod
     def _error_detail(error: HTTPError) -> str:
@@ -117,6 +159,7 @@ class TelegramConfig:
     ollama_url: str = DEFAULT_OLLAMA_URL
     model: str = DEFAULT_MODEL
     context_size: int = DEFAULT_CONTEXT_SIZE
+    ollama_timeout: float = DEFAULT_OLLAMA_TIMEOUT
 
     @classmethod
     def from_environment(cls) -> "TelegramConfig":
@@ -142,7 +185,15 @@ class TelegramConfig:
             raise ValueError("LURA_OLLAMA_URL and LURA_MODEL cannot be empty.")
         if context_size < 2048 or context_size > 131072 or context_size % 1024:
             raise ValueError("LURA_CONTEXT_SIZE must be a multiple of 1024 between 2048 and 131072.")
-        return cls(token, allowed_user_id, ollama_url, model, context_size)
+        try:
+            ollama_timeout = float(
+                os.environ.get("LURA_OLLAMA_TIMEOUT", str(DEFAULT_OLLAMA_TIMEOUT)).strip()
+            )
+        except ValueError as error:
+            raise ValueError("LURA_OLLAMA_TIMEOUT must be a number.") from error
+        if ollama_timeout < 8 or ollama_timeout > 600:
+            raise ValueError("LURA_OLLAMA_TIMEOUT must be between 8 and 600 seconds.")
+        return cls(token, allowed_user_id, ollama_url, model, context_size, ollama_timeout)
 
 
 class LocalAssistant:
@@ -150,7 +201,7 @@ class LocalAssistant:
 
     def __init__(self, config: TelegramConfig) -> None:
         self.config = config
-        self.ollama = OllamaClient(config.ollama_url)
+        self.ollama = OllamaClient(config.ollama_url, timeout=config.ollama_timeout)
         self.tool_manager = ToolManager()
         self.remote_tools = [
             schema
@@ -278,37 +329,88 @@ def _handle_message(
     telegram.send_message(chat_id, response)
 
 
+class TelegramBotRunner:
+    """Long-polling loop shared by the CLI and the desktop worker."""
+
+    def __init__(self, config: TelegramConfig) -> None:
+        self.config = config
+        self.telegram = TelegramClient(
+            config.token, timeout=TELEGRAM_POLL_TIMEOUT + 10
+        )
+        self.assistant = LocalAssistant(config)
+        self._stop_event = threading.Event()
+
+    def run(
+        self,
+        on_connected=None,
+        on_status=None,
+    ) -> None:
+        bot = self.telegram.get_me()
+        username = bot.get("username", "unknown") if isinstance(bot, dict) else "unknown"
+        if on_connected is not None:
+            on_connected(str(username))
+        self.telegram.delete_webhook()
+        if on_status is not None:
+            on_status("Waiting for private Telegram messages.")
+
+        offset = 0
+        seen_update_ids: set[int] = set()
+        while not self._stop_event.is_set():
+            try:
+                for update in self.telegram.get_updates(offset):
+                    update_id = update.get("update_id")
+                    if not isinstance(update_id, int):
+                        continue
+                    if update_id in seen_update_ids:
+                        continue
+                    seen_update_ids.add(update_id)
+                    if len(seen_update_ids) > 1000:
+                        seen_update_ids.clear()
+                    offset = max(offset, update_id + 1)
+                    message = update.get("message")
+                    if isinstance(message, dict):
+                        _handle_message(
+                            self.telegram,
+                            self.assistant,
+                            self.config.allowed_user_id,
+                            message,
+                        )
+            except TelegramApiError:
+                if self._stop_event.is_set():
+                    return
+                if on_status is not None:
+                    on_status(
+                        "Telegram connection lost; retrying in "
+                        f"{TELEGRAM_RETRY_DELAY} seconds."
+                    )
+                time.sleep(TELEGRAM_RETRY_DELAY)
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        self.telegram.cancel_active_request()
+
+
 def run() -> int:
     config = TelegramConfig.from_environment()
-    telegram = TelegramClient(config.token)
-    assistant = LocalAssistant(config)
-    bot = telegram.get_me()
-    username = bot.get("username", "unknown") if isinstance(bot, dict) else "unknown"
-    print(f"Lura Telegram bot connected as @{username}.")
-    telegram.delete_webhook()
-    print("Waiting for private messages from the configured Telegram user.")
-
-    offset = 0
-    while True:
-        try:
-            for update in telegram.get_updates(offset):
-                update_id = update.get("update_id")
-                if isinstance(update_id, int):
-                    offset = max(offset, update_id + 1)
-                message = update.get("message")
-                if isinstance(message, dict):
-                    _handle_message(
-                        telegram, assistant, config.allowed_user_id, message
-                    )
-        except KeyboardInterrupt:
-            print("\nLura Telegram bot stopped.")
-            return 0
-        except TelegramApiError as error:
-            print(f"Telegram connection error: {error}")
-            time.sleep(TELEGRAM_RETRY_DELAY)
-        except Exception as error:
-            print(f"Telegram bot error: {format_ollama_error(error)}")
-            time.sleep(TELEGRAM_RETRY_DELAY)
+    runner = TelegramBotRunner(config)
+    try:
+        runner.run(
+            on_connected=lambda username: print(
+                f"Lura Telegram bot connected as @{username}."
+            ),
+            on_status=print,
+        )
+    except KeyboardInterrupt:
+        print("\nLura Telegram bot stopped.")
+        return 0
+    except TelegramApiError as error:
+        print(f"Telegram connection error: {error}")
+        return 1
+    except Exception as error:
+        print(f"Telegram bot error: {format_ollama_error(error)}")
+        return 1
+    print("Lura Telegram bot stopped.")
+    return 0
 
 
 def main() -> int:

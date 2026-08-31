@@ -30,12 +30,18 @@ from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
 from ..desktop_integration import set_autostart_enabled
 from ..ollama import ChatMessage, OllamaClient
+from ..telegram_bot import (
+    TelegramConfig,
+    load_telegram_token,
+    save_telegram_token,
+)
 from ..tools import PermissionLevel, ToolManager
 from ..voice import VoiceService
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
     SpeechWorker,
+    TelegramBotWorker,
     VoiceRecordWorker,
     VoiceTranscriptionWorker,
 )
@@ -54,6 +60,8 @@ class MainWindow(QMainWindow):
         self.tool_manager = ToolManager()
         self.api_server: ApiServer | None = None
         self.api_thread = None
+        self.telegram_thread: QThread | None = None
+        self.telegram_worker: TelegramBotWorker | None = None
         self.conversation_store = ConversationStore()
         self.conversations = self.conversation_store.load()
         if not self.conversations:
@@ -93,6 +101,7 @@ class MainWindow(QMainWindow):
         self.chat_view.set_messages(self.messages)
         self._persist_conversations()
         self._refresh_connection()
+        self._start_telegram_bot()
 
     def _setup_tray(self) -> None:
         if not QSystemTrayIcon.isSystemTrayAvailable():
@@ -818,6 +827,73 @@ class MainWindow(QMainWindow):
         self.connection_worker = None
         self.connection_thread = None
 
+    def _start_telegram_bot(self) -> None:
+        if not self.config.telegram_enabled:
+            self.status_label.setToolTip("Telegram: disabled")
+            return
+        if self.telegram_worker is not None:
+            return
+        token = load_telegram_token()
+        if not token:
+            self.status_label.setToolTip(
+                "Telegram: open Settings and add your BotFather token."
+            )
+            return
+        try:
+            telegram_config = TelegramConfig(
+                token=token,
+                allowed_user_id=int(self.config.telegram_allowed_user_id),
+                ollama_url=self.config.ollama_url,
+                model=self.config.model,
+                context_size=self.config.ollama_context_size,
+            )
+        except (TypeError, ValueError) as error:
+            self.status_label.setToolTip(f"Telegram configuration error: {error}")
+            return
+
+        self.telegram_thread = QThread(self)
+        self.telegram_worker = TelegramBotWorker(telegram_config)
+        self.telegram_worker.moveToThread(self.telegram_thread)
+        self.telegram_thread.started.connect(self.telegram_worker.run)
+        self.telegram_worker.connected.connect(self._telegram_connected)
+        self.telegram_worker.status.connect(self._telegram_status)
+        self.telegram_worker.failed.connect(self._telegram_failed)
+        self.telegram_worker.stopped.connect(self.telegram_thread.quit)
+        self.telegram_thread.finished.connect(self._telegram_thread_finished)
+        self.telegram_thread.start()
+
+    @Slot(str)
+    def _telegram_connected(self, username: str) -> None:
+        self.status_label.setToolTip(f"Telegram: connected as @{username}")
+
+    @Slot(str)
+    def _telegram_status(self, message: str) -> None:
+        self.status_label.setToolTip(f"Telegram: {message}")
+
+    @Slot(str)
+    def _telegram_failed(self, message: str) -> None:
+        self.status_label.setToolTip(f"Telegram error: {message}")
+
+    def _telegram_thread_finished(self) -> None:
+        if self.telegram_worker:
+            self.telegram_worker.deleteLater()
+        if self.telegram_thread:
+            self.telegram_thread.deleteLater()
+        self.telegram_worker = None
+        self.telegram_thread = None
+
+    def _stop_telegram_bot(self) -> None:
+        worker = self.telegram_worker
+        thread = self.telegram_thread
+        if worker is not None:
+            worker.cancel()
+        if thread is not None and thread.isRunning():
+            if not thread.wait(2500):
+                thread.terminate()
+                thread.wait(1000)
+        self.telegram_worker = None
+        self.telegram_thread = None
+
     @Slot()
     def _open_settings(self) -> None:
         if (
@@ -827,11 +903,33 @@ class MainWindow(QMainWindow):
             or self.speech_worker is not None
         ):
             return
-        dialog = SettingsDialog(self.config, self)
+        dialog = SettingsDialog(
+            self.config,
+            self,
+            telegram_token_present=bool(load_telegram_token()),
+        )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
         previous_autostart = self.config.autostart_enabled
         next_config = dialog.config()
+        token = dialog.telegram_token()
+        if next_config.telegram_enabled and not token and not load_telegram_token():
+            QMessageBox.warning(
+                self,
+                "Telegram token required",
+                "Add the Telegram bot token before enabling Telegram.",
+            )
+            return
+        if token:
+            try:
+                save_telegram_token(token)
+            except (OSError, ValueError) as error:
+                QMessageBox.warning(
+                    self,
+                    "Telegram token not saved",
+                    f"Lura could not save the Telegram token:\n{error}",
+                )
+                return
         try:
             set_autostart_enabled(next_config.autostart_enabled)
         except OSError as error:
@@ -841,6 +939,7 @@ class MainWindow(QMainWindow):
                 f"Lura could not update the Linux autostart entry:\n{error}",
             )
             next_config.autostart_enabled = previous_autostart
+        self._stop_telegram_bot()
         self.config = next_config
         self.config.save()
         self._sync_quit_behavior()
@@ -852,6 +951,7 @@ class MainWindow(QMainWindow):
         self.model_selector.addItem(self.config.model)
         self.runtime_status_value.setText("CHECKING")
         self._refresh_connection()
+        self._start_telegram_bot()
 
     @Slot()
     def _new_chat(self) -> None:
@@ -967,6 +1067,7 @@ class MainWindow(QMainWindow):
             (self.voice_record_thread, self.voice_record_worker),
             (self.voice_transcription_thread, self.voice_transcription_worker),
             (self.speech_thread, self.speech_worker),
+            (self.telegram_thread, self.telegram_worker),
         )
         for thread, worker in threads:
             if worker is not None:
