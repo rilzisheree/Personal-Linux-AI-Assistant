@@ -1,0 +1,238 @@
+Now that the two-model architecture is implemented, I want to improve the Gemma 3 270M model's reliability.
+
+Do NOT fine-tune or retrain the model.
+
+Instead, optimize Gemma specifically as a **fast function/router model** using a strong system prompt, strict structured output, and carefully designed examples.
+
+### Gemma's job
+
+Gemma 270M should NOT try to be a general-purpose intelligent assistant.
+
+Its primary job is to:
+
+1. Understand the user's intent extremely quickly.
+2. Determine whether the request is simple, requires Qwen reasoning, or requires a tool/function.
+3. Handle very simple conversational requests directly.
+4. Route anything beyond its capabilities to Qwen3.5 2B.
+
+### Important principle
+
+Because Gemma is only 270M parameters, **do not expect it to reason deeply**.
+
+When uncertain, it should ALWAYS prefer routing to Qwen rather than hallucinating.
+
+For example:
+
+```text
+"What's 2 + 2?"
+→ simple
+
+"How are you?"
+→ simple
+
+"Tell me a short joke."
+→ simple
+
+"Open Discord."
+→ function
+
+"Close Spotify."
+→ function
+
+"Explain why black holes evaporate."
+→ reasoning
+
+"Write a Python script that..."
+→ reasoning
+
+"Plan me a 7-day trip..."
+→ reasoning
+```
+
+### Create a strict routing schema
+
+Gemma should output ONLY structured JSON.
+
+Use something like:
+
+```json
+{
+  "route": "simple",
+  "response": "I'm doing well, Sir."
+}
+```
+
+or:
+
+```json
+{
+  "route": "reasoning"
+}
+```
+
+or:
+
+```json
+{
+  "route": "function",
+  "function": "open_discord",
+  "arguments": {}
+}
+```
+
+Do NOT allow Gemma to output explanations, chain-of-thought, or unnecessary text.
+
+### Routing rules
+
+Use these rules:
+
+SIMPLE:
+
+* Greetings
+* Goodbyes
+* Basic conversational responses
+* Very easy factual questions
+* Very simple arithmetic
+* Short jokes
+* Basic acknowledgements
+* Questions that can be answered confidently without reasoning
+
+FUNCTION:
+
+* Opening/closing applications
+* PC controls
+* Existing Luna tools
+* Any request that clearly maps to an available function
+
+REASONING:
+
+* Multi-step questions
+* Coding
+* Complex explanations
+* Planning
+* Analysis
+* Ambiguous requests
+* Anything Gemma is uncertain about
+* Anything requiring substantial reasoning
+
+### Safety rule
+
+If Gemma is unsure whether something is simple or complex:
+
+```text
+→ route = reasoning
+```
+
+Never guess.
+
+### Optimize for speed
+
+Gemma's output should be extremely short.
+
+Do not give it a huge context window unnecessarily.
+
+Do not send the entire conversation history to Gemma if it isn't required.
+
+Only provide the information necessary for intent detection/routing.
+
+Keep Gemma loaded in memory if possible so Luna doesn't have to repeatedly load/unload it.
+
+### Examples
+
+Build a small set of few-shot examples into the router prompt.
+
+Example:
+
+USER:
+"Hey Luna"
+
+OUTPUT:
+
+```json
+{"route":"simple","response":"Hello, Sir."}
+```
+
+USER:
+"How are you?"
+
+OUTPUT:
+
+```json
+{"route":"simple","response":"I'm doing well, Sir."}
+```
+
+USER:
+"Open Discord"
+
+OUTPUT:
+
+```json
+{"route":"function","function":"open_discord","arguments":{}}
+```
+
+USER:
+"What's 15 times 7?"
+
+OUTPUT:
+
+```json
+{"route":"simple","response":"105."}
+```
+
+USER:
+"Explain how a black hole works."
+
+OUTPUT:
+
+```json
+{"route":"reasoning"}
+```
+
+USER:
+"Write me a Python program that monitors my CPU temperature."
+
+OUTPUT:
+
+```json
+{"route":"reasoning"}
+```
+
+USER:
+"Turn off my computer."
+
+OUTPUT:
+
+```json
+{"route":"function","function":"shutdown_pc","arguments":{}}
+```
+
+### Critical optimization
+
+Do NOT make Gemma and Qwen both answer the same request.
+
+The intended flow is:
+
+```text
+User
+ ↓
+Gemma 270M
+ ↓
+ROUTE
+ ├── simple → Gemma responds
+ ├── function → execute tool
+ └── reasoning → Qwen3.5 2B
+```
+
+This should minimize latency while keeping Qwen available whenever actual intelligence is needed.
+
+Before finalizing, test Gemma against at least 30 different requests covering simple conversation, functions, ambiguous requests, factual questions, reasoning, coding, and malicious/invalid inputs.
+
+Measure:
+
+* Routing accuracy
+* False "simple" classifications
+* False "reasoning" classifications
+* Function selection accuracy
+* Average routing latency
+
+Do not sacrifice reliability just to make the router slightly faster.

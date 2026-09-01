@@ -7,6 +7,7 @@ from local_ai_assistant.assistant_core import (
     DEFAULT_ROUTER_MODEL,
     ROUTER_CONTEXT_SIZE,
     ROUTER_OUTPUT_TOKENS,
+    ROUTER_RESPONSE_SCHEMA,
     RouteDecision,
     RoutedAssistantService,
 )
@@ -89,7 +90,7 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             call["options"],
             {"num_predict": ROUTER_OUTPUT_TOKENS, "temperature": 0},
         )
-        self.assertEqual(call["response_format"], "json")
+        self.assertEqual(call["response_format"], ROUTER_RESPONSE_SCHEMA)
         self.assertIn("open_app", call["messages"][0].content)
 
     def test_function_route_validates_tool_name_and_arguments(self) -> None:
@@ -130,6 +131,21 @@ class RoutedAssistantServiceTests(unittest.TestCase):
         decision = service.route_request(self.messages, self.tools)
 
         self.assertEqual(decision.route, "reasoning")
+
+    def test_route_shapes_reject_extra_fields(self) -> None:
+        tools = self.tools
+        self.assertIsNone(
+            RoutedAssistantService._parse_decision(
+                '{"route":"simple","response":"hi","reason":"extra"}',
+                tools,
+            )
+        )
+        self.assertIsNone(
+            RoutedAssistantService._parse_decision(
+                '{"route":"reasoning","response":"I need to think"}',
+                tools,
+            )
+        )
 
 
 if __name__ == "__main__":

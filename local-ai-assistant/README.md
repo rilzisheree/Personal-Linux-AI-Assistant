@@ -336,6 +336,15 @@ configured Qwen model so existing functionality remains available. Ollama
 decides GPU placement automatically; use `ollama ps` while testing to confirm
 that both models remain resident on an 8 GB GPU.
 
+To evaluate the router on the target machine, run the 30-case benchmark:
+
+```bash
+python3 scripts/benchmark_router.py
+```
+
+It reports routing accuracy, false-simple classifications, false-reasoning
+classifications, function selection accuracy, and average routing latency.
+
 When spoken responses are enabled, complete sentences are sent to the local
 TTS worker while Ollama is still generating. The chat continues rendering
 tokens independently, and Piper's in-process voice model cache is reused
