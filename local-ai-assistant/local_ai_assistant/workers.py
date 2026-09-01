@@ -23,6 +23,7 @@ from .voice import VoiceError, VoiceService
 
 
 MAX_TOOL_ROUNDS = 8
+MAX_GEMINI_TOOL_ROUNDS = 3
 
 
 class ChatWorker(QObject):
@@ -65,6 +66,11 @@ class ChatWorker(QObject):
         )
         complete_response: list[str] = []
         tool_rounds = 0
+        max_tool_rounds = (
+            MAX_GEMINI_TOOL_ROUNDS
+            if self.service.backend_name.casefold() == "gemini"
+            else MAX_TOOL_ROUNDS
+        )
         try:
             while not self.cancel_event.is_set():
                 cycle_response: list[str] = []
@@ -97,10 +103,10 @@ class ChatWorker(QObject):
                     return
 
                 tool_rounds += 1
-                if tool_rounds > MAX_TOOL_ROUNDS:
+                if tool_rounds > max_tool_rounds:
                     self.conversation_ready.emit(visible_messages)
                     self.failed.emit(
-                        f"Stopped after {MAX_TOOL_ROUNDS} tool rounds to prevent an endless loop.",
+                        f"Stopped after {max_tool_rounds} tool rounds to prevent an endless loop.",
                         "error",
                     )
                     return
