@@ -1,0 +1,71 @@
+(.venv-training) ➜  local-ai-assistant git:(main) ✗ >....               
+with tempfile.TemporaryDirectory(prefix="lura-router-adapter-") as temp: 
+    normalized = Path(temp)
+ 
+    for item in adapter.iterdir():
+        if item.is_file():
+            shutil.copy2(item, normalized / item.name)
+ 
+    alternate = normalized / "model.safetensors"      
+    expected = normalized / "adapter_model.safetensors"
+    
+    if not expected.exists() and alternate.exists():   
+        shutil.copy2(alternate, expected)
+    
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    
+    base = AutoModelForCausalLM.from_pretrained(
+        "google/gemma-3-270m-it",
+        torch_dtype=dtype,                      
+    )                            
+        
+    merged = PeftModel.from_pretrained(base, str(normalized))
+    merged = merged.merge_and_unload()
+
+    output.mkdir(parents=True, exist_ok=True)
+    merged.save_pretrained(str(output), safe_serialization=True)
+    
+    tokenizer = AutoTokenizer.from_pretrained("google/gemma-3-270m-it")
+    tokenizer.save_pretrained(str(output))
+    
+print(f"Merged model written to {output}")
+PY
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+ModuleNotFoundError: No module named 'torch'
+(.venv-training) ➜  local-ai-assistant git:(main) ✗ >....               
+with tempfile.TemporaryDirectory(prefix="lura-router-adapter-") as temp: 
+    normalized = Path(temp)
+ 
+    for item in adapter.iterdir():
+        if item.is_file():
+            shutil.copy2(item, normalized / item.name)
+ 
+    alternate = normalized / "model.safetensors"      
+    expected = normalized / "adapter_model.safetensors"
+    
+    if not expected.exists() and alternate.exists():   
+        shutil.copy2(alternate, expected)
+    
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    
+    base = AutoModelForCausalLM.from_pretrained(
+        "google/gemma-3-270m-it",
+        torch_dtype=dtype,                      
+    )                            
+        
+    merged = PeftModel.from_pretrained(base, str(normalized))
+    merged = merged.merge_and_unload()
+
+    output.mkdir(parents=True, exist_ok=True)
+    merged.save_pretrained(str(output), safe_serialization=True)
+    
+    tokenizer = AutoTokenizer.from_pretrained("google/gemma-3-270m-it")
+    tokenizer.save_pretrained(str(output))
+    
+print(f"Merged model written to {output}")
+PY
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+ModuleNotFoundError: No module named 'torch'
+(.venv-training) ➜  local-ai-assistant git:(main) ✗ 
