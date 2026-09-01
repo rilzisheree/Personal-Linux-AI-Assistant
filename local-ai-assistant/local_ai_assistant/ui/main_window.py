@@ -94,6 +94,8 @@ class MainWindow(QMainWindow):
         self.tray_icon: QSystemTrayIcon | None = None
         self._wake_command_recording = False
         self._wake_command_pending = False
+        self._manual_recording_pending = False
+        self._wake_restart_pending = False
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -507,9 +509,13 @@ class MainWindow(QMainWindow):
             or self.chat_worker is not None
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
-            or self.wake_word_worker is not None
         ):
             self._set_orb_state("idle")
+            return
+        if self.wake_word_worker is not None:
+            if not automatic:
+                self._manual_recording_pending = True
+                self._stop_wake_word_listener()
             return
         self.last_voice_error = None
         self._wake_command_recording = automatic
