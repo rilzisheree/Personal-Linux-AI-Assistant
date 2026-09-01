@@ -1,0 +1,163 @@
+I want to experiment with a two-model architecture for Luna to improve response speed.
+
+Do NOT remove the existing Qwen3.5 2B model. Keep it available for reasoning/complex requests.
+
+Add **Gemma 3 270M** as a very fast lightweight function/router model.
+
+### Architecture
+
+```text
+User
+ ↓
+Gemma 3 270M
+ ↓
+Determine request type
+ ↓
+ ┌──────────────────────┐
+ │                      │
+Simple / non-thinking   Complex / reasoning
+ │                      │
+ ↓                      ↓
+Gemma 270M              Qwen3.5 2B
+ │                      │
+ └──────────┬───────────┘
+            ↓
+           TTS
+```
+
+### Gemma 270M should handle
+
+Use Gemma for things such as:
+
+* Greetings
+* Basic conversational responses
+* Very simple questions
+* Simple factual questions
+* Basic calculations where appropriate
+* Intent detection
+* Function/tool routing
+* Simple PC commands
+* Determining whether a request requires reasoning
+
+The goal is for these interactions to feel almost instantaneous.
+
+### Qwen3.5 2B should handle
+
+Keep Qwen3.5 2B for:
+
+* Complex questions
+* Multi-step reasoning
+* Coding
+* Planning
+* Detailed explanations
+* Difficult problem solving
+* Requests where Gemma determines reasoning is necessary
+
+For these requests, Qwen can use its reasoning capabilities.
+
+### VERY IMPORTANT: avoid unnecessary double inference
+
+Do NOT make every request go:
+
+```text
+Gemma → Qwen → response
+```
+
+That would defeat the purpose.
+
+If Gemma determines that something can be handled without reasoning, Luna should answer using the fast Gemma path.
+
+Only invoke Qwen when necessary.
+
+For example:
+
+```text
+User: "Hey Luna"
+→ Gemma
+→ "Hello, Sir."
+→ Done
+
+User: "What is 25 × 4?"
+→ Gemma
+→ Simple response
+→ Done
+
+User: "Explain how black holes form."
+→ Gemma
+→ Determines reasoning/complex response
+→ Qwen3.5 2B
+→ Answer
+
+User: "Open Discord."
+→ Gemma
+→ Function/tool intent
+→ Execute existing Discord-opening function
+→ Done
+```
+
+### Function/router output
+
+Have Gemma return a small structured result rather than verbose natural-language reasoning.
+
+For example:
+
+```json
+{
+  "route": "simple",
+  "response": "Hello, Sir."
+}
+```
+
+or:
+
+```json
+{
+  "route": "reasoning"
+}
+```
+
+or:
+
+```json
+{
+  "route": "function",
+  "function": "open_discord"
+}
+```
+
+Keep this output extremely small so the router remains fast.
+
+### Performance
+
+Both models should remain available locally through Ollama.
+
+Optimize for:
+
+* Lowest possible latency
+* Fast time-to-first-token
+* GPU acceleration
+* Avoiding unnecessary model loading/unloading
+* Keeping the lightweight Gemma model ready
+* Streaming responses where possible
+
+My RTX 4060 has 8 GB VRAM, so determine whether both models can remain loaded simultaneously without unnecessary VRAM pressure.
+
+### TTS
+
+The final selected response should continue through Luna's existing TTS system.
+
+Do not change the existing voice system.
+
+Also preserve the TTS sanitization we discussed earlier so emojis/markdown aren't spoken literally.
+
+### Do NOT redesign
+
+Do not change the UI.
+
+Do not change Luna's personality.
+
+Do not remove existing functionality.
+
+This is strictly a **backend/model-routing optimization**.
+
+Before implementing it, inspect the current Luna architecture and explain exactly where the model routing should be inserted.
