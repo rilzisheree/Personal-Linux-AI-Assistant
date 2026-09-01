@@ -1,0 +1,79 @@
+(.venv-training) ➜  Personal-Linux-AI-Assistant git:(main) ✗ cd ~/Personal-Linux-AI-Assistant/local-ai-assistant
+source ~/.venv-training/bin/activate
+
+python3 scripts/train_router.py \
+  --max-length 512 \
+  --output-dir training/router_lora_v2
+local_ai_assistant           pyproject.toml  requirements-training.txt  run.sh   tests
+local_ai_assistant.egg-info  README.md       requirements.txt           scripts  training
+Map: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 1080/1080 [00:00<00:00, 2026.94 examples/s]
+Map: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 450/450 [00:00<00:00, 2038.53 examples/s]
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights: 100%|██████████████████████████████████████████████████████████████████████████████████████| 236/236 [00:00<00:00, 18971.11it/s]
+trainable params: 3,796,992 || all params: 271,895,168 || trainable%: 1.3965
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': 2, 'pad_token_id': 0}.
+  0%|▌                                                                                                           | 1/204 [00:01<04:48,  1.42s/it][W901 23:14:44.656182191 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1140850688 bytes (free: 632029184, total: 8205762560).
+{'loss': '1.309', 'grad_norm': '12.52', 'learning_rate': '0.00018', 'epoch': '0.1481'}                                                           
+  8%|████████▍                                                                                                  | 16/204 [00:12<02:21,  1.33it/s][W901 23:14:56.275130189 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1145044992 bytes (free: 57409536, total: 8205762560).
+[W901 23:14:56.354224182 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1145044992 bytes (free: 1189871616, total: 8205762560).
+{'loss': '0.07037', 'grad_norm': '0.4944', 'learning_rate': '0.0001907', 'epoch': '0.2963'}                                                      
+ 12%|█████████████                                                                                              | 25/204 [00:19<02:19,  1.28it/s][W901 23:15:03.291955994 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1149239296 bytes (free: 1166802944, total: 8205762560).
+[W901 23:15:03.349434277 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1149239296 bytes (free: 1160511488, total: 8205762560).
+[W901 23:15:03.349509676 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1149239296 bytes (free: 1160511488, total: 8205762560).
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/scripts/train_router.py", line 258, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/scripts/train_router.py", line 235, in main
+    trainer.train()
+    ~~~~~~~~~~~~~^^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/transformers/trainer.py", line 1458, in train
+    return inner_training_loop(
+        args=args,
+    ...<2 lines>...
+        ignore_keys_for_eval=ignore_keys_for_eval,
+    )
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/transformers/trainer.py", line 1540, in _inner_training_loop
+    self._run_epoch(
+    ~~~~~~~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<9 lines>...
+        steps_trained_in_current_epoch=steps_trained_in_current_epoch,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/transformers/trainer.py", line 1768, in _run_epoch
+    tr_loss_step = self.training_step(model, inputs, num_items_in_batch)
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/transformers/trainer.py", line 1970, in training_step
+    self.accelerator.backward(loss, **kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/accelerate/accelerator.py", line 2850, in backward
+    loss.backward(**kwargs)
+    ~~~~~~~~~~~~~^^^^^^^^^^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/torch/_tensor.py", line 623, in backward
+    torch.autograd.backward(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        self, gradient, retain_graph, create_graph, inputs=inputs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/torch/autograd/__init__.py", line 395, in backward
+    _engine_run_backward(
+    ~~~~~~~~~~~~~~~~~~~~^
+        tensors,
+        ^^^^^^^^
+    ...<5 lines>...
+        accumulate_grad=True,
+        ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/kirata/.venv-training/lib/python3.14/site-packages/torch/autograd/graph.py", line 979, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        t_outputs, *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )  # Calls into the C++ engine to run the backward pass
+    ^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.07 GiB. GPU 0 has a total capacity of 7.64 GiB of which 1.08 GiB is free. Process 4712 has 829.66 MiB memory in use. Process 1425 has 4.91 MiB memory in use. Including non-PyTorch memory, this process has 4.93 GiB memory in use. Of the allocated memory 3.72 GiB is allocated by PyTorch, and 1.08 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+ 12%|█████████████             

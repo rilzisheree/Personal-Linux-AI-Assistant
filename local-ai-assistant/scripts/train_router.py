@@ -105,6 +105,11 @@ def main() -> int:
     parser.add_argument("--learning-rate", type=float, default=2e-4)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--gradient-accumulation", type=int, default=4)
+    parser.add_argument(
+        "--gradient-checkpointing",
+        action="store_true",
+        help="Trade training speed for lower GPU memory use.",
+    )
     parser.add_argument("--qlora", action="store_true", help="Use 4-bit loading (requires CUDA and bitsandbytes).")
     args = parser.parse_args()
     if args.max_length < 64 or args.batch_size < 1:
@@ -166,6 +171,10 @@ def main() -> int:
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
     )
     model = get_peft_model(model, lora_config)
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable()
+        model.enable_input_require_grads()
+        model.config.use_cache = False
     model.print_trainable_parameters()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     parameter_names = inspect.signature(TrainingArguments.__init__).parameters
