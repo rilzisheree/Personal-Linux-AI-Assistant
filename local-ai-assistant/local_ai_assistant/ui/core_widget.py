@@ -19,6 +19,7 @@ class CoreWidget(QWidget):
         super().__init__(parent)
         self.setMinimumSize(220, 220)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setAttribute(Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setAccessibleName("Lura voice orb")
@@ -112,6 +113,24 @@ class CoreWidget(QWidget):
         if self.mouseGrabber() is self:
             self.releaseMouse()
         self.released.emit()
+
+    def event(self, event) -> bool:
+        if event.type() == QEvent.Type.TouchBegin:
+            if not self._pressed:
+                self._pressed = True
+                self._mouse_pressed = False
+                self.set_state("listening")
+                self.pressed.emit()
+            event.accept()
+            return True
+        if event.type() in {
+            QEvent.Type.TouchEnd,
+            QEvent.Type.TouchCancel,
+        }:
+            self._finish_press()
+            event.accept()
+            return True
+        return super().event(event)
 
     def enterEvent(self, event) -> None:
         self._hovered = True
