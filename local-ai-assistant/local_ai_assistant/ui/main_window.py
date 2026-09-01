@@ -30,15 +30,7 @@ from ..assistant_core import AssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
-from ..credentials import (
-    load_gemini_api_key,
-    load_hosted_api_key,
-    save_gemini_api_key,
-    save_hosted_api_key,
-)
 from ..desktop_integration import set_autostart_enabled
-from ..hosted_api import HostedApiClient
-from ..gemini_api import GeminiApiClient
 from ..memory import MemoryStore
 from ..ollama import ChatMessage, OllamaClient
 from ..prompting import build_system_prompt
@@ -120,9 +112,6 @@ class MainWindow(QMainWindow):
             config.ollama_url,
             config.model,
             config.ollama_context_size,
-            provider="gemini" if config.ai_provider == "gemini" else "ollama",
-            gemini_api_key=load_gemini_api_key(),
-            gemini_model=config.gemini_model,
         )
         self._populate_conversations()
         self.chat_view.set_messages(self.messages)
@@ -158,24 +147,10 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _configured_model(config: AppConfig) -> str:
-        if config.ai_provider == "hosted":
-            return config.hosted_model
-        if config.ai_provider == "gemini":
-            return config.gemini_model
         return config.model
 
     @staticmethod
     def _create_ai_client(config: AppConfig):
-        if config.ai_provider == "hosted":
-            return HostedApiClient(
-                config.hosted_api_url,
-                load_hosted_api_key(),
-            )
-        if config.ai_provider == "gemini":
-            return GeminiApiClient(
-                load_gemini_api_key(),
-                thinking_level=config.gemini_thinking_level,
-            )
         return OllamaClient(config.ollama_url)
 
     def _sync_quit_behavior(self) -> None:
@@ -903,12 +878,7 @@ class MainWindow(QMainWindow):
             if self.active_assistant_bubble:
                 self.active_assistant_bubble.set_content(message)
             self._set_status("error")
-            error_label = {
-                "hosted": "Hosted API error",
-                "gemini": "Gemini error",
-                "ollama": "Ollama error",
-            }.get(self.config.ai_provider, "AI backend error")
-            self.status_label.setText(error_label)
+            self.status_label.setText("Ollama error")
         self._persist_current_conversation()
         self._set_generating(False)
 
@@ -1149,8 +1119,6 @@ class MainWindow(QMainWindow):
             self.config,
             self,
             telegram_token_present=bool(load_telegram_token()),
-            hosted_api_key_present=bool(load_hosted_api_key()),
-            gemini_api_key_present=bool(load_gemini_api_key()),
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
@@ -1158,8 +1126,6 @@ class MainWindow(QMainWindow):
         try:
             next_config = dialog.config()
             token = dialog.telegram_token()
-            hosted_api_key = dialog.hosted_api_key()
-            gemini_api_key = dialog.gemini_api_key()
             if next_config.telegram_enabled and not token and not load_telegram_token():
                 QMessageBox.warning(
                     self,
@@ -1167,35 +1133,8 @@ class MainWindow(QMainWindow):
                     "Add the Telegram bot token before enabling Telegram.",
                 )
                 return
-            if (
-                next_config.ai_provider == "hosted"
-                and not hosted_api_key
-                and not load_hosted_api_key()
-            ):
-                QMessageBox.warning(
-                    self,
-                    "Hosted API key required",
-                    "Add a hosted API key before selecting the hosted provider.",
-                )
-                return
-            if (
-                next_config.ai_provider == "gemini"
-                and self.config.ai_provider != "gemini"
-                and not gemini_api_key
-                and not load_gemini_api_key()
-            ):
-                QMessageBox.warning(
-                    self,
-                    "Gemini API key required",
-                    "Add a Google Gemini API key before switching to the Gemini provider.",
-                )
-                return
             if token:
                 save_telegram_token(token)
-            if hosted_api_key:
-                save_hosted_api_key(hosted_api_key)
-            if gemini_api_key:
-                save_gemini_api_key(gemini_api_key)
             set_autostart_enabled(next_config.autostart_enabled)
             next_config.save()
         except (OSError, ValueError, TypeError) as error:
@@ -1348,17 +1287,12 @@ class MainWindow(QMainWindow):
 
     def _set_orb_state(self, state: str) -> None:
         self.core_widget.set_state(state)
-        runtime = {
-            "hosted": "OPENROUTER",
-            "gemini": "GEMINI",
-            "ollama": "LOCAL MODEL",
-        }.get(self.config.ai_provider, "AI MODEL")
         labels = {
             "idle": "READY // HOLD TO SPEAK"
             if self.config.voice_input_enabled
             else "READY // TYPE TO SPEAK",
             "listening": "LISTENING // RELEASE TO SEND",
-            "thinking": f"THINKING // {runtime}",
+            "thinking": "THINKING // LOCAL MODEL",
             "speaking": "SPEAKING // LOCAL VOICE",
             "error": "CHANNEL ERROR // CHECK STATUS",
         }

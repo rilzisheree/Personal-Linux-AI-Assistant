@@ -14,7 +14,6 @@ from urllib.parse import unquote, urlsplit
 
 from .config import (
     DEFAULT_CONTEXT_SIZE,
-    DEFAULT_GEMINI_MODEL,
     DEFAULT_MODEL,
     DEFAULT_OLLAMA_URL,
 )
@@ -28,6 +27,7 @@ from .tools import PermissionLevel, ToolCallResult, ToolManager
 MAX_REQUEST_BYTES = 1_000_000
 MAX_REMOTE_TOOL_ROUNDS = 4
 REMOTE_TOOL_NAMES = frozenset({"open_app"})
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 
 
 class ApiHttpError(Exception):

@@ -13,12 +13,6 @@ DEFAULT_MODEL = "qwen3.5:4b"
 DEFAULT_CONTEXT_SIZE = 8192
 DEFAULT_WHISPER_MODEL = "base"
 DEFAULT_TTS_ENGINE = "piper"
-DEFAULT_AI_PROVIDER = "ollama"
-DEFAULT_HOSTED_API_URL = "https://openrouter.ai/api/v1"
-DEFAULT_HOSTED_MODEL = "openai/gpt-4o-mini"
-DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
-DEFAULT_GEMINI_THINKING_LEVEL = "low"
-GEMINI_THINKING_LEVELS = ("low", "medium", "high")
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
@@ -54,20 +48,10 @@ class AppConfig:
     theme: str = "obsidian"
     orb_intensity: int = 65
     animation_intensity: int = 70
-    ai_provider: str = DEFAULT_AI_PROVIDER
-    hosted_api_url: str = DEFAULT_HOSTED_API_URL
-    hosted_model: str = DEFAULT_HOSTED_MODEL
-    gemini_model: str = DEFAULT_GEMINI_MODEL
-    gemini_thinking_level: str = DEFAULT_GEMINI_THINKING_LEVEL
 
     def __post_init__(self) -> None:
-        self.ai_provider = self.ai_provider.strip().lower()
         self.ollama_url = self.ollama_url.strip().rstrip("/")
         self.model = self.model.strip()
-        self.hosted_api_url = self.hosted_api_url.strip().rstrip("/")
-        self.hosted_model = self.hosted_model.strip()
-        self.gemini_model = self.gemini_model.strip()
-        self.gemini_thinking_level = self.gemini_thinking_level.strip().lower()
         if isinstance(self.ollama_context_size, str):
             self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
@@ -90,27 +74,11 @@ class AppConfig:
         self.validate()
 
     def validate(self) -> None:
-        if self.ai_provider not in {"ollama", "hosted", "gemini"}:
-            raise ValueError("AI provider must be Ollama, OpenRouter, or Gemini.")
         parsed = urlparse(self.ollama_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
         if not self.model:
             raise ValueError("Ollama model cannot be empty.")
-        hosted_parsed = urlparse(self.hosted_api_url)
-        if (
-            hosted_parsed.scheme not in {"http", "https"}
-            or not hosted_parsed.netloc
-        ):
-            raise ValueError(
-                "Hosted API URL must be a complete http:// or https:// URL."
-            )
-        if not self.hosted_model:
-            raise ValueError("Hosted API model cannot be empty.")
-        if not self.gemini_model:
-            raise ValueError("Gemini model cannot be empty.")
-        if self.gemini_thinking_level not in GEMINI_THINKING_LEVELS:
-            raise ValueError("Gemini thinking level must be low, medium, or high.")
         if (
             isinstance(self.ollama_context_size, bool)
             or not isinstance(self.ollama_context_size, int)
@@ -178,28 +146,9 @@ class AppConfig:
             raw = json.loads(config_path.read_text(encoding="utf-8"))
             if not isinstance(raw, dict):
                 raise ValueError("Configuration must be an object.")
-            hosted_api_url = str(
-                raw.get("hosted_api_url", DEFAULT_HOSTED_API_URL)
-            ).strip().rstrip("/")
-            hosted_model = str(raw.get("hosted_model", DEFAULT_HOSTED_MODEL))
-            # Older builds allowed several hosted endpoints. Keep the user's
-            # other settings, but move those saved connections to OpenRouter.
-            if hosted_api_url != DEFAULT_HOSTED_API_URL:
-                hosted_api_url = DEFAULT_HOSTED_API_URL
-                hosted_model = DEFAULT_HOSTED_MODEL
             return cls(
-                ai_provider=str(raw.get("ai_provider", DEFAULT_AI_PROVIDER)),
                 ollama_url=str(raw.get("ollama_url", DEFAULT_OLLAMA_URL)),
                 model=str(raw.get("model", DEFAULT_MODEL)),
-                hosted_api_url=hosted_api_url,
-                hosted_model=hosted_model,
-                gemini_model=str(raw.get("gemini_model", DEFAULT_GEMINI_MODEL)),
-                gemini_thinking_level=str(
-                    raw.get(
-                        "gemini_thinking_level",
-                        DEFAULT_GEMINI_THINKING_LEVEL,
-                    )
-                ),
                 ollama_context_size=_int_setting(
                     raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
                     DEFAULT_CONTEXT_SIZE,

@@ -25,9 +25,6 @@ from PySide6.QtWidgets import (
 
 from ..config import (
     AppConfig,
-    DEFAULT_GEMINI_MODEL,
-    GEMINI_THINKING_LEVELS,
-    DEFAULT_HOSTED_API_URL,
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
 )
@@ -43,8 +40,6 @@ class SettingsDialog(QDialog):
         parent=None,
         *,
         telegram_token_present: bool = False,
-        hosted_api_key_present: bool = False,
-        gemini_api_key_present: bool = False,
     ) -> None:
         super().__init__(parent)
         self.setObjectName("settingsDialog")
@@ -69,11 +64,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(self._scroll_page(self._assistant_page(config)), "Assistant")
         tabs.addTab(
             self._scroll_page(
-                self._ai_page(
-                    config,
-                    hosted_api_key_present,
-                    gemini_api_key_present,
-                )
+                self._ai_page(config)
             ),
             "AI & Models",
         )
@@ -272,24 +263,12 @@ class SettingsDialog(QDialog):
         self._voice_changed(self.tts_voice_input.currentIndex())
         return page
 
-    def _ai_page(
-        self,
-        config: AppConfig,
-        hosted_api_key_present: bool,
-        gemini_api_key_present: bool,
-    ) -> QWidget:
+    def _ai_page(self, config: AppConfig) -> QWidget:
         page, layout = self._page_layout(
-            "AI providers",
-            "Choose between private local Ollama, OpenRouter, and Google Gemini. "
-            "Hosted keys stay in separate local permission-restricted files.",
+            "Local AI runtime",
+            "Lura runs entirely through Ollama. No cloud provider or API key is required.",
         )
         ai_group, ai_form = self._group("AI RUNTIME")
-        self.ai_provider_input = QComboBox()
-        self.ai_provider_input.addItem("Ollama · local", "ollama")
-        self.ai_provider_input.addItem("OpenRouter · hosted", "hosted")
-        self.ai_provider_input.addItem("Google Gemini · hosted", "gemini")
-        provider_index = self.ai_provider_input.findData(config.ai_provider)
-        self.ai_provider_input.setCurrentIndex(max(0, provider_index))
         self.url_input = QLineEdit(config.ollama_url)
         self.url_input.setPlaceholderText("http://localhost:11434")
         self.model_input = QLineEdit(config.model)
@@ -299,76 +278,17 @@ class SettingsDialog(QDialog):
         self.context_size_input.setSingleStep(1024)
         self.context_size_input.setValue(config.ollama_context_size)
         self.context_size_input.setSuffix(" tokens")
-        ai_form.addRow("Active provider", self.ai_provider_input)
         ai_form.addRow("Ollama URL", self.url_input)
         ai_form.addRow("Ollama model", self.model_input)
         ai_form.addRow("Context size", self.context_size_input)
         layout.addWidget(ai_group)
-
-        hosted_group, hosted_form = self._group("OPENROUTER")
-        self.hosted_url_input = QLineEdit(DEFAULT_HOSTED_API_URL)
-        self.hosted_url_input.setReadOnly(True)
-        self.hosted_model_input = QLineEdit(config.hosted_model)
-        self.hosted_model_input.setPlaceholderText("openai/gpt-4o-mini")
-        self.hosted_api_key_input = QLineEdit()
-        self.hosted_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.hosted_api_key_input.setPlaceholderText(
-            "Saved securely — leave blank to keep it"
-            if hosted_api_key_present
-            else "Paste provider API key"
-        )
-        hosted_form.addRow("API base URL", self.hosted_url_input)
-        hosted_form.addRow("Model", self.hosted_model_input)
-        hosted_form.addRow("API key", self.hosted_api_key_input)
-        layout.addWidget(hosted_group)
         hint = QLabel(
-            "OpenRouter model IDs use the provider/model format, for example "
-            "openai/gpt-4o-mini or anthropic/claude-3.5-sonnet."
+            "Only the Ollama URL, model, and context size are configurable here. "
+            "Chat, tools, and model discovery stay on your local Ollama server."
         )
         hint.setObjectName("settingsHint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
-        gemini_group, gemini_form = self._group("GOOGLE GEMINI")
-        self.gemini_model_input = QLineEdit(config.gemini_model)
-        self.gemini_model_input.setPlaceholderText(DEFAULT_GEMINI_MODEL)
-        self.gemini_thinking_level_input = QComboBox()
-        thinking_level_labels = {
-            "low": "Low latency",
-            "medium": "Balanced",
-            "high": "Deep reasoning",
-        }
-        for level in GEMINI_THINKING_LEVELS:
-            self.gemini_thinking_level_input.addItem(
-                thinking_level_labels[level],
-                level,
-            )
-        self.gemini_thinking_level_input.setCurrentIndex(
-            max(
-                0,
-                self.gemini_thinking_level_input.findData(
-                    config.gemini_thinking_level
-                ),
-            )
-        )
-        self.gemini_api_key_input = QLineEdit()
-        self.gemini_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.gemini_api_key_input.setPlaceholderText(
-            "Saved securely — leave blank to keep it"
-            if gemini_api_key_present
-            else "Paste Google AI Studio API key"
-        )
-        gemini_form.addRow("Model", self.gemini_model_input)
-        gemini_form.addRow("Response speed", self.gemini_thinking_level_input)
-        gemini_form.addRow("API key", self.gemini_api_key_input)
-        layout.addWidget(gemini_group)
-        gemini_hint = QLabel(
-            "Create a key in Google AI Studio. The hosted API reads GEMINI_API_KEY "
-            "from the deployment secret; desktop keys are stored locally. Low "
-            "latency is recommended for normal chat."
-        )
-        gemini_hint.setObjectName("settingsHint")
-        gemini_hint.setWordWrap(True)
-        layout.addWidget(gemini_hint)
         layout.addStretch(1)
         return page
 
@@ -471,23 +391,10 @@ class SettingsDialog(QDialog):
             theme=str(self.theme_input.currentData()),
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),
-            ai_provider=str(self.ai_provider_input.currentData()),
-            hosted_api_url=DEFAULT_HOSTED_API_URL,
-            hosted_model=self.hosted_model_input.text(),
-            gemini_model=self.gemini_model_input.text(),
-            gemini_thinking_level=str(
-                self.gemini_thinking_level_input.currentData()
-            ),
         )
 
     def telegram_token(self) -> str:
         return self.telegram_token_input.text().strip()
-
-    def hosted_api_key(self) -> str:
-        return self.hosted_api_key_input.text().strip()
-
-    def gemini_api_key(self) -> str:
-        return self.gemini_api_key_input.text().strip()
 
     def _selected_voice(self) -> str:
         return str(self.tts_voice_input.currentData())

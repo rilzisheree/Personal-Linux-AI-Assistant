@@ -210,13 +210,8 @@ is not installed.
 
 Use the settings button in the app to change:
 
-- Active AI provider: **Ollama · local**, **OpenRouter · hosted**, or
-  **Google Gemini · hosted**
 - Ollama URL, defaulting to `http://localhost:11434`
 - Ollama model, defaulting to `qwen3.5:4b`
-- OpenRouter model, defaulting to `openai/gpt-4o-mini`
-- OpenRouter API key
-- Gemini model and API key
 - Ollama context size, defaulting to 8,192 tokens
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
@@ -243,10 +238,10 @@ Settings are stored locally at:
 ~/.config/local-ai-assistant/config.json
 ```
 
-The Ollama and voice preferences are stored locally. No credentials or prompts
-are written to the settings file. OpenRouter and Gemini API keys are stored
-separately with owner-only permissions. On Replit, set `GEMINI_API_KEY` as a
-Secret so the hosted API can use it without exposing it to the browser.
+The native desktop App stores only Ollama and voice preferences locally. It has
+no cloud provider settings and never asks for or stores an AI API key. The
+separate Railway/web API companion may use `GEMINI_API_KEY` as documented above;
+that path is independent of the native desktop App.
 Conversation history is stored in SQLite at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.db`, or
 `~/.local/share/local-ai-assistant/conversations.db` when `XDG_DATA_HOME` is
@@ -330,9 +325,8 @@ local-ai-assistant/
 │   ├── assistant_core.py      # GUI-independent assistant boundary
 │   ├── config.py              # validated local settings
 │   ├── conversations.py       # local conversation model and JSON store
-│   ├── credentials.py         # permission-restricted hosted API key storage
 │   ├── errors.py              # user-facing error categories
-│   ├── hosted_api.py          # OpenAI-compatible hosted API adapter
+│   ├── gemini_api.py          # Gemini adapter for the separate web/API path
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
 │   ├── voice.py               # local recording, Whisper, and TTS adapters
 │   ├── tools.py               # tool registry and permission gates
