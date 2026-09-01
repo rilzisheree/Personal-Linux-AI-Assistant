@@ -35,7 +35,6 @@ def main() -> int:
         f'SYSTEM """{prompt}"""\n\n'
         "PARAMETER temperature 0\n"
         "PARAMETER num_predict 8\n"
-        'FORMAT """{"type":"string","enum":["SIMPLE","FUNCTION","REASONING"]}"""\n'
     )
     args.output.write_text(content, encoding="utf-8")
     print(f"Wrote {args.output}")
