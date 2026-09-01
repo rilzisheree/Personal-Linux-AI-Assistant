@@ -1,0 +1,262 @@
+I want to make the AI significantly faster and more responsive.
+
+IMPORTANT: The main AI is running locally through **Ollama**.
+
+The assistant both:
+
+1. Displays its response in the chat
+2. Speaks the response aloud using TTS
+
+So optimize the **entire voice conversation pipeline**, not just the text response.
+
+Current flow:
+
+```text id="p8k3q1"
+User speaks
+↓
+Speech-to-text
+↓
+Ollama
+↓
+AI response streams into chat
+↓
+AI response is converted to speech
+↓
+AI speaks aloud
+```
+
+The current response feels too slow, so I want you to find exactly where the delay is coming from and optimize it.
+
+### 1. Measure latency first
+
+Before making major changes, measure:
+
+* End of user speech → STT starts
+* STT starts → transcription complete
+* Transcription complete → Ollama starts
+* Ollama starts → first token
+* First token → first text displayed
+* First usable sentence → TTS starts
+* TTS starts → first audio plays
+* Complete Ollama response
+* Complete spoken response
+
+This will tell us whether the bottleneck is STT, Ollama, TTS, or the way the application handles them.
+
+### 2. Make Ollama feel instant
+
+Make sure the Ollama model stays loaded and isn't being loaded again for every message.
+
+Check the existing implementation for:
+
+* Model reloads
+* Client reinitialization
+* Excessive context being sent
+* Unnecessarily large context windows
+* Blocking requests
+* Waiting for the complete response
+* Non-streaming requests
+
+Use Ollama streaming so the application receives tokens as they are generated.
+
+The chat should begin displaying the response immediately when the first tokens arrive.
+
+Do NOT wait for the complete response before updating the chat.
+
+### 3. Start voice output as early as possible
+
+This is extremely important.
+
+The AI should NOT do:
+
+```text id="f6h2p0"
+Ollama generates entire response
+↓
+Wait
+↓
+Send entire response to TTS
+↓
+Wait
+↓
+Start speaking
+```
+
+Instead, aim for:
+
+```text id="j5r7x2"
+Ollama starts generating
+↓
+Tokens stream into chat
+↓
+First complete/natural sentence is available
+↓
+Send that sentence/chunk to TTS
+↓
+TTS begins speaking
+↓
+Ollama continues generating
+↓
+Next sentence/chunk goes to TTS
+```
+
+This should allow the AI to **start talking while Ollama is still generating the rest of the response**.
+
+The chat should also continue streaming normally at the same time.
+
+### 4. Make the voice feel natural
+
+Do NOT send individual tokens to TTS.
+
+Buffer the streamed Ollama output and detect natural sentence/chunk boundaries.
+
+For example:
+
+```text id="z8v3q6"
+Ollama:
+"Certainly, Sir. The weather today is..."
+        ↓
+Complete first sentence
+        ↓
+TTS speaks it
+        ↓
+Ollama continues:
+"...currently 31 degrees outside."
+        ↓
+TTS speaks next chunk
+```
+
+Avoid awkward pauses between chunks.
+
+Use a small intelligent buffer so TTS has enough text to sound natural without creating unnecessary latency.
+
+### 5. Optimize speech-to-text
+
+Measure how long STT takes.
+
+If STT is the bottleneck:
+
+* Start processing immediately after end-of-speech detection.
+* Don't send unnecessary silence.
+* Don't wait unnecessarily after VAD detects that I'm finished.
+* Keep the STT system initialized if possible.
+* Avoid unnecessary audio conversions.
+* Avoid writing temporary audio files if they aren't necessary.
+* Reuse resources instead of initializing everything for every message.
+
+### 6. Optimize TTS
+
+Measure TTS latency separately.
+
+The goal is to minimize:
+
+**"Ollama response available → AI starts speaking."**
+
+Keep the TTS system ready if possible.
+
+Avoid reinitializing the TTS engine for every sentence/request.
+
+If the current TTS system supports streaming audio, use it.
+
+### 7. Check Ollama GPU performance
+
+Verify that Ollama is actually using the GPU efficiently.
+
+Check:
+
+* GPU utilization
+* VRAM usage
+* CPU usage
+* Model load time
+* Generation speed / tokens per second
+
+Make sure the model isn't unnecessarily falling back to CPU.
+
+Do not randomly change settings. Inspect the current configuration and determine what is actually happening first.
+
+### 8. Remove artificial delays
+
+Search the existing code for anything that unnecessarily slows down the interaction:
+
+* `setTimeout`
+* Artificial delays
+* Excessive debounce
+* Long VAD silence thresholds
+* Waiting for animations
+* Waiting for complete Ollama responses
+* Waiting for complete TTS generation
+* Reinitializing AI/STT/TTS systems
+* Unnecessary file operations
+* Unnecessary audio conversions
+* Sequential operations that could safely overlap
+
+Remove unnecessary delays while keeping the voice system reliable.
+
+### 9. Keep chat and voice synchronized
+
+The AI has TWO outputs:
+
+**Text:**
+
+```text
+Ollama → streamed response → chat
+```
+
+**Voice:**
+
+```text
+Ollama → sentence buffer → TTS → audio
+```
+
+These should happen simultaneously.
+
+The chat should NOT wait for the voice to finish.
+
+The voice should NOT wait for the entire chat response to finish.
+
+Both should consume the same streamed response independently.
+
+### 10. Keep the existing UI
+
+This is ONLY a performance improvement.
+
+Do NOT redesign the application.
+
+Do NOT replace the orb.
+
+Do NOT change the current visual design.
+
+Do NOT remove existing functionality.
+
+Keep the existing voice interaction, orb, chat, animations, and layout exactly as they are.
+
+Only improve the underlying performance and responsiveness.
+
+### Target experience
+
+I want the interaction to feel like this:
+
+```text id="u1k5m9"
+I finish speaking
+        ↓
+Speech ends
+        ↓
+STT quickly finishes
+        ↓
+Ollama starts immediately
+        ↓
+First response tokens appear in chat
+        ↓
+First natural sentence is sent to TTS
+        ↓
+AI starts speaking
+        ↓
+Ollama continues generating
+        ↓
+Chat continues streaming
+        ↓
+TTS continues speaking each natural chunk
+```
+
+The most important goal is to reduce the perceived delay between **me finishing speaking and hearing the AI start talking**.
+
+First measure the pipeline, identify the actual bottleneck, then optimize it.

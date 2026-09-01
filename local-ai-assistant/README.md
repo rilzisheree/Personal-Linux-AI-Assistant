@@ -282,7 +282,17 @@ ollama pull qwen3.5:4b
 
 Check Ollama's own logs and model resource requirements first. The app streams
 each token-sized response chunk and does not buffer a full answer before
-displaying it.
+displaying it. Chat requests send `keep_alive=10m` so Ollama can reuse the
+loaded model between nearby messages. The native app also logs one
+`VOICE_LATENCY` JSON record per conversation at INFO level; compare
+`end_of_user_speech`, `stt_completed`, `ollama_started`, `ollama_first_token`,
+`first_sentence_available`, `tts_synthesis_started`, `first_audio_playback`,
+and `spoken_response_completed` to locate the slow stage.
+
+When spoken responses are enabled, complete sentences are sent to the local
+TTS worker while Ollama is still generating. The chat continues rendering
+tokens independently, and Piper's in-process voice model cache is reused
+across those sentence chunks.
 
 ### Stop does not return immediately
 

@@ -144,10 +144,17 @@ class OllamaClient:
     """Small, synchronous HTTP client intended to run off the Qt UI thread."""
 
     display_name = "Ollama"
+    default_keep_alive = "10m"
 
-    def __init__(self, base_url: str, timeout: float = 8.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        timeout: float = 8.0,
+        keep_alive: str | int = default_keep_alive,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.keep_alive = keep_alive
         self._response: HTTPResponse | None = None
         self._response_lock = threading.Lock()
 
@@ -174,6 +181,7 @@ class OllamaClient:
             "model": model,
             "messages": [self._message_payload(message) for message in messages],
             "stream": True,
+            "keep_alive": self.keep_alive,
         }
         if context_size:
             payload["options"] = {"num_ctx": context_size}

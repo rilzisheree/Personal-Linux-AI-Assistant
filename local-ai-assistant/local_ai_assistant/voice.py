@@ -16,7 +16,7 @@ import time
 import wave
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.request import Request, urlopen
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
@@ -24,6 +24,65 @@ from .config import AppConfig, DEFAULT_TTS_VOICE
 
 class VoiceError(RuntimeError):
     """A user-facing error from an unavailable or failed local voice backend."""
+
+
+class SpeechChunker:
+    """Split streamed model output at natural boundaries for local TTS."""
+
+    def __init__(self, max_chars: int = 260) -> None:
+        self.max_chars = max_chars
+        self._buffer = ""
+
+    def feed(self, text: str) -> list[str]:
+        self._buffer += text
+        return self._extract_ready_chunks()
+
+    def flush(self) -> list[str]:
+        remainder = self._buffer.strip()
+        self._buffer = ""
+        return [remainder] if remainder else []
+
+    def _extract_ready_chunks(self) -> list[str]:
+        chunks: list[str] = []
+        while self._buffer:
+            boundary = self._find_sentence_boundary()
+            if boundary is not None:
+                chunk = self._buffer[:boundary].strip()
+                self._buffer = self._buffer[boundary:].lstrip()
+                if chunk:
+                    chunks.append(chunk)
+                continue
+            if len(self._buffer) <= self.max_chars:
+                break
+            split_at = self._buffer.rfind(" ", 80, self.max_chars + 1)
+            if split_at <= 0:
+                break
+            chunk = self._buffer[:split_at].strip()
+            self._buffer = self._buffer[split_at:].lstrip()
+            if chunk:
+                chunks.append(chunk)
+        return chunks
+
+    def _find_sentence_boundary(self) -> int | None:
+        for index, character in enumerate(self._buffer):
+            if character == "\n":
+                return index + 1
+            if character not in ".!?":
+                continue
+            next_character = self._buffer[index + 1] if index + 1 < len(self._buffer) else ""
+            if next_character and not next_character.isspace():
+                continue
+            # Avoid turning common short abbreviations into spoken fragments.
+            word_start = index
+            while word_start > 0 and not self._buffer[word_start - 1].isspace():
+                word_start -= 1
+            if character == "." and index - word_start <= 2:
+                continue
+            end = index + 1
+            while end < len(self._buffer) and self._buffer[end] in "\"'”’)]":
+                end += 1
+            return end
+        return None
 
 
 def _normalise_spoken_text(text: str) -> list[str]:
@@ -463,7 +522,10 @@ class VoiceService:
                 )
                 self._whisper_model_name = self.config.whisper_model
                 self._whisper_device = device
-            options: dict[str, Any] = {"fp16": False}
+            model_device = str(getattr(self._whisper_model, "device", device or "cpu"))
+            options: dict[str, Any] = {
+                "fp16": model_device.casefold().startswith("cuda")
+            }
             if self.config.whisper_language.casefold() not in {"", "auto"}:
                 options["language"] = self.config.whisper_language
             result = self._whisper_model.transcribe(str(audio_path), **options)
@@ -537,7 +599,13 @@ class VoiceService:
             )
         return result
 
-    def speak(self, text: str, cancel_event: threading.Event | None = None) -> None:
+    def speak(
+        self,
+        text: str,
+        cancel_event: threading.Event | None = None,
+        on_synthesis_started: Callable[[], None] | None = None,
+        on_playback_started: Callable[[], None] | None = None,
+    ) -> None:
         if self.config.tts_engine == "disabled":
             return
         text = text.strip()
@@ -548,8 +616,10 @@ class VoiceService:
         with tempfile.NamedTemporaryFile(suffix=".wav", prefix="lura-tts-", delete=False) as file:
             audio_path = Path(file.name)
         try:
+            if on_synthesis_started is not None:
+                on_synthesis_started()
             self._synthesize(text, audio_path)
-            self._play(audio_path, cancel_event)
+            self._play(audio_path, cancel_event, on_playback_started)
         finally:
             try:
                 audio_path.unlink()
@@ -671,7 +741,12 @@ class VoiceService:
             "eSpeak",
         )
 
-    def _play(self, audio_path: Path, cancel_event: threading.Event | None) -> None:
+    def _play(
+        self,
+        audio_path: Path,
+        cancel_event: threading.Event | None,
+        on_playback_started: Callable[[], None] | None = None,
+    ) -> None:
         executable = next(
             (shutil.which(name) for name in ("pw-play", "aplay", "paplay") if shutil.which(name)),
             None,
@@ -691,6 +766,8 @@ class VoiceService:
             raise VoiceError(f"Could not play the response: {error}") from error
         with self._process_lock:
             self._active_process = process
+        if on_playback_started is not None:
+            on_playback_started()
         try:
             while process.poll() is None:
                 if cancel_event is not None and cancel_event.wait(0.1):

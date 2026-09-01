@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 
 from local_ai_assistant.config import AppConfig
 from local_ai_assistant.voice import (
+    SpeechChunker,
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
@@ -19,6 +20,12 @@ from local_ai_assistant.voice import (
 
 
 class VoiceServiceTests(unittest.TestCase):
+    def test_speech_chunker_emits_complete_sentences_and_flushes_remainder(self) -> None:
+        chunker = SpeechChunker()
+        self.assertEqual(chunker.feed("Certainly, Sir. The weather today is"), ["Certainly, Sir."])
+        self.assertEqual(chunker.feed(" clear."), ["The weather today is clear."])
+        self.assertEqual(chunker.flush(), [])
+
     def test_wake_word_matching_tolerates_common_whisper_spelling(self) -> None:
         self.assertTrue(wake_word_matches("hey Laura", "Lura"))
         self.assertTrue(wake_word_matches("Lara", "Lura"))

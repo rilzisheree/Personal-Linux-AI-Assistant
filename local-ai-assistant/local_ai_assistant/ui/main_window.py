@@ -33,6 +33,7 @@ from ..conversations import Conversation, ConversationStore
 from ..desktop_integration import set_autostart_enabled
 from ..memory import MemoryStore
 from ..ollama import ChatMessage, OllamaClient
+from ..performance import LatencyTrace
 from ..prompting import build_system_prompt
 from ..telegram_bot import (
     TelegramConfig,
@@ -40,11 +41,11 @@ from ..telegram_bot import (
     save_telegram_token,
 )
 from ..tools import PermissionLevel, ToolManager
-from ..voice import VoiceService, remove_wake_word
+from ..voice import SpeechChunker, VoiceService, remove_wake_word
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
-    SpeechWorker,
+    SpeechStreamWorker,
     TelegramBotWorker,
     VoiceRecordWorker,
     VoiceTranscriptionWorker,
@@ -87,7 +88,7 @@ class MainWindow(QMainWindow):
         self.wake_word_thread: QThread | None = None
         self.wake_word_worker: WakeWordWorker | None = None
         self.speech_thread: QThread | None = None
-        self.speech_worker: SpeechWorker | None = None
+        self.speech_worker: SpeechStreamWorker | None = None
         self.last_voice_error: str | None = None
         self.active_assistant_bubble: MessageBubble | None = None
         self.active_response = ""
@@ -102,6 +103,8 @@ class MainWindow(QMainWindow):
         self._manual_handoff_started_at: float | None = None
         self._wake_restart_pending = False
         self._wake_listener_restart_allowed = True
+        self._speech_chunker: SpeechChunker | None = None
+        self._latency_trace: LatencyTrace | None = None
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -423,6 +426,14 @@ class MainWindow(QMainWindow):
         self.chat_view.add_message("user", prompt)
         self.message_input.clear()
         self.active_response = ""
+        self._speech_chunker = (
+            SpeechChunker()
+            if self.config.voice_responses_enabled
+            and self.config.tts_engine != "disabled"
+            else None
+        )
+        if self._latency_trace is None:
+            self._latency_trace = LatencyTrace("conversation")
         self.active_assistant_bubble = self.chat_view.add_message("assistant", "")
         self._set_orb_state("thinking")
         self._set_generating(True)
@@ -438,6 +449,7 @@ class MainWindow(QMainWindow):
         )
         self.chat_worker.moveToThread(self.chat_thread)
         self.chat_thread.started.connect(self.chat_worker.run)
+        self.chat_worker.ollama_started.connect(self._ollama_started)
         self.chat_worker.chunk.connect(self._append_assistant_chunk)
         self.chat_worker.conversation_ready.connect(self._conversation_ready)
         self.chat_worker.tool_started.connect(self._tool_started)
@@ -452,12 +464,24 @@ class MainWindow(QMainWindow):
         self.status_label.setText(f"Generating with {model}")
         self._set_status("connected")
 
+    @Slot()
+    def _ollama_started(self) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("ollama_started")
+
     @Slot(str)
     def _append_assistant_chunk(self, chunk: str) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("ollama_first_token")
         self.active_response += chunk
         if self.active_assistant_bubble:
             self.active_assistant_bubble.set_content(self.active_response)
             self.chat_view.verticalScrollBar().setValue(self.chat_view.verticalScrollBar().maximum())
+            if self._latency_trace is not None:
+                self._latency_trace.mark("first_text_displayed")
+        if self._speech_chunker is not None:
+            for sentence in self._speech_chunker.feed(chunk):
+                self._queue_speech_chunk(sentence)
 
     @Slot(object)
     def _conversation_ready(self, messages: object) -> None:
@@ -592,6 +616,9 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_finished(self, audio_path: str) -> None:
+        self._latency_trace = LatencyTrace()
+        self._latency_trace.mark("end_of_user_speech")
+        self._latency_trace.mark("stt_started")
         self._set_orb_state("thinking")
         self._set_voice_status("TRANSCRIBING WITH LOCAL WHISPER…")
         self.voice_transcription_thread = QThread(self)
@@ -648,6 +675,8 @@ class MainWindow(QMainWindow):
 
     @Slot(str, str)
     def _transcription_finished(self, text: str, audio_path: str) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("stt_completed")
         if self.voice_transcription_thread is not None:
             self.voice_transcription_thread.quit()
         self._remove_recording(audio_path)
@@ -740,6 +769,7 @@ class MainWindow(QMainWindow):
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
             or self.chat_worker is not None
+            or self.speech_worker is not None
         ):
             return
         self._wake_listener_restart_allowed = True
@@ -849,20 +879,21 @@ class MainWindow(QMainWindow):
             self._wake_command_pending = False
             QTimer.singleShot(0, lambda: self._start_recording(automatic=True))
 
-    def _speak_response(self, response: str) -> None:
+    def _start_speech_stream(self) -> SpeechStreamWorker | None:
         if (
             not self.config.voice_responses_enabled
             or self.config.tts_engine == "disabled"
-            or not response.strip()
             or self.speech_worker is not None
         ):
-            self._set_orb_state("idle")
-            return
+            return None
         self._set_orb_state("speaking")
         self.speech_thread = QThread(self)
-        self.speech_worker = SpeechWorker(self.voice_service, response)
+        self.speech_worker = SpeechStreamWorker(self.voice_service)
         self.speech_worker.moveToThread(self.speech_thread)
         self.speech_thread.started.connect(self.speech_worker.run)
+        self.speech_worker.started.connect(self._speech_started)
+        self.speech_worker.synthesis_started.connect(self._tts_synthesis_started)
+        self.speech_worker.playback_started.connect(self._tts_playback_started)
         self.speech_worker.finished.connect(self._speech_finished)
         self.speech_worker.failed.connect(self._speech_failed)
         self.speech_worker.finished.connect(self.speech_thread.quit)
@@ -871,15 +902,67 @@ class MainWindow(QMainWindow):
         self.speech_thread.start()
         self._set_voice_status("SPEAKING LOCAL RESPONSE…")
         self._sync_stop_button()
+        return self.speech_worker
+
+    def _queue_speech_chunk(self, text: str) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("first_sentence_available")
+        worker = self.speech_worker or self._start_speech_stream()
+        if worker is not None:
+            worker.append(text)
+
+    def _finish_speech_stream(self, response: str) -> None:
+        if self._speech_chunker is not None:
+            for sentence in self._speech_chunker.flush():
+                self._queue_speech_chunk(sentence)
+        elif response.strip():
+            self._queue_speech_chunk(response)
+        if self.speech_worker is not None:
+            self.speech_worker.finish()
+        else:
+            self._set_orb_state("idle")
+            if self._latency_trace is not None:
+                self._latency_trace.mark("spoken_response_skipped")
+                self._latency_trace.finish()
+                self._latency_trace = None
+
+    def _speak_response(self, response: str) -> None:
+        """Keep the single-response entry point backed by the streaming worker."""
+        self._speech_chunker = SpeechChunker()
+        self._finish_speech_stream(response)
+
+    @Slot()
+    def _speech_started(self) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("tts_started")
+        self._set_orb_state("speaking")
+
+    @Slot()
+    def _tts_synthesis_started(self) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("tts_synthesis_started")
+
+    @Slot()
+    def _tts_playback_started(self) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("first_audio_playback")
 
     @Slot()
     def _speech_finished(self) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("spoken_response_completed")
+            self._latency_trace.finish()
+            self._latency_trace = None
         self._set_orb_state("idle")
         self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         self._sync_stop_button()
 
     @Slot(str)
     def _speech_failed(self, message: str) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("tts_failed")
+            self._latency_trace.finish()
+            self._latency_trace = None
         self._set_orb_state("error")
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self.status_label.setText("Voice output unavailable")
@@ -897,12 +980,21 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
+        if self._latency_trace is not None:
+            self._latency_trace.mark("ollama_completed")
         self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
-        self._speak_response(response)
+        self._finish_speech_stream(response)
 
     @Slot(str, str)
     def _chat_failed(self, message: str, kind: str) -> None:
+        if self.speech_worker is not None:
+            self.speech_worker.cancel()
+        self._speech_chunker = None
+        if self._latency_trace is not None:
+            self._latency_trace.mark("ollama_failed")
+            self._latency_trace.finish()
+            self._latency_trace = None
         self._set_orb_state("idle" if kind == "cancelled" else "error")
         if kind == "cancelled":
             if self.active_assistant_bubble and self.active_response:
@@ -949,6 +1041,8 @@ class MainWindow(QMainWindow):
     def _stop_generation(self) -> None:
         if self.chat_worker:
             self.chat_worker.cancel()
+            if self.speech_worker:
+                self.speech_worker.cancel()
         elif self.speech_worker:
             self.speech_worker.cancel()
         elif self.voice_record_worker:

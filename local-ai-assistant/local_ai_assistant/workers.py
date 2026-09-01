@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import threading
+import queue
 import subprocess
+import threading
 import time
 import uuid
 import wave
@@ -20,7 +21,12 @@ from .errors import (
 from .ollama import ChatMessage, OllamaClient, ToolCall
 from .telegram_bot import TelegramBotRunner, TelegramConfig
 from .tools import PermissionLevel, ToolManager, ToolCallResult, ToolConfirmationRequired
-from .voice import VoiceActivityDetector, VoiceError, VoiceService, wake_word_matches
+from .voice import (
+    VoiceActivityDetector,
+    VoiceError,
+    VoiceService,
+    wake_word_matches,
+)
 
 
 MAX_TOOL_ROUNDS = 8
@@ -28,6 +34,7 @@ MAX_TOOL_ROUNDS = 8
 
 class ChatWorker(QObject):
     chunk = Signal(str)
+    ollama_started = Signal()
     finished = Signal(str)
     failed = Signal(str, str)
     conversation_ready = Signal(object)
@@ -70,6 +77,7 @@ class ChatWorker(QObject):
             while not self.cancel_event.is_set():
                 cycle_response: list[str] = []
                 tool_calls: list[ToolCall] = []
+                self.ollama_started.emit()
                 for event in self.service.stream_reply(
                     messages,
                     self.model,
@@ -494,6 +502,61 @@ class SpeechWorker(QObject):
             self.finished.emit()
         except Exception as error:
             self.failed.emit(str(error))
+
+    def cancel(self) -> None:
+        self.cancel_event.set()
+        self.service.cancel()
+
+
+class SpeechStreamWorker(QObject):
+    """Synthesize and play sentence-sized chunks while Ollama is still running."""
+
+    started = Signal()
+    synthesis_started = Signal()
+    playback_started = Signal()
+    finished = Signal()
+    failed = Signal(str)
+
+    def __init__(self, service: VoiceService) -> None:
+        super().__init__()
+        self.service = service
+        self.cancel_event = threading.Event()
+        self._chunks: queue.Queue[str | None] = queue.Queue()
+        self._started = False
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            while not self.cancel_event.is_set():
+                try:
+                    chunk = self._chunks.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                if chunk is None:
+                    self.finished.emit()
+                    return
+                if not chunk.strip():
+                    continue
+                if not self._started:
+                    self._started = True
+                    self.started.emit()
+                self.service.speak(
+                    chunk,
+                    self.cancel_event,
+                    self.synthesis_started.emit,
+                    self.playback_started.emit,
+                )
+            self.finished.emit()
+        except Exception as error:
+            self.failed.emit(str(error))
+
+    def append(self, text: str) -> None:
+        if text.strip() and not self.cancel_event.is_set():
+            self._chunks.put(text)
+
+    def finish(self) -> None:
+        if not self.cancel_event.is_set():
+            self._chunks.put(None)
 
     def cancel(self) -> None:
         self.cancel_event.set()

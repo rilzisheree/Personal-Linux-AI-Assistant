@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 
 from PySide6.QtWidgets import QApplication
@@ -15,6 +16,10 @@ from .ui.styles import APP_STYLE
 
 
 def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
     parser = argparse.ArgumentParser(description="Lura local AI assistant")
     parser.add_argument(
         "--background",

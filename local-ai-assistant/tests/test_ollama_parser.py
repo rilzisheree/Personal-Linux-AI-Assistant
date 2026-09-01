@@ -101,6 +101,7 @@ class OllamaParserTests(unittest.TestCase):
             list(client.stream_chat([], "qwen3.5:4b", context_size=8192))
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertEqual(payload["options"], {"num_ctx": 8192})
+        self.assertEqual(payload["keep_alive"], "10m")
 
 
 if __name__ == "__main__":
