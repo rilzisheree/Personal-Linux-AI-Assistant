@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
@@ -95,6 +96,7 @@ class MainWindow(QMainWindow):
         self._wake_command_recording = False
         self._wake_command_pending = False
         self._manual_recording_pending = False
+        self._manual_handoff_started_at: float | None = None
         self._wake_restart_pending = False
 
         self.setWindowTitle("Lura")
@@ -520,6 +522,7 @@ class MainWindow(QMainWindow):
         if self.wake_word_worker is not None:
             if not automatic:
                 self._manual_recording_pending = True
+                self._manual_handoff_started_at = time.monotonic()
                 self._stop_wake_word_listener()
                 self._set_voice_status("SWITCHING TO MANUAL MICROPHONE…")
                 self._start_manual_recording_when_ready()
@@ -569,6 +572,7 @@ class MainWindow(QMainWindow):
             # press/release semantics: a release before that handoff means
             # cancel the pending press rather than starting dead-air capture.
             self._manual_recording_pending = False
+            self._manual_handoff_started_at = None
             self._wake_restart_pending = self.config.wake_word_enabled
         else:
             self._set_orb_state("idle")
@@ -777,10 +781,16 @@ class MainWindow(QMainWindow):
             return
         wake_worker = self.wake_word_worker
         process = getattr(wake_worker, "_process", None) if wake_worker else None
-        if process is not None and process.poll() is None:
+        handoff_age = (
+            time.monotonic() - self._manual_handoff_started_at
+            if self._manual_handoff_started_at is not None
+            else 0.0
+        )
+        if process is not None and process.poll() is None and handoff_age < 0.35:
             QTimer.singleShot(50, self._start_manual_recording_when_ready)
             return
         self._manual_recording_pending = False
+        self._manual_handoff_started_at = None
         self._start_recording(manual_handoff=True)
 
     def _start_pending_wake_command(self) -> None:
