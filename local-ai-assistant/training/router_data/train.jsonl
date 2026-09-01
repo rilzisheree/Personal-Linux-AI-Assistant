@@ -1,0 +1,1080 @@
+{"id": "train-greeting-0001", "text": "Luna, Good morning", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0002", "text": "Hey Luna, I wanted to say hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0003", "text": "Luna, Hello for now", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0004", "text": "Luna, Nice to see you", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0005", "text": "Luna, Just checking in", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0006", "text": "Luna, Hey, are you around?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0007", "text": "Hey Luna, How's your day going", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "voice_variant"}
+{"id": "train-greeting-0008", "text": "Luna, I wanted to say hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0009", "text": "Hey Luna, Hey there Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0010", "text": "Luna, can you hear me?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0011", "text": "Hey Luna, Evening Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0012", "text": "Luna, Good evening", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0013", "text": "Luna, How's your day going?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0014", "text": "Hey Luna, A quick hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0015", "text": "Luna, Hello Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0016", "text": "Luna, Morning Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0017", "text": "Hey, are you around?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0018", "text": "Hey Luna, Luna, can you hear me?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0019", "text": "Hey Luna, How's your day going?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0020", "text": "Hey Luna, Good evening", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0021", "text": "Hello again", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0022", "text": "Hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0023", "text": "Just saying hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0024", "text": "Hi Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0025", "text": "I wanted to say hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0026", "text": "A quick hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0027", "text": "Luna, Hi", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0028", "text": "Good evening", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0029", "text": "Hey there Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0030", "text": "Luna, Are you there?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0031", "text": "Luna, Are you awake?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0032", "text": "Hey Luna, Good morning", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0033", "text": "Hey Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0034", "text": "Luna, Hi Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0035", "text": "Hey Luna, Hey, are you around?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0036", "text": "Hey Luna, Nice to see you", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0037", "text": "Hello for now", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0038", "text": "Luna, Hey there", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0039", "text": "Luna, Hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0040", "text": "Good morning", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0041", "text": "Hey Luna, Hello Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0042", "text": "Hey Luna, Hello for now", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0043", "text": "Luna, Just saying hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0044", "text": "Hey Luna, Just checking in", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0045", "text": "Nice to see you", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0046", "text": "Hey Luna, Hi Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0047", "text": "Luna, Evening Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0048", "text": "Hi", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0049", "text": "Hey Luna, Hello again", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0050", "text": "Hey Luna, Hi there", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0051", "text": "Are you awake?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0052", "text": "Hey Luna, Hi", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0053", "text": "Luna, Hey there Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0054", "text": "Hey Luna, Just saying hello", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0055", "text": "Hey there", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0056", "text": "Hi there", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0057", "text": "Luna, Luna, can you hear me?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0058", "text": "Luna, Hello again", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0059", "text": "Are you there?", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-greeting-0060", "text": "Luna, Hey Luna", "label": "SIMPLE", "scenario": "greeting", "split": "train", "source": "generated"}
+{"id": "train-thanks-0001", "text": "Luna, Thanks again", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0002", "text": "I appreciate the answer", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0003", "text": "Hey Luna, Helpful as always", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0004", "text": "Hey Luna, I appreciate the answer", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0005", "text": "That answers it, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0006", "text": "Thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0007", "text": "Luna, Great, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0008", "text": "Luna, You've been helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0009", "text": "Luna, All good, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0010", "text": "That's all, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0011", "text": "Luna, Thanks a lot", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0012", "text": "Luna, I appreciate your help", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0013", "text": "Hey Luna, Cheers, Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0014", "text": "Hey Luna, Great, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0015", "text": "I appreciate it", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0016", "text": "Hey Luna, You've been helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0017", "text": "Cheers, Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0018", "text": "Hey Luna, Thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0019", "text": "Thanks for that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0020", "text": "Thanks a lot", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0021", "text": "You're helpful, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0022", "text": "Hey Luna, That's helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0023", "text": "Hey Luna, That helps, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0024", "text": "Luna, Thanks for listening", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0025", "text": "Luna, I appreciate the answer", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0026", "text": "That's helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0027", "text": "Luna, I really appreciate that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0028", "text": "Hey Luna, You're helpful, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0029", "text": "Hey Luna, I appreciate your help", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0030", "text": "I really appreciate that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0031", "text": "Thanks for listening", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0032", "text": "Hey Luna, That answers it, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0033", "text": "Hey Luna, Thanks again", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0034", "text": "Hey Luna, Perfect, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0035", "text": "Hey Luna, Thanks for listening", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0036", "text": "Hey Luna, Thanks for that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0037", "text": "Helpful as always", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0038", "text": "Hey Luna, Thank you Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0039", "text": "Thanks again", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0040", "text": "I owe you one", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0041", "text": "Hey Luna, Thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0042", "text": "Luna, That's helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0043", "text": "Luna, Thanks for that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0044", "text": "Luna, You're helpful, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0045", "text": "Thank you Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0046", "text": "That helps, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0047", "text": "You've been helpful", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0048", "text": "Thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0049", "text": "Hey Luna, Thanks a lot", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0050", "text": "Luna, That helps, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0051", "text": "Luna, Cheers, Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0052", "text": "I appreciate your help", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0053", "text": "Luna, Much appreciated", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0054", "text": "Luna, Helpful as always", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0055", "text": "Luna, Perfect, thank you", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0056", "text": "Hey Luna, I appreciate it", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0057", "text": "Hey Luna, I really appreciate that", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0058", "text": "Luna, That's all, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0059", "text": "Luna, That answers it, thanks", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-thanks-0060", "text": "Luna, Thank you Luna", "label": "SIMPLE", "scenario": "thanks", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0001", "text": "Hey Luna, I'm done chatting", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0002", "text": "You can go quiet now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0003", "text": "That's all for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0004", "text": "Bye Luna", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0005", "text": "Hey Luna, Talk to you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0006", "text": "Luna, You can go quiet now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0007", "text": "I'm finished", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0008", "text": "Luna, Have a good night", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0009", "text": "No more for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0010", "text": "Luna, No more for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0011", "text": "Hey Luna, Good night", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0012", "text": "See you around", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0013", "text": "Hey Luna, Bye Luna", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0014", "text": "Luna, I'm finished", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0015", "text": "Bye", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0016", "text": "That's enough, thanks", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0017", "text": "Hey Luna, I'm finished", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0018", "text": "Hey Luna, End this chat", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0019", "text": "Hey Luna, I'm done for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0020", "text": "Luna, I'm done for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0021", "text": "Hey Luna, See you soon", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0022", "text": "Hey Luna, I'm signing off", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0023", "text": "I'm signing off", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0024", "text": "Hey Luna, That's all for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0025", "text": "Hey Luna, Until next time", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0026", "text": "See you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0027", "text": "Hey Luna, I'll be back later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0028", "text": "Luna, I have to go", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0029", "text": "I'm done chatting", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0030", "text": "Hey Luna, I have to go", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0031", "text": "See you soon", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0032", "text": "Luna, That's all for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0033", "text": "Hey Luna, See you around", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0034", "text": "Luna, Bye", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0035", "text": "End this chat", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0036", "text": "I'll be back later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0037", "text": "Good night", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0038", "text": "Catch you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0039", "text": "Talk to you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0040", "text": "Luna, See you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0041", "text": "Luna, That's enough, thanks", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0042", "text": "Luna, I'm signing off", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0043", "text": "Hey Luna, That's enough, thanks", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0044", "text": "Hey Luna, Goodbye", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0045", "text": "Hey Luna, You can go quiet now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0046", "text": "Luna, I'll be back later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0047", "text": "Goodbye for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0048", "text": "I have to go", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0049", "text": "Until next time", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0050", "text": "Hey Luna, No more for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0051", "text": "Goodbye", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0052", "text": "Luna, Catch you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0053", "text": "Luna, Goodbye for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0054", "text": "Hey Luna, Have a good night", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0055", "text": "Have a good night", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0056", "text": "Hey Luna, See you later", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0057", "text": "I'm done for now", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0058", "text": "Luna, End this chat", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0059", "text": "Hey Luna, Take care", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-goodbye-0060", "text": "Luna, Until next time", "label": "SIMPLE", "scenario": "goodbye", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0001", "text": "Hey Luna, How do you feel", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0002", "text": "Luna, Are you feeling fine", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0003", "text": "How is your day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0004", "text": "Are you doing okay?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0005", "text": "How do you feel", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0006", "text": "How's everything going", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0007", "text": "Luna, How have you been?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0008", "text": "Luna, Are you doing okay", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0009", "text": "Hey Luna, How is your day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0010", "text": "How's your morning?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0011", "text": "Hey Luna, How are you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0012", "text": "Luna, How's your morning?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0013", "text": "Hey Luna, Are you well?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0014", "text": "Are you in a good mood?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0015", "text": "Luna, Luna, how are you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0016", "text": "Hey Luna, Are you feeling fine", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0017", "text": "Luna, How's your evening?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0018", "text": "Luna, You doing alright?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0019", "text": "Luna, How are you today?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0020", "text": "Hey Luna, How have things been?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0021", "text": "Are you feeling fine?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0022", "text": "You doing alright?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0023", "text": "Hey Luna, You alright there?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0024", "text": "Luna, How are you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0025", "text": "Hey Luna, Are you okay Luna?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0026", "text": "Luna, How's everything going?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0027", "text": "Hey Luna, How is life?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0028", "text": "Hey Luna, Are you having a good day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0029", "text": "Hey Luna, How are things with you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0030", "text": "Luna, You alright there?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0031", "text": "Hey Luna, Are you feeling fine?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0032", "text": "Luna, How are things?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0033", "text": "How is life?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0034", "text": "Hey Luna, How are things?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0035", "text": "You alright there?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0036", "text": "Luna, How is your day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0037", "text": "How have you been?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0038", "text": "How's your evening?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0039", "text": "Hey Luna, How's your evening?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0040", "text": "Luna, Are you having a good day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0041", "text": "Luna, Is everything good?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0042", "text": "Luna, How are things with you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0043", "text": "Hey Luna, Is everything good", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0044", "text": "How are you?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0045", "text": "How have things been?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0046", "text": "Hey Luna, How are you today?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0047", "text": "Are you okay Luna?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0048", "text": "Luna, How do you feel?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0049", "text": "Luna, How have you been", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0050", "text": "Are you having a good day?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0051", "text": "Hey Luna, Are you in a good mood?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0052", "text": "Hey Luna, Everything okay?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0053", "text": "Luna, Are you okay Luna", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0054", "text": "How is life", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0055", "text": "Hey Luna, How's it going?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0056", "text": "Hey Luna, How's everything going?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0057", "text": "How are things", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-wellbeing-0058", "text": "How's everything going?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0059", "text": "Luna, Are you okay Luna?", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "generated"}
+{"id": "train-wellbeing-0060", "text": "Hey Luna, Are you okay Luna", "label": "SIMPLE", "scenario": "wellbeing", "split": "train", "source": "voice_variant"}
+{"id": "train-arithmetic-0001", "text": "Quick question: How much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0002", "text": "Can you tell me what's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0003", "text": "How much is 144 divided by 12? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0004", "text": "Luna, What's 6 times 9? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0005", "text": "Quick question: How much is 144 divided by 12? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0006", "text": "Do you know what's 6 times 9? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0007", "text": "I was wondering, What is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0008", "text": "Luna, How much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0009", "text": "I was wondering, What is 17 plus 8? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0010", "text": "Can you tell me what's 6 times 9", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "voice_variant"}
+{"id": "train-arithmetic-0011", "text": "Can you tell me what's 6 times 9? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0012", "text": "What is 17 plus 8? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0013", "text": "I was wondering, How much is 144 divided by 12 please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "voice_variant"}
+{"id": "train-arithmetic-0014", "text": "What is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0015", "text": "I was wondering, What is 17 plus 8?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0016", "text": "Do you know how much is 144 divided by 12? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0017", "text": "I was wondering, What is 17 plus 8? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0018", "text": "I was wondering, How much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0019", "text": "Do you know what is 17 plus 8? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0020", "text": "Hey Luna, What's 6 times 9? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0021", "text": "Quick question: How much is 144 divided by 12 real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "voice_variant"}
+{"id": "train-arithmetic-0022", "text": "Luna, How much is 144 divided by 12? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0023", "text": "What's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0024", "text": "Hey Luna, How much is 144 divided by 12? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0025", "text": "I was wondering, What's 6 times 9? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0026", "text": "Luna, How much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0027", "text": "Quick question: What's 6 times 9? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0028", "text": "I was wondering, What's 6 times 9? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0029", "text": "Could you tell me how much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0030", "text": "I was wondering, How much is 144 divided by 12? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0031", "text": "Can you tell me how much is 144 divided by 12? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0032", "text": "Luna, What's 6 times 9? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0033", "text": "How much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0034", "text": "Can you tell me what is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0035", "text": "Could you tell me what's 6 times 9? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0036", "text": "I was wondering, How much is 144 divided by 12? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0037", "text": "Quick question: What's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0038", "text": "Can you tell me how much is 144 divided by 12? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0039", "text": "Hey Luna, How much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0040", "text": "What's 6 times 9? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0041", "text": "Could you tell me how much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0042", "text": "Luna, What is 17 plus 8?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0043", "text": "I was wondering, How much is 144 divided by 12 real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "voice_variant"}
+{"id": "train-arithmetic-0044", "text": "Could you tell me what's 6 times 9? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0045", "text": "Hey Luna, What's 6 times 9? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0046", "text": "Hey Luna, What is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0047", "text": "Quick question: What's 6 times 9? real quick", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0048", "text": "Can you tell me how much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0049", "text": "Do you know what's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0050", "text": "Hey Luna, How much is 144 divided by 12?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0051", "text": "Could you tell me what is 17 plus 8? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0052", "text": "Luna, What is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0053", "text": "Do you know how much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0054", "text": "Hey Luna, What is 17 plus 8?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0055", "text": "I was wondering, What's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0056", "text": "Could you tell me what's 6 times 9?", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0057", "text": "Do you know what is 17 plus 8? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0058", "text": "Can you tell me how much is 144 divided by 12? please", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0059", "text": "Quick question: What is 17 plus 8? if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "generated"}
+{"id": "train-arithmetic-0060", "text": "Luna, What's 6 times 9 if you can", "label": "SIMPLE", "scenario": "arithmetic", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0001", "text": "Hey Luna, What color is made by mixing blue and yellow? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0002", "text": "Luna, What is the capital of France?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0003", "text": "What is the capital of France? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0004", "text": "Luna, What color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0005", "text": "Can you tell me how many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0006", "text": "Could you tell me how many days are in a week?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0007", "text": "Do you know what color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0008", "text": "I was wondering, What is the capital of France? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0009", "text": "Luna, What color is made by mixing blue and yellow? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0010", "text": "Hey Luna, How many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0011", "text": "Quick question: What is the capital of France? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0012", "text": "Can you tell me what color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0013", "text": "Quick question: How many days are in a week? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0014", "text": "What color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0015", "text": "Hey Luna, What color is made by mixing blue and yellow if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0016", "text": "Could you tell me how many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0017", "text": "Luna, What is the capital of France? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0018", "text": "Do you know what is the capital of France? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0019", "text": "Can you tell me what is da capital of France? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0020", "text": "Do you know what color is made by mixing blue and yellow?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0021", "text": "Hey Luna, What is the capital of France? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0022", "text": "How many days are in a week? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0023", "text": "Hey Luna, How many days are in a week?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0024", "text": "How many days are in a week please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0025", "text": "What is the capital of France? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0026", "text": "Quick question: What color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0027", "text": "Could you tell me what color is made by mixing blue and yellow?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0028", "text": "Can you tell me what is the capital of France?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0029", "text": "Luna, How many days are in a week? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0030", "text": "Could you tell me how many days are in a week? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0031", "text": "What is the capital of France? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0032", "text": "Luna, What color is made by mixing blue and yellow?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0033", "text": "I was wondering, How many days are in a week?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0034", "text": "Do you know what is the capital of France?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0035", "text": "I was wondering, What color is made by mixing blue and yellow? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0036", "text": "Can you tell me what color is made by mixing blue and yellow? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0037", "text": "Do you know how many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0038", "text": "Hey Luna, What color is made by mixing blue and yellow? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0039", "text": "I was wondering, What color is made by mixing blue and yellow?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0040", "text": "I was wondering, What color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0041", "text": "Quick question: How many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0042", "text": "Do you know what is the capital of France? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0043", "text": "Could you tell me what color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0044", "text": "I was wondering, How many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0045", "text": "How many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0046", "text": "Quick question: What is the capital of France?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0047", "text": "I was wondering, What is the capital of France? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0048", "text": "I was wondering, What is the capital of France", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0049", "text": "I was wondering, What is the capital of France?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0050", "text": "I was wondering, How many days are in a week? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0051", "text": "Can you tell me how many days are in a week?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0052", "text": "I was wondering, What color is made by mixing blue and yellow please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0053", "text": "I was wondering, What is da capital of France? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-general_fact-0054", "text": "Luna, How many days are in a week? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0055", "text": "Quick question: How many days are in a week? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0056", "text": "Hey Luna, What color is made by mixing blue and yellow? real quick", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0057", "text": "Could you tell me how many days are in a week? please", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0058", "text": "Do you know how many days are in a week? if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0059", "text": "Do you know how many days are in a week?", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "generated"}
+{"id": "train-general_fact-0060", "text": "Luna, What color is made by mixing blue and yellow if you can", "label": "SIMPLE", "scenario": "general_fact", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0001", "text": "I need you to launch my file manager when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0002", "text": "Please open Discord right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0003", "text": "Could you tell me can you bring up Spotify?", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0004", "text": "Can you open Discord when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0005", "text": "Please start Firefox right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0006", "text": "Please start firefocks", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0007", "text": "Hey Luna, Launch my file manager right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0008", "text": "Could you launch my file manager right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0009", "text": "Can you start fire fox when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0010", "text": "Hey Luna, Can you bring up Spotify? if you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0011", "text": "Do you know can you bring up spotyfy?", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0012", "text": "Quick question: Can you bring up spotyfy? if you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0013", "text": "I need you to launch my file manager for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0014", "text": "Luna, Can you bring up Spotify? real quick", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0015", "text": "Could you start Firefox", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0016", "text": "Could you open Discord please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0017", "text": "Do you know can you bring up Spotify? please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0018", "text": "Could you open Discord for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0019", "text": "Luna, Open discourd right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0020", "text": "Could you tell me can you bring up spotyfy? real quick", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0021", "text": "Launch my file manager when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0022", "text": "Can you launch my file manager right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0023", "text": "Luna, Start firefocks for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0024", "text": "Hey Luna, Can you bring up Spotify? real quick", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0025", "text": "Could you tell me can you bring up Spotify? please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0026", "text": "Could you launch my file manager for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0027", "text": "Could you launch my file manager when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0028", "text": "I need you to launch my file manager", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0029", "text": "Luna, Start fire fox", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0030", "text": "Can you bring up Spotify?", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0031", "text": "Can you start Firefox when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0032", "text": "I need you to start Firefox for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0033", "text": "Can you launch my file manager when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0034", "text": "Luna, Can you bring up Spotify? please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0035", "text": "I need you to start firefocks when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0036", "text": "I need you to start Firefox right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0037", "text": "Could you open dis cord when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0038", "text": "Do you know can you bring up Spotify? real quick", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0039", "text": "Could you launch my file manager", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0040", "text": "Can you bring up spot ify? if you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0041", "text": "Can you start fire fox please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0042", "text": "Do you know can you bring up Spotify? if you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0043", "text": "Start Firefox", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0044", "text": "I need you to open discourd right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0045", "text": "Luna, Start fire fox when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0046", "text": "Please start firefocks for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0047", "text": "Can you open Discord for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0048", "text": "Please start Firefox for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0049", "text": "I need you to launch my file manager right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0050", "text": "Hey Luna, Start firefocks for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0051", "text": "Please launch my file manager for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0052", "text": "Hey Luna, Start Firefox", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0053", "text": "Open Discord for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0054", "text": "Could you start Firefox for me", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0055", "text": "Please start firefocks please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0056", "text": "I need you to start Firefox", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0057", "text": "Luna, Launch my file manager please", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-open_app-0058", "text": "Please open discourd when you can", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0059", "text": "Quick question: Can you bring up Spotify real quick", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "voice_variant"}
+{"id": "train-open_app-0060", "text": "Luna, Open Discord right now", "label": "FUNCTION", "scenario": "open_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0001", "text": "Can you quit firefocks when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0002", "text": "Could you please shut Discord for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0003", "text": "Can you close Spotify", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0004", "text": "Hey Luna, Stop the browser when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0005", "text": "Can you quit fire fox", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0006", "text": "Please stop the browser", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0007", "text": "Can you please shut Discord for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0008", "text": "I need you to please shut Discord", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0009", "text": "Could you close Spotify right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0010", "text": "Please quit Firefox for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0011", "text": "Hey Luna, Close spotyfy please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0012", "text": "I need you to quit Firefox right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0013", "text": "Luna, Close Spotify for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0014", "text": "Can you close spot ify for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0015", "text": "I need you to stop the browser for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0016", "text": "I need you to please shut discourd for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0017", "text": "I need you to please shut discourd please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0018", "text": "Luna, Stop the browser please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0019", "text": "Close Spotify for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0020", "text": "Hey Luna, Please shut Discord please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0021", "text": "Please please shut Discord", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0022", "text": "Can you please shut discourd when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0023", "text": "Can you stop the browser right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0024", "text": "Hey Luna, Please shut Discord for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0025", "text": "Please shut Discord when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0026", "text": "Can you close Spotify for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0027", "text": "Close Spotify please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0028", "text": "Can you close spot ify please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0029", "text": "Could you close spotyfy please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0030", "text": "Can you quit fire fox for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0031", "text": "Luna, Please shut Discord for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0032", "text": "Please shut dis cord", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0033", "text": "Hey Luna, Stop the browser", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0034", "text": "I need you to stop the browser right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0035", "text": "Can you quit Firefox please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0036", "text": "Please stop the browser for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0037", "text": "I need you to close Spotify please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0038", "text": "Can you quit fire fox right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0039", "text": "Quit Firefox for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0040", "text": "Can you stop the browser", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0041", "text": "Please close Spotify please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0042", "text": "Hey Luna, Please shut Discord when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0043", "text": "Could you quit Firefox when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0044", "text": "Can you quit Firefox", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0045", "text": "Please shut dis cord for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0046", "text": "Luna, Close spot ify for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0047", "text": "I need you to quit Firefox", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0048", "text": "Luna, Please shut Discord", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0049", "text": "Hey Luna, Stop the browser please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0050", "text": "Please close Spotify", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0051", "text": "Please please shut Discord right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0052", "text": "Luna, Close Spotify please", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0053", "text": "Can you please shut dis cord when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0054", "text": "I need you to close spot ify", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0055", "text": "Please quit Firefox right now", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0056", "text": "I need you to please shut dis cord", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0057", "text": "Hey Luna, Close spotyfy when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-close_app-0058", "text": "Luna, Stop the browser for me", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0059", "text": "Can you quit Firefox when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "generated"}
+{"id": "train-close_app-0060", "text": "Could you quit fire fox when you can", "label": "FUNCTION", "scenario": "close_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0001", "text": "Could you reopen dis cord from scratch for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0002", "text": "Hey Luna, Restart Firefox when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0003", "text": "I need you to reopen Discord from scratch when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0004", "text": "Can you restart fire fox", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0005", "text": "Hey Luna, Restart my browser please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0006", "text": "I need you to reopen Discord from scratch", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0007", "text": "Luna, Restart Firefox when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0008", "text": "Could you tell me can you relaunch Spotify? real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0009", "text": "I was wondering, Can you relaunch Spotify? please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0010", "text": "I need you to restart my browser right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0011", "text": "Hey Luna, Can you relaunch spot ify? real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0012", "text": "Restart my browser for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0013", "text": "Luna, Restart my browser right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0014", "text": "I need you to restart my browser", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0015", "text": "Can you restart Firefox when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0016", "text": "Restart my browser please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0017", "text": "Can you tell me can you relaunch Spotify? please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0018", "text": "Can you tell me can you relaunch Spotify?", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0019", "text": "I need you to restart my browser for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0020", "text": "I need you to restart Firefox", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0021", "text": "Restart Firefox for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0022", "text": "Can you restart firefocks please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0023", "text": "Luna, Restart Firefox please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0024", "text": "I need you to reopen Discord from scratch please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0025", "text": "Could you restart firefocks when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0026", "text": "Reopen dis cord from scratch please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0027", "text": "Hey Luna, Restart my browser", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0028", "text": "Could you tell me can you relaunch spotyfy? real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0029", "text": "Could you restart my browser please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0030", "text": "I need you to restart Firefox when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0031", "text": "Please reopen Discord from scratch", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0032", "text": "Can you reopen Discord from scratch right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0033", "text": "Can you relaunch Spotify? if you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0034", "text": "Luna, Can you relaunch spotyfy? real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0035", "text": "I need you to reopen dis cord from scratch please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0036", "text": "Please restart my browser when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0037", "text": "Hey Luna, Restart my browser right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0038", "text": "Could you restart firefocks", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0039", "text": "I was wondering, Can you relaunch Spotify?", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0040", "text": "Could you reopen Discord from scratch", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0041", "text": "Luna, Reopen Discord from scratch please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0042", "text": "Could you tell me can you relaunch spotyfy? please", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0043", "text": "Reopen Discord from scratch right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0044", "text": "Quick question: Can you relaunch spot ify real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0045", "text": "Can you reopen Discord from scratch", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0046", "text": "Please reopen Discord from scratch for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0047", "text": "Please reopen Discord from scratch right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0048", "text": "Luna, Restart my browser", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0049", "text": "Quick question: Can you relaunch Spotify? if you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0050", "text": "Luna, Restart Firefox", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0051", "text": "Restart my browser right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0052", "text": "Can you restart my browser for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0053", "text": "I need you to reopen dis cord from scratch right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0054", "text": "Reopen discourd from scratch", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0055", "text": "Restart my browser when you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0056", "text": "Quick question: Can you relaunch spot ify? if you can", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-restart_app-0057", "text": "Could you restart my browser right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0058", "text": "Can you relaunch Spotify? real quick", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0059", "text": "Hey Luna, Restart Firefox for me", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "generated"}
+{"id": "train-restart_app-0060", "text": "Could you restart fire fox right now", "label": "FUNCTION", "scenario": "restart_app", "split": "train", "source": "voice_variant"}
+{"id": "train-screenshot-0001", "text": "I need you to grab a screenshot now for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0002", "text": "Please take a screenshot", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0003", "text": "Please grab a screenshot now for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0004", "text": "Can you show me what's on my desktop", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0005", "text": "Could you show me what's on my desktop for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0006", "text": "Luna, Capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0007", "text": "Grab a screenshot now when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0008", "text": "Please capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0009", "text": "Luna, Grab a screenshot now when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0010", "text": "Could you capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0011", "text": "Can you capture my screen", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0012", "text": "Could you capture my screen when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0013", "text": "Capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0014", "text": "Hey Luna, Capture my screen", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0015", "text": "I need you to take a screenshot right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0016", "text": "Luna, Take a screenshot", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0017", "text": "I need you to take a screenshot for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0018", "text": "Please capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0019", "text": "Can you show me what's on my desktop please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0020", "text": "Hey Luna, Capture my screen when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0021", "text": "I need you to capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0022", "text": "Can you capture my screen for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0023", "text": "Can you grab a screenshot now when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0024", "text": "Capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0025", "text": "Could you take a screenshot please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0026", "text": "Could you show me what's on my desktop when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0027", "text": "Grab a screenshot now for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0028", "text": "Show me what's on my desktop right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0029", "text": "Hey Luna, Show me what's on my desktop right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0030", "text": "I need you to take a screenshot when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0031", "text": "Luna, Take a screenshot please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0032", "text": "Can you capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0033", "text": "Could you show me what's on my desktop please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0034", "text": "Hey Luna, Capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0035", "text": "Can you take a screenshot for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0036", "text": "Hey Luna, Grab a screenshot now please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0037", "text": "I need you to take a screenshot", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0038", "text": "Could you take a screenshot right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0039", "text": "Grab a screenshot now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0040", "text": "I need you to show me what's on my desktop for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0041", "text": "Could you capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0042", "text": "I need you to grab a screenshot now right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0043", "text": "Can you show me what's on my desktop for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0044", "text": "Can you take a screenshot", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0045", "text": "Hey Luna, Take a screenshot for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0046", "text": "Please show me what's on my desktop right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0047", "text": "Luna, Capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0048", "text": "Show me what's on my desktop for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0049", "text": "Please capture my screen when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0050", "text": "Luna, Grab a screenshot now right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0051", "text": "Hey Luna, Capture my screen please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0052", "text": "Luna, Show me what's on my desktop right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0053", "text": "Can you capture my screen right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0054", "text": "I need you to show me what's on my desktop when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0055", "text": "Capture my screen", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0056", "text": "I need you to show me what's on my desktop please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0057", "text": "Take a screenshot right now", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0058", "text": "Hey Luna, Take a screenshot please", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0059", "text": "Can you take a screenshot when you can", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-screenshot-0060", "text": "Luna, Show me what's on my desktop for me", "label": "FUNCTION", "scenario": "screenshot", "split": "train", "source": "generated"}
+{"id": "train-cpu-0001", "text": "Quick question: What is my CPU usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0002", "text": "Luna, Check the current processor load when you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0003", "text": "Quick question: What is my c p u usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0004", "text": "How busy is my CPU right now? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0005", "text": "Hey Luna, How busy is my CPU right now? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0006", "text": "Luna, Is my processor under heavy load?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0007", "text": "What is my CPU usage?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0008", "text": "Luna, Check the current processor load please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0009", "text": "Can you tell me is my processor under heavy load? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0010", "text": "I need you to check the current processor load when you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0011", "text": "Can you tell me what is my see pee you usage? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0012", "text": "Is my processor under heavy load? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0013", "text": "What is my CPU usage? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0014", "text": "Please check the current processor load when you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0015", "text": "Luna, How busy is my CPU right now? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0016", "text": "I need you to check da current processor load please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0017", "text": "How busy is my CPU right now? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0018", "text": "Can you check the current processor load for me", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0019", "text": "Quick question: Is my processor under heavy load? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0020", "text": "What is my CPU usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0021", "text": "Could you tell me is my processor under heavy load?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0022", "text": "Can you tell me is my processor under heavy load? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0023", "text": "Do you know how busy is my CPU right now real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0024", "text": "Check the current processor load please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0025", "text": "Quick question: Is my processor under heavy load? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0026", "text": "Luna, How busy is my CPU right now? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0027", "text": "What is my CPU usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0028", "text": "Could you tell me what is my see pee you usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0029", "text": "Do you know what is my CPU usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0030", "text": "Can you check the current processor load", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0031", "text": "Do you know how busy is my CPU right now?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0032", "text": "Could you tell me how busy is my see pee you right now? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0033", "text": "Can you check the current processor load right now", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0034", "text": "Do you know what is my see pee you usage?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0035", "text": "Luna, How busy is my see pee you right now?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0036", "text": "Could you tell me what is my CPU usage please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0037", "text": "Can you tell me how busy is my CPU right now? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0038", "text": "I was wondering, What is my c p u usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0039", "text": "Luna, How busy is my CPU right now?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0040", "text": "Luna, How busy is my CPU right now", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0041", "text": "Could you tell me is my processor under heavy load? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0042", "text": "Could you tell me is my processor under heavy load? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0043", "text": "Luna, What is my CPU usage?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0044", "text": "I was wondering, What is my see pee you usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0045", "text": "I need you to check da current processor load when you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0046", "text": "Do you know how busy is my CPU right now? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0047", "text": "Quick question: What is my see pee you usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0048", "text": "Is my processor under heavy load?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0049", "text": "Please check the current processor load please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0050", "text": "Check the current processor load", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0051", "text": "Hey Luna, Check the current processor load when you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0052", "text": "I need you to check the current processor load for me", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0053", "text": "Hey Luna, What is my CPU usage? real quick", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0054", "text": "Could you tell me what is my CPU usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0055", "text": "I was wondering, Is my processor under heavy load? if you can", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0056", "text": "I was wondering, Is my processor under heavy load?", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0057", "text": "Please check the current processor load right now", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0058", "text": "Could you check the current processor load", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-cpu-0059", "text": "Luna, What is my see pee you usage? please", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "voice_variant"}
+{"id": "train-cpu-0060", "text": "Please check the current processor load", "label": "FUNCTION", "scenario": "cpu", "split": "train", "source": "generated"}
+{"id": "train-memory-0001", "text": "Hey Luna, How much memory am I using? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0002", "text": "Please check my r a m usage when you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0003", "text": "I was wondering, How much memory am I using? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0004", "text": "What is using the most memory?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0005", "text": "Can you check my RAM usage", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0006", "text": "Could you tell me the current memory load for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0007", "text": "Luna, Check my RAM usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0008", "text": "I need you to tell me the current memory load right now", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0009", "text": "Quick question: How much memory am I using real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0010", "text": "Quick question: How much memory am I using? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0011", "text": "I need you to tell me the current memory load please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0012", "text": "Hey Luna, How much memory am I using? please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0013", "text": "Luna, Check my RAM usage please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0014", "text": "Please tell me the current memory load please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0015", "text": "Luna, Tell me the current memory load please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0016", "text": "Luna, Check my r a m usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0017", "text": "Can you tell me how much memory am I using? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0018", "text": "I need you to tell me the current memory load when you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0019", "text": "Do you know what is using the most memory? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0020", "text": "Could you tell me how much memory am I using?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0021", "text": "Check my RAM usage please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0022", "text": "Please tell me the current memory load right now", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0023", "text": "I need you to check my ran usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0024", "text": "Can you tell me what is using the most memory?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0025", "text": "Could you check my ran usage please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0026", "text": "Could you check my RAM usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0027", "text": "I need you to check my RAM usage please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0028", "text": "Luna, How much memory am I using?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0029", "text": "Can you tell me the current memory load when you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0030", "text": "Hey Luna, Check my ran usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0031", "text": "Tell me the current memory load for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0032", "text": "Quick question: What is using the most memory? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0033", "text": "Could you tell me how much memory am I using? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0034", "text": "Hey Luna, How much memory am I using? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0035", "text": "I need you to check my r a m usage right now", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0036", "text": "I was wondering, How much memory am I using if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0037", "text": "Can you check my RAM usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0038", "text": "Hey Luna, Tell me the current memory load right now", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0039", "text": "I need you to check my RAM usage right now", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0040", "text": "Please check my RAM usage please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0041", "text": "Can you tell me da current memory load for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0042", "text": "Hey Luna, Check my RAM usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0043", "text": "Check my RAM usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0044", "text": "Do you know how much memory am I using? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0045", "text": "Luna, What is using the most memory? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0046", "text": "Quick question: What is using da most memory? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0047", "text": "Hey Luna, What is using the most memory? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0048", "text": "Luna, What is using the most memory? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0049", "text": "Hey Luna, How much memory am I using?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0050", "text": "How much memory am I using? if you can", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0051", "text": "Please check my RAM usage", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0052", "text": "Could you tell me what is using the most memory?", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0053", "text": "Please tell me the current memory load for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0054", "text": "Luna, Check my RAM usage", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0055", "text": "I need you to check my r a m usage for me", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0056", "text": "Do you know how much memory am I using? please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0057", "text": "Could you tell me what is using the most memory? real quick", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0058", "text": "Hey Luna, Tell me the current memory load", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-memory-0059", "text": "I need you to check my r a m usage", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "voice_variant"}
+{"id": "train-memory-0060", "text": "Could you tell me how much memory am I using? please", "label": "FUNCTION", "scenario": "memory", "split": "train", "source": "generated"}
+{"id": "train-coding-0001", "text": "Luna, Write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0002", "text": "Build a small bash backup script. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0003", "text": "Hey Luna, Help me implement a parser for these records. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0004", "text": "Hey Luna, Build a small bash backup script. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0005", "text": "I need you to write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0006", "text": "Luna, Help me implement a parser for these records. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0007", "text": "I need you to write a Python program that monitors CPU temperature. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0008", "text": "I need you to help me implement a parser for these records.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0009", "text": "Can you write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0010", "text": "Hey Luna, Help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0011", "text": "Could you help me implement a parser for these records for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "voice_variant"}
+{"id": "train-coding-0012", "text": "Luna, Build a small bash backup script.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0013", "text": "Can you help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0014", "text": "I need you to build a small bash backup script. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0015", "text": "Luna, Write a Python program that monitors CPU temperature. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0016", "text": "Could you build a small bash backup script. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0017", "text": "Please help me implement a parser for these records.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0018", "text": "Please write a Python program that monitors CPU temperature. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0019", "text": "Can you write a Python program that monitors CPU temperature. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0020", "text": "Please build a small bash backup script. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0021", "text": "Could you build a small bash backup script. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0022", "text": "Could you write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0023", "text": "Write a Python program that monitors CPU temperature. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0024", "text": "Can you build a small bash backup script. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0025", "text": "Could you write a Python program that monitors CPU temperature. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0026", "text": "Hey Luna, Write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0027", "text": "Write a Python program that monitors CPU temperature. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0028", "text": "Hey Luna, Help me implement a parser for these records. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0029", "text": "Luna, Help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0030", "text": "Hey Luna, Write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0031", "text": "Luna, Write a Python program that monitors CPU temperature. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0032", "text": "I need you to write a Python program that monitors CPU temperature. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0033", "text": "Can you help me implement a parser for these records.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0034", "text": "Luna, Build a small bash backup script. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0035", "text": "Luna, Write a Python program that monitors CPU temperature when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "voice_variant"}
+{"id": "train-coding-0036", "text": "I need you to build a small bash backup script. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0037", "text": "Hey Luna, Build a small bash backup script. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0038", "text": "Please write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0039", "text": "Could you help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0040", "text": "Could you write a Python program that monitors CPU temperature. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0041", "text": "Could you build a small bash backup script. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0042", "text": "Can you write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0043", "text": "Can you build a small bash backup script. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0044", "text": "Please help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0045", "text": "Luna, Build a small bash backup script when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "voice_variant"}
+{"id": "train-coding-0046", "text": "Please write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0047", "text": "I need you to write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0048", "text": "Build a small bash backup script. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0049", "text": "Help me implement a parser for these records. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0050", "text": "Can you help me implement a parser for these records. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0051", "text": "Could you help me implement a parser for these records. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0052", "text": "Could you write a Python program that monitors CPU temperature. please", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0053", "text": "Can you help me implement a parser for these records right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "voice_variant"}
+{"id": "train-coding-0054", "text": "Could you help me implement a parser for these records. for me", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0055", "text": "Could you write a Python program that monitors CPU temperature. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0056", "text": "Hey Luna, Write a Python program that monitors CPU temperature. when you can", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0057", "text": "Build a small bash backup script.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0058", "text": "Write a Python program that monitors CPU temperature. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0059", "text": "Write a Python program that monitors CPU temperature.", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-coding-0060", "text": "Can you help me implement a parser for these records. right now", "label": "REASONING", "scenario": "coding", "split": "train", "source": "generated"}
+{"id": "train-debugging-0001", "text": "Hey Luna, Find the bug in this algorithm. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0002", "text": "Can you find the bug in this algorithm. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0003", "text": "Please debug this authentication error and propose a fix. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0004", "text": "Hey Luna, Why does this code throw an exception?", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0005", "text": "Could you find the bug in this algorithm. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0006", "text": "Quick question: Why does this code throw an exception? please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0007", "text": "I was wondering, Why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0008", "text": "Why does this code throw an exception? please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0009", "text": "Luna, Find the bug in this algorithm. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0010", "text": "Can you find the bug in this algorithm.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0011", "text": "Do you know why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0012", "text": "Please debug this authentication error and propose a fix. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0013", "text": "Quick question: Why does this code throw an exception?", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0014", "text": "Quick question: Why does this code throw an exception real quick", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "voice_variant"}
+{"id": "train-debugging-0015", "text": "Luna, Find the bug in this algorithm. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0016", "text": "Please debug this authentication error and propose a fix. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0017", "text": "Hey Luna, Debug this authentication error and propose a fix. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0018", "text": "Luna, Find the bug in this algorithm for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "voice_variant"}
+{"id": "train-debugging-0019", "text": "Can you debug this authentication error and propose a fix. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0020", "text": "Luna, Debug this authentication error and propose a fix. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0021", "text": "Can you find the bug in this algorithm. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0022", "text": "Hey Luna, Find the bug in this algorithm. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0023", "text": "Can you tell me why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0024", "text": "Debug this authentication error and propose a fix. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0025", "text": "Hey Luna, Debug this authentication error and propose a fix. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0026", "text": "Please find the bug in this algorithm. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0027", "text": "I need you to find the bug in this algorithm. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0028", "text": "Find the bug in this algorithm. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0029", "text": "I need you to debug this authentication error and propose a fix. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0030", "text": "Luna, Why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0031", "text": "Could you find the bug in this algorithm. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0032", "text": "Find the bug in this algorithm. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0033", "text": "Please find the bug in this algorithm.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0034", "text": "Hey Luna, Debug this authentication error and propose a fix.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0035", "text": "Can you tell me why does this code throw an exception? real quick", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0036", "text": "Do you know why does this code throw an exception? real quick", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0037", "text": "Quick question: Why does this code throw an exception? real quick", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0038", "text": "Luna, Find the bug in this algorithm. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0039", "text": "Could you tell me why does this code throw an exception?", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0040", "text": "Hey Luna, Find the bug in this algorithm. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0041", "text": "Could you tell me why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0042", "text": "Please find the bug in this algorithm. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0043", "text": "Could you debug this authentication error and propose a fix. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0044", "text": "Find the bug in this algorithm.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0045", "text": "Can you find the bug in this algorithm. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0046", "text": "Could you tell me why does this code throw an exception? please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0047", "text": "Could you find the bug in this algorithm. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0048", "text": "Hey Luna, Why does this code throw an exception? if you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0049", "text": "Can you debug this authentication error and propose a fix. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0050", "text": "Find the bug in this algorithm. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0051", "text": "Do you know why does this code throw an exception?", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0052", "text": "Hey Luna, Debug this authentication error and propose a fix. when you can", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0053", "text": "I need you to find the bug in this algorithm. for me", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0054", "text": "I need you to debug this authentication error and propose a fix.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0055", "text": "Can you debug this authentication error and propose a fix.", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0056", "text": "Could you debug this authentication error and propose a fix. right now", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0057", "text": "Luna, Debug this authentication error and propose a fix. please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0058", "text": "Could you tell me why does this code throw an exception? real quick", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0059", "text": "Can you tell me why does this code throw an exception? please", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-debugging-0060", "text": "Why does this code throw an exception?", "label": "REASONING", "scenario": "debugging", "split": "train", "source": "generated"}
+{"id": "train-planning-0001", "text": "Luna, Plan a seven-day trip through Japan. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0002", "text": "I need you to plan a seven-day trip through Japan. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0003", "text": "Luna, Plan a seven-day trip through Japan. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0004", "text": "Can you make a realistic study plan for next month. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0005", "text": "Luna, Help me organize a dinner party. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0006", "text": "Can you make a realistic study plan for next month. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0007", "text": "Can you make a realistic study plan for next month when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0008", "text": "Hey Luna, Help me organize a dinner party when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0009", "text": "Please make a realistic study plan for next month please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0010", "text": "Help me organize a dinner party. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0011", "text": "Help me organize a dinner party.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0012", "text": "Can you plan a seven-day trip through Japan please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0013", "text": "Hey Luna, Help me organize a dinner party. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0014", "text": "Please make a realistic study plan for next month. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0015", "text": "Please help me organize a dinner party. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0016", "text": "Can you make a realistic study plan for next month. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0017", "text": "Could you help me organize a dinner party.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0018", "text": "Could you plan a seven-day trip through Japan. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0019", "text": "Please make a realistic study plan for next month. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0020", "text": "Can you make a realistic study plan for next month. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0021", "text": "Hey Luna, Help me organize a dinner party for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0022", "text": "Help me organize a dinner party. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0023", "text": "Hey Luna, Make a realistic study plan for next month. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0024", "text": "Luna, Make a realistic study plan for next month. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0025", "text": "Hey Luna, Plan a seven-day trip through Japan.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0026", "text": "Please plan a seven-day trip through Japan. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0027", "text": "Hey Luna, Plan a seven-day trip through Japan. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0028", "text": "Could you plan a seven-day trip through Japan.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0029", "text": "Can you help me organize a dinner party. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0030", "text": "I need you to make a realistic study plan for next month. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0031", "text": "Could you help me organize a dinner party. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0032", "text": "Please plan a seven-day trip through Japan. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0033", "text": "Make a realistic study plan for next month. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0034", "text": "Please make a realistic study plan for next month. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0035", "text": "I need you to plan a seven-day trip through Japan. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0036", "text": "Luna, Help me organize a dinner party. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0037", "text": "Could you make a realistic study plan for next month. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0038", "text": "Luna, Help me organize a dinner party. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0039", "text": "Help me organize a dinner party. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0040", "text": "I need you to help me organize a dinner party. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0041", "text": "Plan a seven-day trip through Japan. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0042", "text": "Could you make a realistic study plan for next month. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0043", "text": "Please plan a seven-day trip through Japan. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0044", "text": "Luna, Make a realistic study plan for next month.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0045", "text": "Please plan a seven-day trip through Japan.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0046", "text": "Could you help me organize a dinner party. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0047", "text": "Hey Luna, Help me organize a dinner party.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0048", "text": "Can you help me organize a dinner party. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0049", "text": "I need you to help me organize a dinner party. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0050", "text": "Hey Luna, Make a realistic study plan for next month.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0051", "text": "Could you help me organize a dinner party please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0052", "text": "Could you make a realistic study plan for next month when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0053", "text": "Please help me organize a dinner party. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0054", "text": "Luna, Help me organize a dinner party. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0055", "text": "Please make a realistic study plan for next month.", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0056", "text": "Plan a seven-day trip through Japan. when you can", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0057", "text": "I need you to plan a seven-day trip through Japan. please", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0058", "text": "Help me organize a dinner party. for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-planning-0059", "text": "Luna, Help me organize a dinner party for me", "label": "REASONING", "scenario": "planning", "split": "train", "source": "voice_variant"}
+{"id": "train-planning-0060", "text": "Can you plan a seven-day trip through Japan. right now", "label": "REASONING", "scenario": "planning", "split": "train", "source": "generated"}
+{"id": "train-explanation-0001", "text": "Please explain why black holes evaporate. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0002", "text": "Hey Luna, Teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0003", "text": "Luna, Explain this networking concept in detail. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0004", "text": "Can you explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0005", "text": "Luna, Explain this networking concept in detail. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0006", "text": "Could you explain this networking concept in detail.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0007", "text": "Can you explain why black holes evaporate. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0008", "text": "I need you to explain why black holes evaporate. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0009", "text": "Can you teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0010", "text": "Hey Luna, Explain this networking concept in detail. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0011", "text": "Can you teach me how photosynthesis works. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0012", "text": "Can you explain this networking concept in detail. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0013", "text": "Please teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0014", "text": "Explain this networking concept in detail.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0015", "text": "Hey Luna, Teach me how photosynthesis works. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0016", "text": "Please explain why black holes evaporate. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0017", "text": "Hey Luna, Explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0018", "text": "Could you explain this networking concept in detail. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0019", "text": "Explain why black holes evaporate.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0020", "text": "Could you explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0021", "text": "Explain why black holes evaporate. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0022", "text": "Luna, Teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0023", "text": "Please explain this networking concept in detail. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0024", "text": "Could you explain why black holes evaporate. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0025", "text": "Could you teach me how photosynthesis works. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0026", "text": "Can you explain this networking concept in detail", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "voice_variant"}
+{"id": "train-explanation-0027", "text": "I need you to explain why black holes evaporate.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0028", "text": "Please explain this networking concept in detail.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0029", "text": "Luna, Explain why black holes evaporate. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0030", "text": "Can you explain why black holes evaporate. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0031", "text": "Could you explain why black holes evaporate. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0032", "text": "I need you to teach me how photosynthesis works. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0033", "text": "Please teach me how photosynthesis works. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0034", "text": "I need you to explain this networking concept in detail.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0035", "text": "Luna, Explain why black holes evaporate. for me", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0036", "text": "Luna, Explain this networking concept in detail. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0037", "text": "I need you to teach me how photosynthesis works. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0038", "text": "I need you to explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0039", "text": "I need you to teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0040", "text": "Hey Luna, Explain this networking concept in detail. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0041", "text": "Luna, Teach me how photosynthesis works. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0042", "text": "Teach me how photosynthesis works. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0043", "text": "Hey Luna, Explain why black holes evaporate. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0044", "text": "I need you to teach me how photosynthesis works. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0045", "text": "Could you explain this networking concept in detail. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0046", "text": "Could you explain this networking concept in detail when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "voice_variant"}
+{"id": "train-explanation-0047", "text": "Could you explain why black holes evaporate right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "voice_variant"}
+{"id": "train-explanation-0048", "text": "Could you teach me how photosynthesis works. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0049", "text": "I need you to explain this networking concept in detail. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0050", "text": "Hey Luna, Explain this networking concept in detail.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0051", "text": "Could you explain why black holes evaporate. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0052", "text": "Explain this networking concept in detail right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "voice_variant"}
+{"id": "train-explanation-0053", "text": "Can you explain why black holes evaporate.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0054", "text": "I need you to explain why black holes evaporate. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0055", "text": "Please explain why black holes evaporate.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0056", "text": "I need you to explain why black holes evaporate. when you can", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0057", "text": "Luna, Explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0058", "text": "Luna, Teach me how photosynthesis works. right now", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0059", "text": "Could you teach me how photosynthesis works.", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-explanation-0060", "text": "Explain this networking concept in detail. please", "label": "REASONING", "scenario": "explanation", "split": "train", "source": "generated"}
+{"id": "train-comparison-0001", "text": "Please compare SQLite and PostgreSQL for this project. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0002", "text": "I was wondering, What are the tradeoffs between REST and GraphQL? real quick", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0003", "text": "I need you to compare SQLite and PostgreSQL for this project.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0004", "text": "Could you tell me what are the tradeoffs between REST and GraphQL? if you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0005", "text": "Could you contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0006", "text": "Please compare SQLite and PostgreSQL for this project. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0007", "text": "Contrast these two database designs. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0008", "text": "Compare SQLite and PostgreSQL for this project. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0009", "text": "Luna, What are the tradeoffs between REST and GraphQL? if you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0010", "text": "I need you to contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0011", "text": "Can you contrast these two database designs. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0012", "text": "Luna, Compare SQLite and PostgreSQL for this project. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0013", "text": "Could you tell me what are the tradeoffs between REST and GraphQL please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0014", "text": "Luna, Compare SQLite and PostgreSQL for this project. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0015", "text": "I was wondering, What are the tradeoffs between REST and GraphQL", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0016", "text": "Could you contrast these two database designs. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0017", "text": "Can you tell me what are the tradeoffs between REST and GraphQL?", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0018", "text": "Contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0019", "text": "Can you contrast these two database designs. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0020", "text": "Hey Luna, Contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0021", "text": "I need you to compare SQLite and PostgreSQL for this project. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0022", "text": "What are the tradeoffs between REST and GraphQL? real quick", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0023", "text": "Luna, Contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0024", "text": "Luna, What are the tradeoffs between REST and GraphQL? real quick", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0025", "text": "What are the tradeoffs between REST and GraphQL? if you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0026", "text": "Could you contrast these two database designs. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0027", "text": "Can you tell me what are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0028", "text": "Could you tell me what are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0029", "text": "Can you compare SQLite and PostgreSQL for this project. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0030", "text": "What are the tradeoffs between REST and GraphQL?", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0031", "text": "Luna, Contrast these two database designs when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0032", "text": "Hey Luna, Contrast these two database designs. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0033", "text": "Can you compare SQLite and PostgreSQL for this project for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0034", "text": "Hey Luna, Contrast these two database designs. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0035", "text": "Please contrast these two database designs. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0036", "text": "Hey Luna, Compare SQLite and PostgreSQL for this project. when you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0037", "text": "Luna, Compare SQLite and PostgreSQL for this project. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0038", "text": "Could you contrast these two database designs. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0039", "text": "Please contrast these two database designs. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0040", "text": "Luna, Compare SQLite and PostgreSQL for this project.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0041", "text": "Hey Luna, What are the tradeoffs between REST and GraphQL? real quick", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0042", "text": "Quick question: What are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0043", "text": "I was wondering, What are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0044", "text": "Do you know what are the tradeoffs between REST and GraphQL please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0045", "text": "Could you compare SQLite and PostgreSQL for this project please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "voice_variant"}
+{"id": "train-comparison-0046", "text": "I need you to contrast these two database designs. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0047", "text": "Could you tell me what are the tradeoffs between REST and GraphQL? real quick", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0048", "text": "Contrast these two database designs. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0049", "text": "Hey Luna, Contrast these two database designs. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0050", "text": "Could you compare SQLite and PostgreSQL for this project. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0051", "text": "Luna, What are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0052", "text": "Can you contrast these two database designs. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0053", "text": "Hey Luna, Compare SQLite and PostgreSQL for this project. please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0054", "text": "Luna, Compare SQLite and PostgreSQL for this project. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0055", "text": "I was wondering, What are the tradeoffs between REST and GraphQL? if you can", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0056", "text": "Hey Luna, What are the tradeoffs between REST and GraphQL? please", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0057", "text": "Could you contrast these two database designs. for me", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0058", "text": "Quick question: What are the tradeoffs between REST and GraphQL?", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0059", "text": "Please contrast these two database designs.", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-comparison-0060", "text": "I need you to contrast these two database designs. right now", "label": "REASONING", "scenario": "comparison", "split": "train", "source": "generated"}
+{"id": "train-design-0001", "text": "Help me design an application for tracking habits. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0002", "text": "Can you help me design an application for tracking habits.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0003", "text": "Hey Luna, Help me design an application for tracking habits. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0004", "text": "How should I organize this software project? please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0005", "text": "Please help me design an application for tracking habits. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0006", "text": "Luna, Help me design an application for tracking habits. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0007", "text": "Do you know how should I organize this software project? real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0008", "text": "Please design a database schema for a multi-tenant app. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0009", "text": "Luna, How should I organize this software project", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0010", "text": "Quick question: How should I organize this software project? real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0011", "text": "Could you design a database schema for a multi-tenant app", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0012", "text": "Design a database schema for a multi-tenant app. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0013", "text": "Can you help me design an application for tracking habits. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0014", "text": "I need you to help me design an application for tracking habits. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0015", "text": "Please help me design an application for tracking habits. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0016", "text": "Help me design an application for tracking habits. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0017", "text": "Hey Luna, How should I organize this software project? please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0018", "text": "I was wondering, How should I organize this software project please", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0019", "text": "Luna, How should I organize this software project? please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0020", "text": "I need you to help me design an application for tracking habits.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0021", "text": "Quick question: How should I organize this software project?", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0022", "text": "I was wondering, How should I organize this software project? real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0023", "text": "Could you design a database schema for a multi-tenant app. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0024", "text": "Help me design an application for tracking habits. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0025", "text": "Can you tell me how should I organize this software project? real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0026", "text": "Quick question: How should I organize this software project", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0027", "text": "Do you know how should I organize this software project? please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0028", "text": "Luna, Help me design an application for tracking habits. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0029", "text": "Can you design a database schema for a multi-tenant app.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0030", "text": "Luna, How should I organize this software project? real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0031", "text": "Help me design an application for tracking habits right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0032", "text": "Can you tell me how should I organize this software project? if you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0033", "text": "Luna, How should I organize this software project?", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0034", "text": "Luna, Design a database schema for a multi-tenant app. please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0035", "text": "Luna, Design a database schema for a multi-tenant app right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0036", "text": "Could you tell me how should I organize this software project? if you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0037", "text": "Can you design a database schema for a multi-tenant app. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0038", "text": "How should I organize this software project? if you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0039", "text": "Luna, Design a database schema for a multi-tenant app. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0040", "text": "Hey Luna, Help me design an application for tracking habits.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0041", "text": "Could you design a database schema for a multi-tenant app. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0042", "text": "Can you design a database schema for a multi-tenant app. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0043", "text": "Help me design an application for tracking habits.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0044", "text": "Hey Luna, How should I organize this software project? if you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0045", "text": "Quick question: How should I organize this software project? please", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0046", "text": "Could you tell me how should I organize this software project?", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0047", "text": "Hey Luna, Design a database schema for a multi-tenant app. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0048", "text": "Hey Luna, How should I organize this software project?", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0049", "text": "Can you design a database schema for a multi-tenant app. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0050", "text": "Quick question: How should I organize this software project? if you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0051", "text": "Please help me design an application for tracking habits. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0052", "text": "Please design a database schema for a multi-tenant app right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}
+{"id": "train-design-0053", "text": "Hey Luna, Help me design an application for tracking habits. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0054", "text": "Luna, Design a database schema for a multi-tenant app. when you can", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0055", "text": "Luna, Help me design an application for tracking habits. for me", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0056", "text": "Please design a database schema for a multi-tenant app. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0057", "text": "Can you help me design an application for tracking habits. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0058", "text": "Luna, Help me design an application for tracking habits.", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0059", "text": "Could you design a database schema for a multi-tenant app. right now", "label": "REASONING", "scenario": "design", "split": "train", "source": "generated"}
+{"id": "train-design-0060", "text": "I was wondering, How should I organize this software project real quick", "label": "REASONING", "scenario": "design", "split": "train", "source": "voice_variant"}

@@ -387,6 +387,48 @@ They cover Ollama's newline-delimited JSON stream parsing, configuration
 defaults/round-tripping, conversations, permission gates, local tool handlers,
 and local voice discovery/error handling.
 
+## Fine-tuning the Gemma router
+
+Lura includes a real LoRA fine-tuning and evaluation pipeline for the
+three-label Gemma router. It does not alter the desktop UI, voice system, or
+Qwen response model.
+
+```bash
+cd local-ai-assistant
+python3 scripts/generate_router_dataset.py
+python3 -m pip install -r requirements-training.txt
+python3 scripts/train_router.py
+python3 scripts/evaluate_router.py \
+  --backend transformers \
+  --model-path training/router_lora \
+  --output training/router_test_report.json
+```
+
+The generated test split is isolated by scenario: entire concepts are held
+out rather than randomly scattering near-duplicate phrasings across splits.
+The report includes accuracy, precision, recall, F1, a confusion matrix, and
+latency statistics. The evaluation command returns a failure status below
+90% accuracy, so a weak model cannot be mistaken for a successful run.
+
+Training uses the public `google/gemma-3-270m-it` checkpoint and requires
+accepting Google's Gemma terms on Hugging Face. `requirements-training.txt`
+is intentionally separate from the runtime dependencies. `--qlora` is
+available for CUDA hosts with `bitsandbytes`; regular LoRA is the default.
+
+Ollama serving depends on the installed Ollama/llama.cpp adapter format. The
+pipeline writes a PEFT adapter and does not silently claim that conversion
+succeeded. Generate a candidate Modelfile with:
+
+```bash
+python3 scripts/create_ollama_modelfile.py \
+  --adapter /path/to/converted-router-adapter
+ollama create lura-gemma-router -f training/Modelfile.router
+```
+
+Only after `ollama create` succeeds should `LURA_ROUTER_MODEL=lura-gemma-router`
+be used. The runtime also supports this environment variable without changing
+the saved desktop settings; Qwen remains the response model.
+
 ## Project structure
 
 ```text

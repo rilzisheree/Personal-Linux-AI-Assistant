@@ -1,0 +1,11 @@
+# Optional dependencies for the Gemma 3 270M LoRA pipeline.
+# Keep these separate from the desktop/API runtime: they are large and are not
+# needed to run Lura or generate/evaluate a dataset through Ollama.
+accelerate>=1.6
+datasets>=3.5
+peft>=0.15
+torch>=2.6
+transformers>=4.51
+
+# Install only when using train_router.py --qlora on CUDA:
+# bitsandbytes>=0.45

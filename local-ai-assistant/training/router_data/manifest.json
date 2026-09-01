@@ -1,0 +1,71 @@
+{
+  "labels": [
+    "SIMPLE",
+    "FUNCTION",
+    "REASONING"
+  ],
+  "scenario_split": {
+    "affirmation": "validation",
+    "ambiguous": "test",
+    "analysis": "validation",
+    "arithmetic": "train",
+    "close_app": "train",
+    "coding": "train",
+    "comparison": "train",
+    "cpu": "train",
+    "debugging": "train",
+    "definition": "validation",
+    "design": "train",
+    "explanation": "train",
+    "file_search": "test",
+    "general_fact": "train",
+    "goodbye": "train",
+    "greeting": "train",
+    "memory": "train",
+    "multi_step": "test",
+    "open_app": "train",
+    "optimization": "test",
+    "planning": "train",
+    "power": "test",
+    "research": "validation",
+    "restart_app": "train",
+    "screenshot": "train",
+    "short_joke": "validation",
+    "small_conversion": "test",
+    "spelling": "test",
+    "system_status": "test",
+    "thanks": "train",
+    "unit_fact": "test",
+    "volume": "validation",
+    "website": "validation",
+    "wellbeing": "train",
+    "windows": "validation",
+    "writing": "validation"
+  },
+  "splits": {
+    "test": {
+      "examples": 630,
+      "labels": {
+        "FUNCTION": 210,
+        "REASONING": 210,
+        "SIMPLE": 210
+      }
+    },
+    "train": {
+      "examples": 1080,
+      "labels": {
+        "FUNCTION": 360,
+        "REASONING": 360,
+        "SIMPLE": 360
+      }
+    },
+    "validation": {
+      "examples": 450,
+      "labels": {
+        "FUNCTION": 150,
+        "REASONING": 150,
+        "SIMPLE": 150
+      }
+    }
+  }
+}

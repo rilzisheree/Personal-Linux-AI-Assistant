@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from dataclasses import dataclass, field
 from typing import Iterator, Protocol
@@ -37,7 +38,7 @@ class AssistantBackend(Protocol):
 
 
 LOGGER = logging.getLogger("lura.assistant")
-DEFAULT_ROUTER_MODEL = "gemma3:270m"
+DEFAULT_ROUTER_MODEL = os.environ.get("LURA_ROUTER_MODEL", "gemma3:270m").strip() or "gemma3:270m"
 ROUTER_CONTEXT_SIZE = 2048
 ROUTER_OUTPUT_TOKENS = 8
 ROUTER_RESPONSE_SCHEMA = {
@@ -49,6 +50,33 @@ ROUTER_LABELS = {
     "FUNCTION": "function",
     "REASONING": "reasoning",
 }
+ROUTER_SYSTEM_PROMPT = """You are a classifier, not an assistant.
+Classify REQUEST into exactly one label and output only that uppercase label:
+SIMPLE, FUNCTION, or REASONING. Never answer, explain, use JSON, or add punctuation.
+
+Choose FUNCTION first for any computer action or live computer information:
+open, close, restart, screenshot, windows, CPU, memory, volume, website.
+Otherwise choose REASONING for coding, planning, analysis, research, explanations,
+debugging, generation, multiple steps, or uncertainty.
+Choose SIMPLE only for an obvious greeting, thanks, goodbye, easy fact, arithmetic,
+or short joke that needs no tools or meaningful reasoning.
+
+Examples:
+Hello -> SIMPLE
+How are you? -> SIMPLE
+Thanks -> SIMPLE
+What is 2 + 2? -> SIMPLE
+Tell me a joke -> SIMPLE
+Open Discord -> FUNCTION
+What is my CPU usage? -> FUNCTION
+Take a screenshot -> FUNCTION
+List my open windows -> FUNCTION
+Write a Python program -> REASONING
+Plan a trip -> REASONING
+Explain black holes -> REASONING
+Debug this error -> REASONING
+
+REQUEST: output one label now."""
 
 
 @dataclass(frozen=True)
@@ -101,33 +129,10 @@ class AssistantService:
 class RoutedAssistantService(AssistantService):
     """Use a small Ollama model to classify the request before responding."""
 
-    _router_prompt = """You are a classifier, not an assistant.
-Classify REQUEST into exactly one label and output only that uppercase label:
-SIMPLE, FUNCTION, or REASONING. Never answer, explain, use JSON, or add punctuation.
-
-Choose FUNCTION first for any computer action or live computer information:
-open, close, restart, screenshot, windows, CPU, memory, volume, website.
-Otherwise choose REASONING for coding, planning, analysis, research, explanations,
-debugging, generation, multiple steps, or uncertainty.
-Choose SIMPLE only for an obvious greeting, thanks, goodbye, easy fact, arithmetic,
-or short joke that needs no tools or meaningful reasoning.
-
-Examples:
-Hello -> SIMPLE
-How are you? -> SIMPLE
-Thanks -> SIMPLE
-What is 2 + 2? -> SIMPLE
-Tell me a joke -> SIMPLE
-Open Discord -> FUNCTION
-What is my CPU usage? -> FUNCTION
-Take a screenshot -> FUNCTION
-List my open windows -> FUNCTION
-Write a Python program -> REASONING
-Plan a trip -> REASONING
-Explain black holes -> REASONING
-Debug this error -> REASONING
-
-REQUEST: output one label now."""
+    # This is a stable compatibility prompt for base and fine-tuned models. The
+    # classification behavior is learned from the dataset, not from editing this
+    # string for individual benchmark examples.
+    _router_prompt = ROUTER_SYSTEM_PROMPT
 
     def __init__(
         self,

@@ -1,0 +1,630 @@
+{"id": "test-spelling-0001", "text": "Could you tell me how do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0002", "text": "Please spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0003", "text": "Spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0004", "text": "I was wondering, How do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0005", "text": "Do you know how do you spell necessary?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0006", "text": "Hey Luna, Spell the word restaurant. right now", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0007", "text": "Can you tell me how do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0008", "text": "I need you to spell the word restaurant right now", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0009", "text": "Luna, Spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0010", "text": "Luna, What's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0011", "text": "Quick question: What's the plural of mouse? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0012", "text": "Quick question: How do you spell necessary? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0013", "text": "Hey Luna, How do you spell necessary?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0014", "text": "Do you know how do you spell necessary? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0015", "text": "How do you spell necessary?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0016", "text": "Could you tell me what's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0017", "text": "Luna, What's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0018", "text": "I was wondering, How do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0019", "text": "Please spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0020", "text": "How do you spell necessary", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0021", "text": "Hey Luna, What's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0022", "text": "I was wondering, What's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0023", "text": "Do you know what's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0024", "text": "Do you know how do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0025", "text": "Spell the word restaurant.", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0026", "text": "Hey Luna, Spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0027", "text": "Hey Luna, How do you spell necessary? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0028", "text": "I was wondering, What's the plural of mouse? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0029", "text": "Quick question: What's the plural of mouse please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0030", "text": "Can you spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0031", "text": "I need you to spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0032", "text": "Luna, What's the plural of mouse? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0033", "text": "Could you spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0034", "text": "Can you spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0035", "text": "I was wondering, What's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0036", "text": "Hey Luna, Spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0037", "text": "Can you tell me how do you spell necessary?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0038", "text": "I need you to spell the word restaurant.", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0039", "text": "Can you spell the word restaurant. right now", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0040", "text": "Quick question: How do you spell necessary please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0041", "text": "Could you spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0042", "text": "Do you know how do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0043", "text": "Can you spell the word restaurant", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0044", "text": "Quick question: How do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0045", "text": "Do you know what's the plural of mouse? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0046", "text": "I was wondering, How do you spell necessary?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0047", "text": "I need you to spell the word restaurant for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0048", "text": "Quick question: How do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0049", "text": "How do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0050", "text": "Hey Luna, How do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0051", "text": "What's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0052", "text": "Could you spell the word restaurant.", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0053", "text": "I was wondering, What's the plural of mouse? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0054", "text": "Spell the word restaurant. right now", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0055", "text": "Please spell the word restaurant. right now", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0056", "text": "Can you tell me what's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0057", "text": "Hey Luna, How do you spell necessary? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0058", "text": "I need you to spell the word restaurant. when you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0059", "text": "Luna, How do you spell necessary? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0060", "text": "Quick question: What's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0061", "text": "What's the plural of mouse? please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0062", "text": "Spell the word restaurant. please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0063", "text": "Please spell da word restaurant please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "voice_variant"}
+{"id": "test-spelling-0064", "text": "Do you know what's the plural of mouse? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0065", "text": "Can you tell me what's the plural of mouse? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0066", "text": "How do you spell necessary? real quick", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0067", "text": "Luna, What's the plural of mouse? if you can", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0068", "text": "Luna, Spell the word restaurant. please", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0069", "text": "Spell the word restaurant. for me", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-spelling-0070", "text": "Quick question: What's the plural of mouse?", "label": "SIMPLE", "scenario": "spelling", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0001", "text": "Hey Luna, How many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0002", "text": "Do you know how many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0003", "text": "I was wondering, How many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0004", "text": "Hey Luna, How many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0005", "text": "Luna, How many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0006", "text": "Luna, How many minutes are in an hour real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "voice_variant"}
+{"id": "test-unit_fact-0007", "text": "Luna, How many sides does a hexagon have? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0008", "text": "Quick question: How many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0009", "text": "Luna, How many centimeters are in a meter?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0010", "text": "How many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0011", "text": "Could you tell me how many sides does a hexagon have? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0012", "text": "Luna, How many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0013", "text": "Could you tell me how many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0014", "text": "Could you tell me how many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0015", "text": "Can you tell me how many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0016", "text": "Can you tell me how many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0017", "text": "Do you know how many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0018", "text": "Quick question: How many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0019", "text": "I was wondering, How many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0020", "text": "Can you tell me how many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0021", "text": "Hey Luna, How many minutes are in an hour? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0022", "text": "Hey Luna, How many sides does a hexagon have? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0023", "text": "Luna, How many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0024", "text": "How many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0025", "text": "Can you tell me how many minutes are in an hour? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0026", "text": "How many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0027", "text": "I was wondering, How many centimeters are in a meter?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0028", "text": "Can you tell me how many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0029", "text": "Do you know how many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0030", "text": "Quick question: How many minutes are in an hour real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "voice_variant"}
+{"id": "test-unit_fact-0031", "text": "How many centimeters are in a meter? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0032", "text": "Hey Luna, How many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0033", "text": "Hey Luna, How many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0034", "text": "Quick question: How many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0035", "text": "I was wondering, How many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0036", "text": "I was wondering, How many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0037", "text": "Luna, How many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0038", "text": "How many sides does a hexagon have? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0039", "text": "How many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0040", "text": "Luna, How many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0041", "text": "Do you know how many minutes are in an hour? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0042", "text": "Quick question: How many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0043", "text": "I was wondering, How many sides does a hexagon have? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0044", "text": "Quick question: How many sides does a hexagon have? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0045", "text": "Do you know how many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0046", "text": "Luna, How many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0047", "text": "I was wondering, How many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0048", "text": "Quick question: How many sides does a hexagon have? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0049", "text": "How many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0050", "text": "Hey Luna, How many sides does a hexagon have? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0051", "text": "Quick question: How many minutes are in an hour? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0052", "text": "I was wondering, How many minutes are in an hour? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0053", "text": "Can you tell me how many centimeters are in a meter?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0054", "text": "Luna, How many centimeters are in a meter? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0055", "text": "How many centimeters are in a meter?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0056", "text": "Luna, How many minutes are in an hour? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0057", "text": "Could you tell me how many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0058", "text": "Can you tell me how many sides does a hexagon have? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0059", "text": "Hey Luna, How many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0060", "text": "I was wondering, How many minutes are in an hour? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0061", "text": "Quick question: How many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0062", "text": "Could you tell me how many sides does a hexagon have? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0063", "text": "Hey Luna, How many minutes are in an hour?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0064", "text": "How many minutes are in an hour please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "voice_variant"}
+{"id": "test-unit_fact-0065", "text": "Luna, How many minutes are in an hour", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "voice_variant"}
+{"id": "test-unit_fact-0066", "text": "Do you know how many minutes are in an hour if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "voice_variant"}
+{"id": "test-unit_fact-0067", "text": "Do you know how many minutes are in an hour? if you can", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0068", "text": "Quick question: How many centimeters are in a meter? real quick", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0069", "text": "Quick question: How many sides does a hexagon have?", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-unit_fact-0070", "text": "Could you tell me how many minutes are in an hour? please", "label": "SIMPLE", "scenario": "unit_fact", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0001", "text": "Can you tell me how many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0002", "text": "Could you tell me how many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0003", "text": "Do you know what is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0004", "text": "Luna, How many seconds are in two minutes? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0005", "text": "What is 3 kilometers in meters? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0006", "text": "Can you tell me what is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0007", "text": "Convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0008", "text": "How many seconds are in two minutes? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0009", "text": "Luna, What is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0010", "text": "Luna, Convert five dollars to cents. when you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0011", "text": "Can you tell me how many seconds are in two minutes real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0012", "text": "Do you know what is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0013", "text": "Hey Luna, How many seconds are in two minutes? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0014", "text": "Hey Luna, Convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0015", "text": "Could you tell me how many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0016", "text": "Quick question: What is 3 kilometers in meters? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0017", "text": "Can you tell me how many seconds are in two minutes? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0018", "text": "Convert five dollars to cents. right now", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0019", "text": "Luna, What is 3 kilometers in meters? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0020", "text": "Luna, What is 3 kilometers in meters?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0021", "text": "Could you tell me what is 3 kilometers in meters? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0022", "text": "Do you know what is 3 kilometers in meters?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0023", "text": "Quick question: How many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0024", "text": "Could you convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0025", "text": "Hey Luna, How many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0026", "text": "I was wondering, What is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0027", "text": "Quick question: How many seconds are in two minutes? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0028", "text": "Can you tell me how many seconds are in two minutes? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0029", "text": "I was wondering, What is 3 kilometers in meters?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0030", "text": "Can you tell me how many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0031", "text": "Can you tell me what is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0032", "text": "Quick question: What is 3 kilometers in meters?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0033", "text": "Hey Luna, What is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0034", "text": "I need you to convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0035", "text": "Could you tell me how many seconds are in two minutes? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0036", "text": "Convert five dollars to cents. please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0037", "text": "Hey Luna, How many seconds are in two minutes real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0038", "text": "Hey Luna, How many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0039", "text": "Could you convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0040", "text": "How many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0041", "text": "Can you tell me what is 3 kilometers in meters? if you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0042", "text": "Luna, How many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0043", "text": "Luna, Convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0044", "text": "Do you know how many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0045", "text": "Convert five dollars to cents. when you can", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0046", "text": "Please convert five dollars to cents right now", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0047", "text": "Hey Luna, Convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0048", "text": "Please convert five dollars to cents. please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0049", "text": "Luna, How many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0050", "text": "How many seconds are in two minutes? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0051", "text": "Can you convert five dollars to cents. right now", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0052", "text": "Could you tell me what is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0053", "text": "What is 3 kilometers in meters please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0054", "text": "Luna, Convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0055", "text": "What is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0056", "text": "Please convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0057", "text": "Luna, What is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0058", "text": "Could you tell me what is 3 kilometers in meters? please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0059", "text": "I need you to convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0060", "text": "What is 3 kilometers in meters?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0061", "text": "Do you know how many seconds are in two minutes? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0062", "text": "I was wondering, What is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0063", "text": "What is 3 kilometers in meters? real quick", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0064", "text": "Can you tell me how many seconds are in two minutes please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0065", "text": "I was wondering, How many seconds are in two minutes", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0066", "text": "Could you tell me what is 3 kilometers in meters", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "voice_variant"}
+{"id": "test-small_conversion-0067", "text": "Please convert five dollars to cents. for me", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0068", "text": "Convert five dollars to cents.", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0069", "text": "Hey Luna, Convert five dollars to cents. please", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-small_conversion-0070", "text": "Quick question: How many seconds are in two minutes?", "label": "SIMPLE", "scenario": "small_conversion", "split": "test", "source": "generated"}
+{"id": "test-file_search-0001", "text": "Hey Luna, Search my files for config.json", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0002", "text": "Read the notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0003", "text": "Hey Luna, Look for the latest PDF in my home folder when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0004", "text": "Luna, Look for the latest PDF in my home folder right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0005", "text": "Can you read the notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0006", "text": "Please read the notes file from my desktop for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0007", "text": "Could you search my files for config.json when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0008", "text": "Could you read the notes file from my desktop for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0009", "text": "Could you search my files for config.json", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0010", "text": "Look for the latest PDF in my home folder please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0011", "text": "I need you to read the notes file from my desktop right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0012", "text": "Can you read da notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0013", "text": "Luna, Find the error log on my computer right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0014", "text": "Can you search my files for config.json right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0015", "text": "Find the error log on my computer please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0016", "text": "Could you look for the latest PDF in my home folder please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0017", "text": "Please find the error log on my computer", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0018", "text": "Search my files for config.json for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0019", "text": "I need you to find the error log on my computer when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0020", "text": "Search my files for config.json please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0021", "text": "Luna, Find the error log on my computer when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0022", "text": "Please search my files for config.json for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0023", "text": "Hey Luna, Look for the latest PDF in my home folder right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0024", "text": "Hey Luna, Look for the latest PDF in my home folder", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0025", "text": "Could you read the notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0026", "text": "Look for the latest PDF in my home folder for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0027", "text": "Hey Luna, Read the notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0028", "text": "Luna, Read the notes file from my desktop for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0029", "text": "Please search my files for config.json when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0030", "text": "Hey Luna, Find the error log on my computer please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0031", "text": "Can you look for the latest PDF in my home folder when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0032", "text": "Search my files for config.json when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0033", "text": "Could you read the notes file from my desktop right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0034", "text": "Look for the latest PDF in my home folder right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0035", "text": "Hey Luna, Look for the latest PDF in my home folder for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0036", "text": "Hey Luna, Read the notes file from my desktop please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0037", "text": "Please look for the latest PDF in my home folder when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0038", "text": "Can you find the error log on my computer for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0039", "text": "Can you look for the latest PDF in my home folder for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0040", "text": "Could you look for the latest PDF in my home folder when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0041", "text": "Can you read the notes file from my desktop right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0042", "text": "Please look for the latest PDF in my home folder right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0043", "text": "Please search my files for configjson", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0044", "text": "Search my files for config.json", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0045", "text": "Read the notes file from my desktop", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0046", "text": "Read da notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0047", "text": "Hey Luna, Look for the latest PDF in my home folder please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0048", "text": "Could you read the notes file from my desktop", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0049", "text": "I need you to read the notes file from my desktop please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0050", "text": "Can you look for the latest PDF in my home folder right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0051", "text": "Could you find the error log on my computer please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0052", "text": "Hey Luna, Find the error log on my computer", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0053", "text": "Search my files for config.json right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0054", "text": "I need you to find the error log on my computer right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0055", "text": "Look for da latest PDF in my home folder for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0056", "text": "Please search my files for configjson for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0057", "text": "Can you read da notes file from my desktop", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0058", "text": "Could you look for the latest PDF in my home folder for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0059", "text": "Can you search my files for config.json for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0060", "text": "Can you read the notes file from my desktop for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0061", "text": "Please look for the latest PDF in my home folder", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0062", "text": "Please read the notes file from my desktop", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0063", "text": "Hey Luna, Search my files for configjson for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0064", "text": "Please read the notes file from my desktop when you can", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0065", "text": "Hey Luna, Find the error log on my computer for me", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0066", "text": "Hey Luna, Read the notes file from my desktop right now", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0067", "text": "Luna, Look for the latest PDF in my home folder", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0068", "text": "Can you read the notes file from my desktop please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-file_search-0069", "text": "Please find da error log on my computer please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "voice_variant"}
+{"id": "test-file_search-0070", "text": "Read the notes file from my desktop please", "label": "FUNCTION", "scenario": "file_search", "split": "test", "source": "generated"}
+{"id": "test-system_status-0001", "text": "Luna, Check my battery and system health when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0002", "text": "Show live system information", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0003", "text": "I was wondering, What is my computer status? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0004", "text": "Could you tell me what is my computer status?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0005", "text": "Is my machine okay right now? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0006", "text": "I was wondering, What is my computer status?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0007", "text": "Quick question: What is my computer status", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "voice_variant"}
+{"id": "test-system_status-0008", "text": "I need you to show live system information right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0009", "text": "Could you tell me is my machine okay right now? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0010", "text": "I was wondering, Is my machine okay right now? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0011", "text": "I need you to check my battery and system health for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0012", "text": "Can you tell me is my machine okay right now?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0013", "text": "Could you check my battery and system health when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0014", "text": "I was wondering, Is my machine okay right now real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "voice_variant"}
+{"id": "test-system_status-0015", "text": "Can you tell me what is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0016", "text": "Luna, What is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0017", "text": "Please check my battery and system health", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0018", "text": "Hey Luna, Check my battery and system health right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0019", "text": "Check my battery and system health", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0020", "text": "Quick question: What is my computer status? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0021", "text": "Do you know what is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0022", "text": "Could you tell me what is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0023", "text": "Can you tell me is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0024", "text": "Please check my battery and system health please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0025", "text": "Could you check my battery and system health for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0026", "text": "Please check my battery and system health right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0027", "text": "Please show live system information for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0028", "text": "I was wondering, What is my computer status? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0029", "text": "Do you know is my machine okay right now? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0030", "text": "What is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0031", "text": "Hey Luna, What is my computer status?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0032", "text": "Can you show live system information please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0033", "text": "Could you show live system information for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0034", "text": "Please show live system information please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0035", "text": "Could you check my battery and system health please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0036", "text": "Quick question: Is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0037", "text": "Could you tell me what is my computer status? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0038", "text": "Check my battery and system health right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0039", "text": "Could you tell me is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0040", "text": "Show live system information for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0041", "text": "Hey Luna, Show live system information right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0042", "text": "Luna, What is my computer status?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0043", "text": "I was wondering, Is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0044", "text": "Could you tell me is my machine okay right now?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0045", "text": "Hey Luna, Show live system information when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0046", "text": "Could you check my battery and system health", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0047", "text": "Can you tell me is my machine okay right now? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0048", "text": "Hey Luna, Show live system information", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0049", "text": "Luna, Check my battery and system health please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0050", "text": "Could you tell me what is my computer status? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0051", "text": "Quick question: Is my machine okay right now?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0052", "text": "Do you know what is my computer status? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0053", "text": "Show live system information please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0054", "text": "Hey Luna, Is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0055", "text": "Quick question: What is my computer status? if you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0056", "text": "Can you tell me is my machine okay right now? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0057", "text": "Can you check my battery and system health when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0058", "text": "Can you tell me what is my computer status? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0059", "text": "Please show live system information when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0060", "text": "Can you show live system information for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0061", "text": "Do you know is my machine okay right now? please", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0062", "text": "Can you check my battery and system health", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0063", "text": "I need you to check my battery and system health when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0064", "text": "Hey Luna, Check my battery and system health for me", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0065", "text": "I need you to show live system information", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0066", "text": "Do you know is my machine okay right now?", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0067", "text": "Luna, What is my computer status? real quick", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0068", "text": "Hey Luna, Check my battery and system health when you can", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0069", "text": "Can you check my battery and system health right now", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-system_status-0070", "text": "Please show live system information", "label": "FUNCTION", "scenario": "system_status", "split": "test", "source": "generated"}
+{"id": "test-power-0001", "text": "Please power off this computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0002", "text": "Luna, Put the machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0003", "text": "Hey Luna, Shut down my PC please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0004", "text": "Put the machine to sleep for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0005", "text": "Could you restart the computer right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0006", "text": "Hey Luna, Restart the computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0007", "text": "Please restart the computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0008", "text": "I need you to put the machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0009", "text": "I need you to shut down my PC", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0010", "text": "Please power off this computer right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0011", "text": "Could you restart the computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0012", "text": "Restart the computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0013", "text": "Can you restart the computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0014", "text": "Please power off this computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0015", "text": "Please shut down my PC right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0016", "text": "Hey Luna, Power off this computer right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0017", "text": "Power off this computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0018", "text": "I need you to power off this computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0019", "text": "Luna, Shut down my PC when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0020", "text": "Can you shut down my PC right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0021", "text": "I need you to power off this computer", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0022", "text": "Luna, Power off this computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0023", "text": "Could you power off this computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0024", "text": "Can you restart the computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0025", "text": "Please shut down my PC please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0026", "text": "Hey Luna, Power off this computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0027", "text": "Hey Luna, Put the machine to sleep right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0028", "text": "I need you to put the machine to sleep when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0029", "text": "Hey Luna, Put the machine to sleep for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0030", "text": "Could you shut down my PC please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0031", "text": "Can you shut down my PC", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0032", "text": "I need you to power off this computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0033", "text": "Could you put the machine to sleep right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0034", "text": "Hey Luna, Put da machine to sleep for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "voice_variant"}
+{"id": "test-power-0035", "text": "I need you to put the machine to sleep for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0036", "text": "I need you to put the machine to sleep please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0037", "text": "Put the machine to sleep right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0038", "text": "Power off this computer right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0039", "text": "Please put the machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0040", "text": "Could you put the machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0041", "text": "Can you put the machine to sleep when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0042", "text": "Shut down my PC when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0043", "text": "I need you to restart the computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0044", "text": "Power off this computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0045", "text": "Hey Luna, Shut down my PC when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0046", "text": "Could you put the machine to sleep for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0047", "text": "Can you shut down my PC for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0048", "text": "Can you power off this computer right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0049", "text": "Luna, Shut down my PC please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0050", "text": "Could you restart the computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0051", "text": "Hey Luna, Restart the computer", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0052", "text": "Luna, Put da machine to sleep when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "voice_variant"}
+{"id": "test-power-0053", "text": "Shut down my PC right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0054", "text": "Luna, Power off this computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0055", "text": "Could you shut down my PC when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0056", "text": "Put the machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0057", "text": "Please shut down my PC", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0058", "text": "Please power off this computer when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0059", "text": "Power off this computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0060", "text": "I need you to shut down my PC please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0061", "text": "Restart the computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0062", "text": "I need you to put da machine to sleep", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "voice_variant"}
+{"id": "test-power-0063", "text": "Could you put the machine to sleep when you can", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0064", "text": "I need you to shut down my PC right now", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0065", "text": "Please shut down my PC for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0066", "text": "Hey Luna, Shut down my PC", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0067", "text": "Put the machine to sleep please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0068", "text": "Luna, Power off this computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0069", "text": "Please restart the computer please", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-power-0070", "text": "Could you power off this computer for me", "label": "FUNCTION", "scenario": "power", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0001", "text": "I need you to break this complicated task into a sequence of actions. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0002", "text": "Luna, Work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0003", "text": "Hey Luna, Solve this multi-step logic puzzle and explain each step. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0004", "text": "Hey Luna, Work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0005", "text": "Solve this multi-step logic puzzle and explain each step right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0006", "text": "Could you work through this problem carefully from the beginning.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0007", "text": "I need you to solve this multi-step logic puzzle and explain each step. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0008", "text": "Solve this multi-step logic puzzle and explain each step. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0009", "text": "Could you solve this multi-step logic puzzle and explain each step. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0010", "text": "Please break this complicated task into a sequence of actions.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0011", "text": "Work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0012", "text": "Can you work through this problem carefully from the beginning. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0013", "text": "Could you solve this multi-step logic puzzle and explain each step. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0014", "text": "Break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0015", "text": "Luna, Break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0016", "text": "I need you to break this complicated task into a sequence of actions.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0017", "text": "Solve this multi-step logic puzzle and explain each step.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0018", "text": "Could you break this complicated task into a sequence of actions.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0019", "text": "Could you break this complicated task into a sequence of actions. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0020", "text": "Luna, Work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0021", "text": "I need you to solve this multi-step logic puzzle and explain each step. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0022", "text": "Can you break this complicated task into a sequence of actions. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0023", "text": "Break this complicated task into a sequence of actions.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0024", "text": "Please solve this multi-step logic puzzle and explain each step. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0025", "text": "Hey Luna, Work through this problem carefully from the beginning. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0026", "text": "I need you to work through this problem carefully from the beginning for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0027", "text": "Please break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0028", "text": "Luna, Work through this problem carefully from the beginning.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0029", "text": "Please break this complicated task into a sequence of actions. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0030", "text": "Could you solve this multi-step logic puzzle and explain each step. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0031", "text": "Luna, Break this complicated task into a sequence of actions. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0032", "text": "Can you solve this multi-step logic puzzle and explain each step. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0033", "text": "Work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0034", "text": "Hey Luna, Break this complicated task into a sequence of actions. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0035", "text": "Can you work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0036", "text": "I need you to work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0037", "text": "Can you work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0038", "text": "I need you to work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0039", "text": "I need you to break this complicated task into a sequence of actions. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0040", "text": "Can you break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0041", "text": "Please work through this problem carefully from the beginning. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0042", "text": "Luna, Solve this multi-step logic puzzle and explain each step. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0043", "text": "Could you break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0044", "text": "Hey Luna, Solve this multi-step logic puzzle and explain each step", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0045", "text": "Please break this complicated task into a sequence of actions. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0046", "text": "Break this complicated task into a sequence of actions please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0047", "text": "Break this complicated task into a sequence of actions. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0048", "text": "I need you to break this complicated task into a sequence of actions. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0049", "text": "I need you to work through this problem carefully from the beginning. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0050", "text": "Hey Luna, Work through this problem carefully from the beginning. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0051", "text": "Could you work through this problem carefully from da beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0052", "text": "Can you work through this problem carefully from the beginning. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0053", "text": "Work through this problem carefully from da beginning.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0054", "text": "Please solve this multi-step logic puzzle and explain each step. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0055", "text": "Luna, Break this complicated task into a sequence of actions. for me", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0056", "text": "Hey Luna, Solve this multi-step logic puzzle and explain each step. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0057", "text": "Could you solve this multi-step logic puzzle and explain each step.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0058", "text": "Could you work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0059", "text": "I need you to work through this problem carefully from the beginning.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0060", "text": "Luna, Break this complicated task into a sequence of actions. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0061", "text": "Please solve this multi-step logic puzzle and explain each step please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0062", "text": "Could you break this complicated task into a sequence of actions. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0063", "text": "Could you solve this multi-step logic puzzle and explain each step. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0064", "text": "Solve this multi-step logic puzzle and explain each step. right now", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0065", "text": "Please work through this problem carefully from the beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0066", "text": "Could you break this complicated task into a sequence of actions. please", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0067", "text": "Can you break this complicated task into a sequence of actions.", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0068", "text": "Luna, Work through this problem carefully from the beginning when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-multi_step-0069", "text": "Solve this multi-step logic puzzle and explain each step. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "generated"}
+{"id": "test-multi_step-0070", "text": "Work through this problem carefully from da beginning. when you can", "label": "REASONING", "scenario": "multi_step", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0001", "text": "Please make it better. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0002", "text": "Something is wrong with my project and I don't know where to start. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0003", "text": "Can you something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0004", "text": "Could you i have a complicated problem; help me figure it out. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0005", "text": "Hey Luna, I have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0006", "text": "Please i have a complicated problem; help me figure it out. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0007", "text": "Could you make it better. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0008", "text": "I need you to make it better. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0009", "text": "Could you i have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0010", "text": "I need you to make it better.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0011", "text": "Hey Luna, Something is wrong with my project and I don't know where to start. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0012", "text": "Hey Luna, Make it better. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0013", "text": "Please make it better for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0014", "text": "Hey Luna, Make it better. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0015", "text": "Could you make it better. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0016", "text": "Please something is wrong with my project and I don't know where to start. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0017", "text": "I have a complicated problem; help me figure it out. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0018", "text": "Please something is wrong with my project and I don't know where to start. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0019", "text": "Hey Luna, I have a complicated problem; help me figure it out. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0020", "text": "Could you i have a complicated problem; help me figure it out.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0021", "text": "I have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0022", "text": "Can you make it better please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0023", "text": "Hey Luna, Make it better.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0024", "text": "I need you to i have a complicated problem; help me figure it out. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0025", "text": "Can you something is wrong with my project and I don't know where to start. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0026", "text": "Luna, Make it better. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0027", "text": "Please something is wrong with my project and I don't know where to start. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0028", "text": "Can you i have a complicated problem; help me figure it out.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0029", "text": "Could you something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0030", "text": "Can you make it better. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0031", "text": "Hey Luna, Something is wrong with my project and I don't know where to start. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0032", "text": "I need you to something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0033", "text": "Luna, Make it better. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0034", "text": "I need you to something is wrong with my project and I don't know where to start. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0035", "text": "Hey Luna, Make it better. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0036", "text": "Could you i have a complicated problem; help me figure it out. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0037", "text": "Make it better. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0038", "text": "Can you something is wrong with my project and I don't know where to start. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0039", "text": "Luna, Something is wrong with my project and I don't know where to start. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0040", "text": "Something is wrong with my project and I don't know where to start. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0041", "text": "I need you to something is wrong with my project and I don't know where to start. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0042", "text": "Something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0043", "text": "Make it better. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0044", "text": "Please make it better. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0045", "text": "I need you to something is wrong with my project and I don't know where to start. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0046", "text": "Luna, I have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0047", "text": "Hey Luna, I have a complicated problem; help me figure it out.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0048", "text": "Hey Luna, Something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0049", "text": "Make it better.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0050", "text": "Could you something is wrong with my project and I don't know where to start. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0051", "text": "Please something is wrong with my project and I don't know where to start.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0052", "text": "Please make it better. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0053", "text": "I need you to i have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0054", "text": "Luna, Make it better.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0055", "text": "Luna, Make it better. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0056", "text": "Luna, Something is wrong with my project and I don't know where to start. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0057", "text": "Please i have a complicated problem; help me figure it out. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0058", "text": "Luna, Something is wrong with my project and I don't know where to start", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0059", "text": "Could you i have a complicated problem; help me figure it out. for me", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0060", "text": "Please i have a complicated problem; help me figure it out.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0061", "text": "Please i have a complicated problem; help me figure it out. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0062", "text": "Luna, Make it better. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0063", "text": "Make it better when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0064", "text": "I have a complicated problem; help me figure it out.", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0065", "text": "Please make it better. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0066", "text": "Could you something is wrong with my project and I don't know where to start. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0067", "text": "Luna, I have a complicated problem; help me figure it out. right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0068", "text": "Hey Luna, I have a complicated problem; help me figure it out right now", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "voice_variant"}
+{"id": "test-ambiguous-0069", "text": "Something is wrong with my project and I don't know where to start. when you can", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-ambiguous-0070", "text": "Make it better. please", "label": "REASONING", "scenario": "ambiguous", "split": "test", "source": "generated"}
+{"id": "test-optimization-0001", "text": "Could you suggest a more reliable approach with reasons. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0002", "text": "Luna, How can I make this code faster?", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0003", "text": "I need you to suggest a more reliable approach with reasons. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0004", "text": "Luna, Optimize this query and explain the changes for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0005", "text": "Hey Luna, Suggest a more reliable approach with reasons. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0006", "text": "Hey Luna, How can I make this code faster? please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0007", "text": "Could you tell me how can I make this code faster?", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0008", "text": "Can you suggest a more reliable approach with reasons. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0009", "text": "Luna, Suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0010", "text": "Quick question: How can I make this code faster? please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0011", "text": "Luna, Optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0012", "text": "Can you optimize this query and explain the changes. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0013", "text": "Can you tell me how can I make this code faster? real quick", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0014", "text": "Luna, Suggest a more reliable approach with reasons. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0015", "text": "I need you to optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0016", "text": "Can you suggest a more reliable approach with reasons. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0017", "text": "Luna, Optimize this query and explain the changes. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0018", "text": "I was wondering, How can I make this code faster? please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0019", "text": "I need you to optimize this query and explain the changes", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0020", "text": "Do you know how can I make this code faster? real quick", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0021", "text": "Hey Luna, Optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0022", "text": "I need you to suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0023", "text": "Can you suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0024", "text": "Please optimize this query and explain the changes. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0025", "text": "Hey Luna, Suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0026", "text": "Hey Luna, Optimize this query and explain the changes.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0027", "text": "Hey Luna, Optimize this query and explain the changes", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0028", "text": "Do you know how can I make this code faster? if you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0029", "text": "I need you to suggest a more reliable approach with reasons.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0030", "text": "Suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0031", "text": "Hey Luna, Suggest a more reliable approach with reasons. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0032", "text": "Could you suggest a more reliable approach with reasons.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0033", "text": "Can you optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0034", "text": "Please optimize this query and explain the changes.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0035", "text": "Luna, How can I make this code faster? please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0036", "text": "Suggest a more reliable approach with reasons", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0037", "text": "Could you suggest a more reliable approach with reasons. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0038", "text": "Could you suggest a more reliable approach with reasons when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0039", "text": "Hey Luna, Suggest a more reliable approach with reasons right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0040", "text": "Could you suggest a more reliable approach with reasons. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0041", "text": "Hey Luna, How can I make this code faster? if you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0042", "text": "Optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0043", "text": "Can you tell me how can I make this code faster? please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0044", "text": "Hey Luna, How can I make this code faster?", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0045", "text": "I need you to optimize this query and explain the changes. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0046", "text": "Could you optimize this query and explain the changes. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0047", "text": "Optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0048", "text": "I need you to suggest a more reliable approach with reasons. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0049", "text": "Please suggest a more reliable approach with reasons. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0050", "text": "I need you to suggest a more reliable approach with reasons. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0051", "text": "I need you to optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0052", "text": "Hey Luna, Optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0053", "text": "Please optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0054", "text": "Luna, Suggest a more reliable approach with reasons. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0055", "text": "Could you optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0056", "text": "Hey Luna, How can I make this code faster? real quick", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0057", "text": "Can you optimize this query and explain the changes.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0058", "text": "Luna, Suggest a more reliable approach with reasons. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0059", "text": "Luna, How can I make this code faster? if you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0060", "text": "Could you optimize this query and explain the changes. right now", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0061", "text": "Luna, How can I make this code faster? real quick", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0062", "text": "I was wondering, How can I make this code faster please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0063", "text": "Can you optimize this query and explain the changes when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}
+{"id": "test-optimization-0064", "text": "Can you suggest a more reliable approach with reasons.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0065", "text": "Suggest a more reliable approach with reasons.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0066", "text": "Please suggest a more reliable approach with reasons.", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0067", "text": "Please optimize this query and explain the changes. when you can", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0068", "text": "Luna, Optimize this query and explain the changes. for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0069", "text": "Optimize this query and explain the changes. please", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "generated"}
+{"id": "test-optimization-0070", "text": "Suggest a more reliable approach with reasons for me", "label": "REASONING", "scenario": "optimization", "split": "test", "source": "voice_variant"}

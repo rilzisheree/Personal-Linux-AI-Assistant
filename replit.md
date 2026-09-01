@@ -106,3 +106,24 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 
 - See `local-ai-assistant/README.md` for installation, Ollama setup, and
   troubleshooting.
+
+## Gemma router training
+
+- Generate the balanced, scenario-isolated dataset with
+  `cd local-ai-assistant && python3 scripts/generate_router_dataset.py`.
+- Install optional training packages from `requirements-training.txt`, then
+  run `python3 scripts/train_router.py`. The default base checkpoint is
+  `google/gemma-3-270m-it`; Hugging Face access requires accepting Google's
+  Gemma terms.
+- Evaluate only the untouched test split with
+  `python3 scripts/evaluate_router.py --backend transformers --model-path
+  training/router_lora`, or evaluate an Ollama model with
+  `--backend ollama --ollama-model <model>`.
+- The report includes accuracy, macro precision/recall/F1, per-label metrics,
+  a confusion matrix, and average/p50/p95 latency. The script exits non-zero
+  below 90% accuracy instead of hiding a poor model.
+- LoRA output is an adapter, not an Ollama model by itself. Use
+  `python3 scripts/create_ollama_modelfile.py --adapter <converted-adapter>`
+  and let `ollama create` validate the adapter format. If it succeeds, set
+  `LURA_ROUTER_MODEL` to the created model name before launching Lura. The
+  default remains `gemma3:270m`.

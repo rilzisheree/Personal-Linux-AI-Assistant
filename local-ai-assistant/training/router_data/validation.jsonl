@@ -1,0 +1,450 @@
+{"id": "validation-definition-0001", "text": "Please give me a one-sentence definition of gravity. please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0002", "text": "Can you tell me what does the word ephemeral mean? please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0003", "text": "Define photosynthesis briefly.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0004", "text": "Define photosynthesis briefly. for me", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0005", "text": "Can you define photosynthesis briefly. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0006", "text": "Could you define photosynthesis briefly. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0007", "text": "Could you define photosynthesis briefly.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0008", "text": "Please define photosynthesis briefly. for me", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0009", "text": "Can you define photosynthesis briefly. please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0010", "text": "I need you to give me a one-sentence definition of gravity. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0011", "text": "Please define photosynthesis briefly. please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0012", "text": "Luna, What does the word ephemeral mean? please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0013", "text": "Luna, Give me a one-sentence definition of gravity. please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0014", "text": "Please define photosynthesis briefly. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0015", "text": "Can you give me a one-sentence definition of gravity. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0016", "text": "I was wondering, What does the word ephemeral mean?", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0017", "text": "Can you define photosynthesis briefly. when you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0018", "text": "Luna, Define photosynthesis briefly. please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0019", "text": "Quick question: What does the word ephemeral mean? real quick", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0020", "text": "Can you tell me what does the word ephemeral mean? real quick", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0021", "text": "Please define photosynthesis briefly please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0022", "text": "Hey Luna, What does the word ephemeral mean? if you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0023", "text": "Could you tell me what does the word ephemeral mean?", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0024", "text": "Quick question: What does the word ephemeral mean?", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0025", "text": "Can you tell me what does the word ephemeral mean? if you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0026", "text": "I need you to give me a one-sentence definition of gravity.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0027", "text": "Could you tell me what does the word ephemeral mean? if you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0028", "text": "Can you define photosynthesis briefly.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0029", "text": "Could you give me a one-sentence definition of gravity please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0030", "text": "I was wondering, What does the word ephemeral mean please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0031", "text": "Could you tell me what does da word ephemeral mean? please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0032", "text": "I need you to give me a one-sentence definition of gravity. for me", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0033", "text": "Quick question: What does the word ephemeral mean? please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0034", "text": "Luna, Give me a one-sentence definition of gravity. for me", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0035", "text": "Do you know what does the word ephemeral mean? if you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0036", "text": "Luna, Define photosynthesis briefly. when you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0037", "text": "Hey Luna, Give me a one-sentence definition of gravity please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0038", "text": "I was wondering, What does the word ephemeral mean", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0039", "text": "Please give me a one-sentence definition of gravity", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0040", "text": "Hey Luna, What does the word ephemeral mean real quick", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0041", "text": "Luna, Define photosynthesis briefly.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0042", "text": "Please give me a one-sentence definition of gravity. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0043", "text": "Please give me a one-sentence definition of gravity.", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0044", "text": "Hey Luna, Give me a one-sentence definition of gravity. right now", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0045", "text": "Hey Luna, What does the word ephemeral mean? real quick", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0046", "text": "Can you define photosynthesis briefly please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "voice_variant"}
+{"id": "validation-definition-0047", "text": "Luna, Give me a one-sentence definition of gravity. when you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0048", "text": "I was wondering, What does the word ephemeral mean? please", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0049", "text": "I need you to give me a one-sentence definition of gravity. when you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-definition-0050", "text": "Please give me a one-sentence definition of gravity. when you can", "label": "SIMPLE", "scenario": "definition", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0001", "text": "Make me laugh with one quick joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0002", "text": "Could you make me laugh with one quick joke. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0003", "text": "Can you give me a tiny joke, nothing long when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0004", "text": "Hey Luna, Tell me a short joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0005", "text": "Luna, Make me laugh with one quick joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0006", "text": "I need you to tell me a short joke. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0007", "text": "Luna, Give me a tiny joke, nothing long. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0008", "text": "Could you tell me a short joke right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0009", "text": "Luna, Give me a tiny joke, nothing long. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0010", "text": "Luna, Make me laugh with one quick joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0011", "text": "Could you make me laugh with one quick joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0012", "text": "Can you tell me a short joke. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0013", "text": "Could you tell me a short joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0014", "text": "Please tell me a short joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0015", "text": "Can you tell me a short joke please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0016", "text": "Could you tell me a short joke. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0017", "text": "I need you to give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0018", "text": "Make me laugh with one quick joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0019", "text": "Can you give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0020", "text": "Hey Luna, Make me laugh with one quick joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0021", "text": "Luna, Tell me a short joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0022", "text": "Tell me a short joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0023", "text": "Could you make me laugh with one quick joke right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0024", "text": "Luna, Tell me a short joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0025", "text": "Hey Luna, Give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0026", "text": "Can you give me a tiny joke, nothing long. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0027", "text": "I need you to make me laugh with one quick joke right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0028", "text": "Give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0029", "text": "Can you give me a tiny joke, nothing long. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0030", "text": "Luna, Make me laugh with one quick joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0031", "text": "I need you to give me a tiny joke, nothing long. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0032", "text": "Luna, Give me a tiny joke, nothing long please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0033", "text": "Can you tell me a short joke for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0034", "text": "Give me a tiny joke, nothing long. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0035", "text": "I need you to make me laugh with one quick joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0036", "text": "Can you make me laugh with one quick joke.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0037", "text": "Make me laugh with one quick joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0038", "text": "Please tell me a short joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0039", "text": "I need you to make me laugh with one quick joke. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0040", "text": "Please make me laugh with one quick joke. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0041", "text": "Could you give me a tiny joke, nothing long. when you can", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0042", "text": "Please tell me a short joke. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0043", "text": "Give me a tiny joke, nothing long", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "voice_variant"}
+{"id": "validation-short_joke-0044", "text": "Please give me a tiny joke, nothing long. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0045", "text": "Could you give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0046", "text": "I need you to make me laugh with one quick joke. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0047", "text": "Luna, Give me a tiny joke, nothing long. please", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0048", "text": "Give me a tiny joke, nothing long.", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0049", "text": "Can you make me laugh with one quick joke. for me", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-short_joke-0050", "text": "I need you to tell me a short joke. right now", "label": "SIMPLE", "scenario": "short_joke", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0001", "text": "Luna, Are you still there?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0002", "text": "Let me know you heard me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0003", "text": "Respond so I know the microphone works.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0004", "text": "Let me know you're available", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0005", "text": "Can you respond briefly?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0006", "text": "Luna, Let me know you're available.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0007", "text": "Are you still there?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0008", "text": "Luna, Just say something.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0009", "text": "Hey Luna, Can you confirm you're there?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0010", "text": "Luna, Can you respond briefly?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0011", "text": "Let me know you're awake.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0012", "text": "Hey Luna, Give me a sign.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0013", "text": "Give me a sign.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0014", "text": "Give me a quick acknowledgement.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0015", "text": "Confirm that you are listening.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0016", "text": "Hey Luna, Are you still there?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0017", "text": "Luna, Answer with yes.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0018", "text": "Tell me you're listening.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0019", "text": "Hey Luna, Please acknowledge me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0020", "text": "Luna, Give me a sign.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0021", "text": "Luna, Respond with a quick hello.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0022", "text": "Hey Luna, Let me know you're awake.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0023", "text": "Hey Luna, Tell me you're listening", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0024", "text": "Just acknowledge me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0025", "text": "Say anything at all.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0026", "text": "Luna, Say hello back.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0027", "text": "Tell me you can hear me", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0028", "text": "Acknowledge this message.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0029", "text": "Hey Luna, Tell me you can hear me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0030", "text": "Say hello back.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0031", "text": "Hey Luna, Give me a quick acknowledgement", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0032", "text": "Please acknowledge me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0033", "text": "Respond with a quick hello.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0034", "text": "Can you hear what I'm saying?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0035", "text": "Luna, Let me know you heard me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0036", "text": "Hey Luna, Respond so I know the microphone works.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0037", "text": "Let me know you're awake", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0038", "text": "Tell me you can hear me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0039", "text": "Hey Luna, Answer with yes.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0040", "text": "Are you listening?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0041", "text": "Luna, Let me know you're awake.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0042", "text": "Let me know you're available.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0043", "text": "Luna, Say anything at all", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0044", "text": "Hey Luna, Tell me you're listening.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0045", "text": "Hey Luna, Check in with me", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0046", "text": "Respond with a quick hello", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "voice_variant"}
+{"id": "validation-affirmation-0047", "text": "Luna, Can you confirm you're there?", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0048", "text": "Luna, Check in with me.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0049", "text": "Luna, Acknowledge this message.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-affirmation-0050", "text": "Luna, Tell me you're listening.", "label": "SIMPLE", "scenario": "affirmation", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0001", "text": "Can you check the current volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0002", "text": "Mute my computer for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0003", "text": "Could you turn up the volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0004", "text": "Hey Luna, Check da current volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0005", "text": "Please check the current volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0006", "text": "Please check the current volume right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0007", "text": "Hey Luna, Check the current volume when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0008", "text": "I need you to turn up the volume when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0009", "text": "Please turn up the volume", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0010", "text": "Please mute my computer when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0011", "text": "Hey Luna, Turn up the volume", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0012", "text": "I need you to mute my computer for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0013", "text": "I need you to check the current volum when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0014", "text": "Can you turn up the volum when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0015", "text": "Quick question: How loud is my computer right now? please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0016", "text": "Luna, How loud is my computer right now?", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0017", "text": "Do you know how loud is my computer right now? real quick", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0018", "text": "Luna, How loud is my computer right now? real quick", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0019", "text": "Turn up the volume please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0020", "text": "Mute my computer please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0021", "text": "Please mute my computer please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0022", "text": "Hey Luna, Check the current volume right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0023", "text": "Can you mute my computer right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0024", "text": "Luna, Mute my computer", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0025", "text": "Could you mute my computer please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0026", "text": "Luna, Mute my computer for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0027", "text": "I need you to check the current volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0028", "text": "Check the current volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0029", "text": "Please check the current vollume right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0030", "text": "Quick question: How loud is my computer right now? real quick", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0031", "text": "Mute my computer", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0032", "text": "How loud is my computer right now?", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0033", "text": "Could you mute my computer", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0034", "text": "I was wondering, How loud is my computer right now? if you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0035", "text": "Luna, Check the current vollume please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0036", "text": "Can you tell me how loud is my computer right now? real quick", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0037", "text": "Can you mute my computer for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0038", "text": "Check the current volume", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0039", "text": "Hey Luna, How loud is my computer right now? if you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0040", "text": "Please mute my computer right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0041", "text": "Hey Luna, Turn up the volume when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0042", "text": "Hey Luna, Turn up the volume right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0043", "text": "I need you to check the current vollume", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0044", "text": "Please check the current volum right now", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0045", "text": "Could you turn up the vollume", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "voice_variant"}
+{"id": "validation-volume-0046", "text": "Can you mute my computer when you can", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0047", "text": "Please turn up the volume for me", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0048", "text": "Can you tell me how loud is my computer right now?", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0049", "text": "Luna, Mute my computer please", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-volume-0050", "text": "Could you tell me how loud is my computer right now?", "label": "FUNCTION", "scenario": "volume", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0001", "text": "Luna, List my open windows when you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0002", "text": "Can you tell me which windows are currently visible?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0003", "text": "Can you list my open windows right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0004", "text": "Please list my open windows", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0005", "text": "Can you show the applications on my desktop", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0006", "text": "I was wondering, What windows do I have open? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0007", "text": "Hey Luna, Show the applications on my desktop right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0008", "text": "Luna, List my open windows please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0009", "text": "Luna, Show the applications on my desktop please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0010", "text": "List my open windows for me", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0011", "text": "Could you tell me what windows do I have open? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0012", "text": "Quick question: Which windows are currently visible?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0013", "text": "I need you to show the applications on my desktop right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0014", "text": "Please show the applications on my desktop", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0015", "text": "Could you tell me what windows do I have open? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0016", "text": "What windows do I have open? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0017", "text": "Luna, What windows do I have open? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0018", "text": "Please list my open windows please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0019", "text": "Quick question: What windows do I have open? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0020", "text": "Luna, What windows do I have open? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0021", "text": "What windows do I have open? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0022", "text": "Show the applications on my desktop right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0023", "text": "Could you tell me which windows are currently visible? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0024", "text": "Hey Luna, Show the applications on my desktop please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0025", "text": "Could you tell me which windows are currently visible", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "voice_variant"}
+{"id": "validation-windows-0026", "text": "I was wondering, What windows do I have open? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0027", "text": "Could you show the applications on my desktop please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0028", "text": "Show the applications on my desktop", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0029", "text": "Show da applications on my desktop for me", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "voice_variant"}
+{"id": "validation-windows-0030", "text": "Quick question: Which windows are currently visible? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0031", "text": "Hey Luna, List my open windows", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0032", "text": "Do you know what windows do I have open? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0033", "text": "Luna, Which windows are currently visible? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0034", "text": "Hey Luna, Show da applications on my desktop for me", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "voice_variant"}
+{"id": "validation-windows-0035", "text": "Could you tell me which windows are currently visible?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0036", "text": "Luna, List my open windows right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0037", "text": "Quick question: What windows do I have open? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0038", "text": "Luna, Which windows are currently visible? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0039", "text": "Luna, Which windows are currently visible? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0040", "text": "Could you tell me what windows do I have open?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0041", "text": "Quick question: What windows do I have open?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0042", "text": "Hey Luna, What windows do I have open? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0043", "text": "Please show the applications on my desktop right now", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0044", "text": "Do you know which windows are currently visible? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0045", "text": "Luna, List my open windows for me", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0046", "text": "What windows do I have open?", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0047", "text": "Do you know which windows are currently visible? if you can", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0048", "text": "Hey Luna, Show the applications on my desktop", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0049", "text": "Hey Luna, Which windows are currently visible? real quick", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-windows-0050", "text": "Hey Luna, Which windows are currently visible? please", "label": "FUNCTION", "scenario": "windows", "split": "validation", "source": "generated"}
+{"id": "validation-website-0001", "text": "Luna, Navigate to example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0002", "text": "Please open https://example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0003", "text": "Open this URL in my browser: https://example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0004", "text": "Luna, Go to the example website right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0005", "text": "Navigate to example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0006", "text": "I need you to navigate to example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0007", "text": "Open this URL in my browser: https://example.com for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0008", "text": "Open this URL in my browser: https://example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0009", "text": "Could you navigate to example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0010", "text": "Can you navigate to example.com for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0011", "text": "Please go to the example website", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0012", "text": "I need you to open this URL in my browser: https://example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0013", "text": "Hey Luna, Open this URL in my browser: https://example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0014", "text": "Can you open https://example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0015", "text": "Go to the example website right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0016", "text": "Please open this URL in my browser: https://examplecom right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "voice_variant"}
+{"id": "validation-website-0017", "text": "Hey Luna, Open https://example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0018", "text": "Open this URL in my browser: https://example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0019", "text": "Can you open https://example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0020", "text": "Luna, Go to the example website", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0021", "text": "Please go to the example website for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0022", "text": "Can you open this URL in my browser: https://examplecom", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "voice_variant"}
+{"id": "validation-website-0023", "text": "Luna, Open https://example.com for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0024", "text": "Luna, Navigate to example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0025", "text": "Luna, Navigate to example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0026", "text": "Can you navigate to example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0027", "text": "Luna, Go to the example website when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0028", "text": "Can you open https://example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0029", "text": "Could you go to the example website when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0030", "text": "I need you to navigate to example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0031", "text": "Can you go to the example website when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0032", "text": "Could you navigate to example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0033", "text": "Go to the example website please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0034", "text": "Hey Luna, Open this URL in my browser: https://example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0035", "text": "Navigate to example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0036", "text": "Hey Luna, Go to da example website for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "voice_variant"}
+{"id": "validation-website-0037", "text": "Open https://example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0038", "text": "Luna, Open https://example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0039", "text": "Hey Luna, Go to the example website right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0040", "text": "Please navigate to example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0041", "text": "Hey Luna, Go to the example website for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0042", "text": "Hey Luna, Open this URL in my browser: https://example.com please", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0043", "text": "Hey Luna, Navigate to example.com", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0044", "text": "Could you navigate to example.com right now", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0045", "text": "Could you open this URL in my browser: https://examplecom when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "voice_variant"}
+{"id": "validation-website-0046", "text": "Hey Luna, Navigate to example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0047", "text": "Could you open https://example.com for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0048", "text": "Hey Luna, Open https://example.com when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0049", "text": "Luna, Navigate to example.com for me", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "generated"}
+{"id": "validation-website-0050", "text": "Please open https://examplecom when you can", "label": "FUNCTION", "scenario": "website", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0001", "text": "Analyze these logs and identify da likely cause.", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0002", "text": "I was wondering, What conclusions can you draw from this data? please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0003", "text": "Could you tell me what conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0004", "text": "Analyze these logs and identify the likely cause. please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0005", "text": "Do you know what conclusions can you draw from this data? real quick", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0006", "text": "Hey Luna, Review these numbers and find da trend. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0007", "text": "Hey Luna, Review these numbers and find the trend. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0008", "text": "Luna, Review these numbers and find the trend. please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0009", "text": "Could you analyze these logs and identify the likely cause.", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0010", "text": "I was wondering, What conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0011", "text": "Can you tell me what conclusions can you draw from this data?", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0012", "text": "Luna, What conclusions can you draw from this data?", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0013", "text": "Luna, Analyze these logs and identify the likely cause. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0014", "text": "Can you review these numbers and find the trend. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0015", "text": "What conclusions can you draw from this data?", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0016", "text": "Quick question: What conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0017", "text": "Please review these numbers and find the trend. please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0018", "text": "Could you review these numbers and find the trend. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0019", "text": "Can you review these numbers and find the trend. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0020", "text": "Please analyze these logs and identify the likely cause. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0021", "text": "Hey Luna, What conclusions can you draw from this data? please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0022", "text": "I need you to review these numbers and find the trend.", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0023", "text": "Hey Luna, Analyze these logs and identify the likely cause. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0024", "text": "Hey Luna, What conclusions can you draw from this data? real quick", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0025", "text": "Quick question: What conclusions can you draw from this data? please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0026", "text": "Can you tell me what conclusions can you draw from this data? real quick", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0027", "text": "Can you review these numbers and find the trend. when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0028", "text": "Do you know what conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0029", "text": "Luna, Review these numbers and find the trend. when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0030", "text": "I need you to review these numbers and find the trend. please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0031", "text": "Can you analyze these logs and identify the likely cause. when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0032", "text": "Luna, What conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0033", "text": "Please analyze these logs and identify the likely cause. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0034", "text": "I was wondering, What conclusions can you draw from this data?", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0035", "text": "What conclusions can you draw from this data? if you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0036", "text": "I need you to review these numbers and find the trend. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0037", "text": "Luna, Review these numbers and find the trend.", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0038", "text": "Can you analyze these logs and identify the likely cause please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0039", "text": "Quick question: What conclusions can you draw from this data? real quick", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0040", "text": "Review these numbers and find the trend. when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0041", "text": "Please review these numbers and find the trend when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0042", "text": "Luna, Review these numbers and find da trend. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0043", "text": "Can you tell me what conclusions can you draw from this data? please", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0044", "text": "Please review these numbers and find the trend", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "voice_variant"}
+{"id": "validation-analysis-0045", "text": "Luna, Analyze these logs and identify the likely cause. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0046", "text": "Hey Luna, Analyze these logs and identify the likely cause. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0047", "text": "Hey Luna, Analyze these logs and identify the likely cause.", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0048", "text": "I need you to analyze these logs and identify the likely cause. for me", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0049", "text": "Can you analyze these logs and identify the likely cause. right now", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-analysis-0050", "text": "Hey Luna, Analyze these logs and identify the likely cause. when you can", "label": "REASONING", "scenario": "analysis", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0001", "text": "Rewrite this explanation so it is clearer. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0002", "text": "Could you improve this paragraph without changing its meaning. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0003", "text": "Could you rewrite this explanation so it is clearer. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0004", "text": "Could you draft a professional reply to this message.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0005", "text": "Rewrite this explanation so it is clearer. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0006", "text": "Draft a professional reply to this message. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0007", "text": "Hey Luna, Rewrite this explanation so it is clearer. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0008", "text": "Can you draft a professional reply to this message.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0009", "text": "I need you to rewrite this explanation so it is clearer. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0010", "text": "Improve this paragraph without changing its meaning. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0011", "text": "I need you to rewrite this explanation so it is clearer. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0012", "text": "Please improve this paragraph without changing its meaning.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0013", "text": "Draft a professional reply to this message.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0014", "text": "Can you draft a professional reply to this message. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0015", "text": "Hey Luna, Draft a professional reply to this message. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0016", "text": "Luna, Improve this paragraph without changing its meaning. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0017", "text": "Improve this paragraph without changing its meaning. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0018", "text": "Can you rewrite this explanation so it is clearer. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0019", "text": "Please draft a professional reply to this message. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0020", "text": "I need you to improve this paragraph without changing its meaning. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0021", "text": "I need you to improve this paragraph without changing its meaning. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0022", "text": "Luna, Draft a professional reply to this message.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0023", "text": "I need you to draft a professional reply to this message. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0024", "text": "Luna, Rewrite this explanation so it is clearer. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0025", "text": "Luna, Rewrite this explanation so it is clearer. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0026", "text": "Hey Luna, Draft a professional reply to this message. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0027", "text": "Can you improve this paragraph without changing its meaning.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0028", "text": "Can you rewrite this explanation so it is clearer please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "voice_variant"}
+{"id": "validation-writing-0029", "text": "Luna, Rewrite this explanation so it is clearer.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0030", "text": "Luna, Improve this paragraph without changing its meaning. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0031", "text": "Hey Luna, Draft a professional reply to this message.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0032", "text": "Hey Luna, Rewrite this explanation so it is clearer. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0033", "text": "Please improve this paragraph without changing its meaning. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0034", "text": "Hey Luna, Rewrite this explanation so it is clearer. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0035", "text": "Can you improve this paragraph without changing its meaning. when you can", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0036", "text": "Hey Luna, Draft a professional reply to this message. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0037", "text": "Luna, Draft a professional reply to this message. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0038", "text": "Hey Luna, Draft a professional reply to this message please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "voice_variant"}
+{"id": "validation-writing-0039", "text": "Can you rewrite this explanation so it is clearer.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0040", "text": "I need you to improve this paragraph without changing its meaning. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0041", "text": "Could you rewrite this explanation so it is clearer.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0042", "text": "Draft a professional reply to this message. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0043", "text": "Can you improve this paragraph without changing its meaning. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0044", "text": "Hey Luna, Improve this paragraph without changing its meaning. right now", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0045", "text": "Luna, Improve this paragraph without changing its meaning.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0046", "text": "Can you improve this paragraph without changing its meaning", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "voice_variant"}
+{"id": "validation-writing-0047", "text": "Please improve this paragraph without changing its meaning. please", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0048", "text": "Hey Luna, Draft a professional reply to this message. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0049", "text": "Could you improve this paragraph without changing its meaning. for me", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-writing-0050", "text": "Rewrite this explanation so it is clearer.", "label": "REASONING", "scenario": "writing", "split": "validation", "source": "generated"}
+{"id": "validation-research-0001", "text": "Please research battery technology and summarize da tradeoffs. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0002", "text": "Please find da main arguments for and against remote work. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0003", "text": "Could you find the main arguments for and against remote work. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0004", "text": "Research battery technology and summarize the tradeoffs right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0005", "text": "Luna, Find da main arguments for and against remote work. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0006", "text": "I need you to find the main arguments for and against remote work. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0007", "text": "Give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0008", "text": "Hey Luna, Give me a sourced overview of this topic. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0009", "text": "Research battery technology and summarize the tradeoffs. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0010", "text": "Could you research battery technology and summarize the tradeoffs. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0011", "text": "Please research battery technology and summarize the tradeoffs.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0012", "text": "Please research battery technology and summarize the tradeoffs. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0013", "text": "Hey Luna, Find the main arguments for and against remote work.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0014", "text": "Give me a sourced overview of this topic. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0015", "text": "Luna, Find the main arguments for and against remote work. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0016", "text": "Give me a sourced overview of this topic.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0017", "text": "Can you give me a sourced overview of this topic. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0018", "text": "Please research battery technology and summarize the tradeoffs. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0019", "text": "Could you research battery technology and summarize the tradeoffs. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0020", "text": "Please research battery technology and summarize the tradeoffs. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0021", "text": "I need you to research battery technology and summarize da tradeoffs. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0022", "text": "Luna, Research battery technology and summarize the tradeoffs. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0023", "text": "I need you to research battery technology and summarize the tradeoffs. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0024", "text": "I need you to give me a sourced overview of this topic. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0025", "text": "Could you give me a sourced overview of this topic. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0026", "text": "Luna, Give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0027", "text": "Could you give me a sourced overview of this topic.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0028", "text": "Can you give me a sourced overview of this topic. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0029", "text": "Luna, Find the main arguments for and against remote work. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0030", "text": "I need you to give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0031", "text": "Research battery technology and summarize the tradeoffs. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0032", "text": "Please give me a sourced overview of this topic. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0033", "text": "Could you give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0034", "text": "Please give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0035", "text": "Can you find the main arguments for and against remote work when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0036", "text": "Can you research battery technology and summarize the tradeoffs. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0037", "text": "I need you to give me a sourced overview of this topic.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0038", "text": "Luna, Give me a sourced overview of this topic. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0039", "text": "Can you find the main arguments for and against remote work.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0040", "text": "Hey Luna, Find da main arguments for and against remote work. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0041", "text": "Hey Luna, Research battery technology and summarize the tradeoffs.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0042", "text": "Can you give me a sourced overview of this topic. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0043", "text": "Can you find the main arguments for and against remote work. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0044", "text": "Hey Luna, Research battery technology and summarize the tradeoffs. when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0045", "text": "Can you research battery technology and summarize the tradeoffs when you can", "label": "REASONING", "scenario": "research", "split": "validation", "source": "voice_variant"}
+{"id": "validation-research-0046", "text": "I need you to research battery technology and summarize the tradeoffs. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0047", "text": "Please give me a sourced overview of this topic. please", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0048", "text": "Give me a sourced overview of this topic. for me", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0049", "text": "Luna, Research battery technology and summarize the tradeoffs.", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
+{"id": "validation-research-0050", "text": "I need you to find the main arguments for and against remote work. right now", "label": "REASONING", "scenario": "research", "split": "validation", "source": "generated"}
