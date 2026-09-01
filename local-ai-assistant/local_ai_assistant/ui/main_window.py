@@ -40,7 +40,7 @@ from ..telegram_bot import (
     save_telegram_token,
 )
 from ..tools import PermissionLevel, ToolManager
-from ..voice import VoiceService
+from ..voice import VoiceService, remove_wake_word
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
@@ -101,6 +101,7 @@ class MainWindow(QMainWindow):
         self._manual_recording_pending = False
         self._manual_handoff_started_at: float | None = None
         self._wake_restart_pending = False
+        self._wake_listener_restart_allowed = True
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -613,12 +614,15 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
         self.last_voice_error = message
+        self._wake_command_recording = False
         self._set_orb_state("error")
         self._set_voice_idle()
         self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_status("error")
         self.status_label.setText("Voice input unavailable")
         self.status_label.setToolTip(message)
+        if self.config.wake_word_enabled:
+            self._wake_restart_pending = True
         if self.voice_record_thread is not None:
             self.voice_record_thread.quit()
 
@@ -634,6 +638,13 @@ class MainWindow(QMainWindow):
             self._set_voice_idle()
             if self.last_voice_error:
                 self._set_voice_status(f"VOICE ERROR // {self.last_voice_error[:180]}")
+            if (
+                self._wake_restart_pending
+                and self.config.wake_word_enabled
+                and not self._quitting
+            ):
+                self._wake_restart_pending = False
+                QTimer.singleShot(250, self._start_wake_word_listener)
 
     @Slot(str, str)
     def _transcription_finished(self, text: str, audio_path: str) -> None:
@@ -642,16 +653,14 @@ class MainWindow(QMainWindow):
         self._remove_recording(audio_path)
         self._set_voice_idle()
         if self.config.wake_word_enabled and not self._wake_command_recording:
-            wake_word = self.config.wake_word.casefold()
-            lowered = text.casefold()
-            if wake_word not in lowered:
+            command = remove_wake_word(text, self.config.wake_word)
+            if command is None:
                 self._set_voice_status(
                     f"WAKE WORD REQUIRED // SAY {self.config.wake_word}"
                 )
-                self._start_wake_word_listener()
+                self._wake_restart_pending = True
                 return
-            start = lowered.find(wake_word)
-            text = text[start + len(wake_word):].strip(" ,.!?:;-")
+            text = command
             if not text:
                 self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
                 self._wake_command_pending = True
@@ -671,7 +680,7 @@ class MainWindow(QMainWindow):
         self.status_label.setText("Voice transcription failed")
         self.status_label.setToolTip(message)
         if self.config.wake_word_enabled:
-            self._start_wake_word_listener()
+            self._wake_restart_pending = True
         if self.voice_transcription_thread is not None:
             self.voice_transcription_thread.quit()
 
@@ -683,6 +692,13 @@ class MainWindow(QMainWindow):
         self.voice_transcription_worker = None
         self.voice_transcription_thread = None
         self._sync_stop_button()
+        if (
+            self._wake_restart_pending
+            and self.config.wake_word_enabled
+            and not self._quitting
+        ):
+            self._wake_restart_pending = False
+            QTimer.singleShot(250, self._start_wake_word_listener)
 
     @staticmethod
     def _remove_recording(audio_path: str) -> None:
@@ -726,6 +742,8 @@ class MainWindow(QMainWindow):
             or self.chat_worker is not None
         ):
             return
+        self._wake_listener_restart_allowed = True
+        self._set_orb_state("idle")
         self.wake_word_thread = QThread(self)
         self.wake_word_worker = WakeWordWorker(
             self.voice_service,
@@ -742,6 +760,14 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _wake_word_detected(self) -> None:
+        if (
+            self._wake_command_pending
+            or self._manual_recording_pending
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+            or self.chat_worker is not None
+        ):
+            return
         self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
         self._wake_command_pending = True
         # Keep detection state and listener shutdown in the same queued
@@ -756,6 +782,8 @@ class MainWindow(QMainWindow):
         self.status_label.setToolTip(message)
 
     def _stop_wake_word_listener(self) -> None:
+        if not self._manual_recording_pending and not self._wake_restart_pending:
+            self._wake_listener_restart_allowed = False
         worker = self.wake_word_worker
         thread = self.wake_word_thread
         if worker is not None:
@@ -785,6 +813,13 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, self._start_wake_word_listener)
         elif self._manual_recording_pending:
             self._start_manual_recording_when_ready()
+        elif self._wake_command_pending:
+            self._start_pending_wake_command()
+        elif self._wake_listener_restart_allowed and not self._quitting:
+            # A worker can finish because a recorder disappeared, a Whisper
+            # process crashed, or a PipeWire stream was interrupted. Keep the
+            # always-on mode alive instead of silently falling back to idle.
+            QTimer.singleShot(250, self._start_wake_word_listener)
         else:
             self._start_pending_wake_command()
 
@@ -892,6 +927,7 @@ class MainWindow(QMainWindow):
         self.active_assistant_bubble = None
         self.active_response = ""
         self._set_voice_idle()
+        self._start_wake_word_listener()
 
     def _set_generating(self, generating: bool) -> None:
         if generating:
@@ -1286,6 +1322,8 @@ class MainWindow(QMainWindow):
         self.status_label.style().polish(self.status_label)
 
     def _set_orb_state(self, state: str) -> None:
+        # All voice entry points converge here, so the visible state cannot
+        # drift from the operation that currently owns the microphone.
         self.core_widget.set_state(state)
         labels = {
             "idle": "READY // HOLD TO SPEAK"

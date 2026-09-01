@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import re
 import shutil
 import shlex
 import signal
@@ -22,6 +24,124 @@ from .config import AppConfig, DEFAULT_TTS_VOICE
 
 class VoiceError(RuntimeError):
     """A user-facing error from an unavailable or failed local voice backend."""
+
+
+def _normalise_spoken_text(text: str) -> list[str]:
+    """Return lowercase word-like tokens for tolerant wake-word matching."""
+    cleaned = "".join(character.casefold() if character.isalnum() else " " for character in text)
+    return [token for token in cleaned.split() if token]
+
+
+def wake_word_matches(text: str, wake_word: str, threshold: float = 0.72) -> bool:
+    """Match Whisper's small pronunciation/spelling variations safely.
+
+    Whisper commonly renders short names such as "Lura" as "Laura" or "Lara".
+    Comparing individual words (rather than arbitrary substrings) avoids
+    treating a word that merely contains the wake word as a trigger.
+    """
+    from difflib import SequenceMatcher
+
+    expected = _normalise_spoken_text(wake_word)
+    actual = _normalise_spoken_text(text)
+    if not expected or not actual:
+        return False
+    width = len(expected)
+    for start in range(len(actual) - width + 1):
+        candidate = actual[start : start + width]
+        score = SequenceMatcher(None, " ".join(expected), " ".join(candidate)).ratio()
+        if score >= threshold:
+            return True
+    return False
+
+
+def remove_wake_word(text: str, wake_word: str, threshold: float = 0.72) -> str | None:
+    """Return the command after a tolerant wake word, or None when absent."""
+    from difflib import SequenceMatcher
+
+    expected = _normalise_spoken_text(wake_word)
+    matches = list(re.finditer(r"[^\W_]+", text, flags=re.UNICODE))
+    if not expected or not matches:
+        return None
+    width = len(expected)
+    for start in range(len(matches) - width + 1):
+        candidate = [match.group(0).casefold() for match in matches[start : start + width]]
+        score = SequenceMatcher(None, " ".join(expected), " ".join(candidate)).ratio()
+        if score >= threshold:
+            end = matches[start + width - 1].end()
+            return text[end:].strip(" ,.!?:;-")
+    return None
+
+
+class VoiceActivityDetector:
+    """Adaptive activity detector for 16-bit, 16 kHz mono WAV recordings."""
+
+    def __init__(
+        self,
+        *,
+        threshold: int,
+        silence_duration: float,
+        min_speech_duration: float,
+        sample_rate: int = 16_000,
+    ) -> None:
+        self.threshold = threshold
+        self.silence_duration = silence_duration
+        self.min_speech_duration = min_speech_duration
+        self.sample_rate = sample_rate
+        self.speech_started = False
+        self._voiced_duration = 0.0
+        self._last_voice_at: float | None = None
+        self._noise_floor = float(threshold) * 0.25
+
+    @staticmethod
+    def _levels(samples: bytes) -> tuple[float, int]:
+        usable = len(samples) - (len(samples) % 2)
+        if usable <= 0:
+            return 0.0, 0
+        values = [
+            int.from_bytes(samples[index : index + 2], "little", signed=True)
+            for index in range(0, usable, 2)
+        ]
+        rms = math.sqrt(sum(value * value for value in values) / len(values))
+        return rms, max(abs(value) for value in values)
+
+    def consume(self, samples: bytes, now: float) -> bool:
+        """Consume new PCM bytes and return True after confirmed end-of-speech."""
+        usable = len(samples) - (len(samples) % 2)
+        if usable <= 0:
+            return False
+        rms, peak = self._levels(samples[:usable])
+        duration = usable / 2 / self.sample_rate
+
+        if not self.speech_started:
+            # Let the room establish a baseline, but retain an absolute floor
+            # so a quiet normal voice is not rejected just because the first
+            # few frames happened to be quiet.
+            self._noise_floor = min(
+                self._noise_floor * 0.8 + rms * 0.2,
+                float(self.threshold) * 0.8,
+            )
+        dynamic_floor = max(float(self.threshold) * 0.65, self._noise_floor * 2.2)
+        voiced = rms >= dynamic_floor or (
+            peak >= self.threshold * 1.5 and rms >= self.threshold * 0.25
+        )
+        if voiced:
+            self._voiced_duration += duration
+            self._last_voice_at = now
+        else:
+            self._voiced_duration = max(0.0, self._voiced_duration - duration * 0.35)
+
+        if not self.speech_started:
+            if self._voiced_duration >= self.min_speech_duration:
+                self.speech_started = True
+            return False
+        return self.should_stop(now)
+
+    def should_stop(self, now: float) -> bool:
+        """Check for end-of-speech even when a recorder poll has no new bytes."""
+        return (
+            self._last_voice_at is not None
+            and now - self._last_voice_at >= self.silence_duration
+        )
 
 
 def _is_monitor_source(
@@ -59,6 +179,7 @@ class VoiceService:
     def __init__(self, config: AppConfig) -> None:
         self.config = config
         self._process_lock = threading.Lock()
+        self._recorder_process: subprocess.Popen | None = None
         self._active_process: subprocess.Popen | None = None
         self._last_recorder_command: list[str] = []
         self._whisper_model: Any | None = None
@@ -200,20 +321,35 @@ class VoiceService:
         return [*command, str(destination)]
 
     def start_recorder(self, destination: Path) -> subprocess.Popen:
-        command = self.recorder_command(destination)
-        self._last_recorder_command = command
-        try:
-            process = subprocess.Popen(
-                command,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                text=True,
-                start_new_session=True,
-            )
-        except OSError as error:
-            raise VoiceError(f"Could not start microphone recording: {error}") from error
+        with self._process_lock:
+            if (
+                self._recorder_process is not None
+                and self._recorder_process.poll() is None
+            ):
+                raise VoiceError(
+                    "The microphone is already in use by another voice operation."
+                )
+            command = self.recorder_command(destination)
+            self._last_recorder_command = command
+            try:
+                process = subprocess.Popen(
+                    command,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    start_new_session=True,
+                )
+            except OSError as error:
+                raise VoiceError(f"Could not start microphone recording: {error}") from error
+            self._recorder_process = process
         return process
+
+    def release_recorder(self, process: subprocess.Popen) -> None:
+        """Release microphone ownership after the recorder has fully exited."""
+        with self._process_lock:
+            if self._recorder_process is process:
+                self._recorder_process = None
 
     def finish_recording(self, process: subprocess.Popen, destination: Path) -> None:
         detail = process.stderr.read().strip() if process.stderr is not None else ""

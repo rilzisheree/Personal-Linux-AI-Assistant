@@ -9,10 +9,38 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from local_ai_assistant.config import AppConfig
-from local_ai_assistant.voice import VoiceError, VoiceService
+from local_ai_assistant.voice import (
+    VoiceActivityDetector,
+    VoiceError,
+    VoiceService,
+    remove_wake_word,
+    wake_word_matches,
+)
 
 
 class VoiceServiceTests(unittest.TestCase):
+    def test_wake_word_matching_tolerates_common_whisper_spelling(self) -> None:
+        self.assertTrue(wake_word_matches("hey Laura", "Lura"))
+        self.assertTrue(wake_word_matches("Lara", "Lura"))
+        self.assertFalse(wake_word_matches("coloration", "Lura"))
+        self.assertEqual(remove_wake_word("Laura, what's up?", "Lura"), "what's up")
+
+    def test_vad_waits_for_sustained_silence_after_speech(self) -> None:
+        detector = VoiceActivityDetector(
+            threshold=350,
+            silence_duration=0.9,
+            min_speech_duration=0.2,
+        )
+        silence = b"\0\0" * 3200  # 200 ms at 16 kHz
+        voice = (900).to_bytes(2, "little", signed=True) * 3200
+
+        self.assertFalse(detector.consume(silence, 0.2))
+        self.assertFalse(detector.consume(voice, 0.4))
+        self.assertTrue(detector.speech_started)
+        self.assertFalse(detector.consume(silence, 0.7))
+        self.assertFalse(detector.should_stop(1.0))
+        self.assertTrue(detector.should_stop(1.35))
+
     def test_list_microphones_filters_monitors_and_keeps_source_names(self) -> None:
         pactl_output = json.dumps(
             [

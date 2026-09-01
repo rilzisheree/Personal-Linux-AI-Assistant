@@ -6,6 +6,7 @@ import threading
 import subprocess
 import time
 import uuid
+import wave
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal, Slot
@@ -19,7 +20,7 @@ from .errors import (
 from .ollama import ChatMessage, OllamaClient, ToolCall
 from .telegram_bot import TelegramBotRunner, TelegramConfig
 from .tools import PermissionLevel, ToolManager, ToolCallResult, ToolConfirmationRequired
-from .voice import VoiceError, VoiceService
+from .voice import VoiceActivityDetector, VoiceError, VoiceService, wake_word_matches
 
 
 MAX_TOOL_ROUNDS = 8
@@ -294,6 +295,8 @@ class VoiceRecordWorker(QObject):
             self.failed.emit(f"Microphone recording failed: {error}")
         finally:
             self._process = None
+            if process is not None:
+                self.service.release_recorder(process)
 
     def stop(self) -> None:
         self._stop_event.set()
@@ -311,8 +314,11 @@ class VoiceRecordWorker(QObject):
         a command to record dead air for the full duration.
         """
         deadline = time.monotonic() + float(self.duration_seconds or 1)
-        speech_started = False
-        last_voice_at = 0.0
+        detector = VoiceActivityDetector(
+            threshold=self.service.config.voice_vad_threshold,
+            silence_duration=self.service.config.voice_silence_duration,
+            min_speech_duration=self.service.config.voice_min_speech_duration,
+        )
         offset = 44
         while process.poll() is None and not self._stop_event.is_set():
             now = time.monotonic()
@@ -326,22 +332,17 @@ class VoiceRecordWorker(QObject):
                     samples = samples[:-1]
                 if samples:
                     offset += len(samples)
-                    peak = max(
-                        abs(int.from_bytes(samples[index:index + 2], "little", signed=True))
-                        for index in range(0, len(samples), 2)
-                    )
-                    if peak >= 700:
-                        speech_started = True
-                        last_voice_at = now
+                    if detector.consume(samples, now):
+                        return
             except OSError:
                 pass
-            if speech_started and now - last_voice_at >= 1.2:
+            if detector.should_stop(now):
                 return
             self._stop_event.wait(0.1)
 
 
 class WakeWordWorker(QObject):
-    """Continuously inspect short local audio chunks for the wake phrase."""
+    """Continuously capture one stream while scanning overlapping audio windows."""
 
     detected = Signal()
     failed = Signal(str)
@@ -350,7 +351,7 @@ class WakeWordWorker(QObject):
         self,
         service: VoiceService,
         wake_word: str,
-        chunk_seconds: float = 3.0,
+        chunk_seconds: float = 4.0,
     ) -> None:
         super().__init__()
         self.service = service
@@ -361,49 +362,91 @@ class WakeWordWorker(QObject):
 
     @Slot()
     def run(self) -> None:
+        stream_path: Path | None = None
+        process: subprocess.Popen | None = None
         try:
+            stream_path = self.service.new_recording_path()
+            process = self.service.start_recorder(stream_path)
+            self._process = process
+            if self.chunk_seconds <= 0:
+                # A zero-length window is useful for deterministic worker
+                # tests and keeps the worker's public seam backwards
+                # compatible; normal wake listening always uses a real window.
+                transcript = self.service.transcribe(stream_path, device="cpu").casefold()
+                if wake_word_matches(transcript, self.wake_word):
+                    self.detected.emit()
+                return
+            window_bytes = max(1, int(self.chunk_seconds * 16_000 * 2))
+            overlap_bytes = min(window_bytes // 2, int(2.0 * 16_000 * 2))
+            pcm = b""
+            offset = 44
             while not self._stop_event.is_set():
-                audio_path = self.service.new_recording_path()
+                if process.poll() is not None:
+                    raise VoiceError("The microphone stream stopped unexpectedly.")
                 try:
-                    process = self.service.start_recorder(audio_path)
-                    self._process = process
-                    if self._stop_event.wait(self.chunk_seconds):
-                        self.service.stop_recorder(process)
+                    with stream_path.open("rb") as audio:
+                        audio.seek(offset)
+                        new_pcm = audio.read()
+                except OSError:
+                    new_pcm = b""
+                if new_pcm:
+                    usable = len(new_pcm) - (len(new_pcm) % 2)
+                    pcm += new_pcm[:usable]
+                    offset += usable
+                if len(pcm) >= window_bytes:
+                    snapshot = self.service.new_recording_path()
+                    try:
+                        with wave.open(str(snapshot), "wb") as audio:
+                            audio.setnchannels(1)
+                            audio.setsampwidth(2)
+                            audio.setframerate(16_000)
+                            audio.writeframes(pcm[-window_bytes:])
+                        # Keep wake listening off the GPU used by Ollama and
+                        # other desktop workloads. The recorder itself stays
+                        # open, so Whisper processing never creates a
+                        # microphone-monitoring gap.
+                        transcript = self.service.transcribe(
+                            snapshot, device="cpu"
+                        ).casefold()
+                        if wake_word_matches(transcript, self.wake_word):
+                            self.detected.emit()
+                            return
+                    except VoiceError as error:
+                        if "No speech was detected" not in str(error):
+                            self.failed.emit(str(error))
+                            return
+                    finally:
                         try:
-                            process.wait(timeout=3)
-                        except subprocess.TimeoutExpired:
-                            process.kill()
-                            process.wait()
-                        return
-                    self.service.stop_recorder(process)
-                    try:
-                        process.wait(timeout=3)
-                    except subprocess.TimeoutExpired:
-                        process.kill()
-                        process.wait()
-                    self.service.finish_recording(process, audio_path)
-                    # Wake-word recognition runs continuously, so keep it
-                    # off the GPU used by Ollama and other desktop workloads.
-                    transcript = self.service.transcribe(
-                        audio_path, device="cpu"
-                    ).casefold()
-                    if self.wake_word and self.wake_word in transcript:
-                        self.detected.emit()
-                        return
-                except VoiceError as error:
-                    # An empty chunk is normal while waiting. A missing
-                    # recorder/Whisper backend is not, and should be visible.
-                    if "No speech was detected" not in str(error):
-                        self.failed.emit(str(error))
-                        return
-                finally:
-                    self._process = None
-                    try:
-                        audio_path.unlink()
-                    except OSError:
-                        pass
+                            snapshot.unlink()
+                        except OSError:
+                            pass
+                    pcm = pcm[-overlap_bytes:]
+                self._stop_event.wait(0.1)
         except Exception as error:
-            self.failed.emit(str(error))
+            if not self._stop_event.is_set():
+                self.failed.emit(str(error))
+        finally:
+            if process is not None:
+                if process.poll() is None:
+                    self.service.stop_recorder(process)
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
+                if stream_path is not None:
+                    try:
+                        self.service.finish_recording(process, stream_path)
+                    except VoiceError as error:
+                        if not self._stop_event.is_set():
+                            self.failed.emit(str(error))
+                self.service.release_recorder(process)
+            self._process = None
+            if stream_path is not None:
+                try:
+                    stream_path.unlink()
+                except OSError:
+                    pass
 
     def cancel(self) -> None:
         self._stop_event.set()

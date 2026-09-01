@@ -1,0 +1,192 @@
+I need you to fix and improve **3 existing voice-interaction problems**. Do NOT redesign the UI or replace the existing orb/voice interface. Work with the current implementation and fix the underlying functionality.
+
+### 1. Wake Word Detection — VERY UNRELIABLE
+
+The wake word detection currently barely works.
+
+Sometimes it detects the wake word, but other times I can say it clearly and nothing happens.
+
+Please investigate the entire wake-word pipeline and make it significantly more reliable.
+
+Requirements:
+
+* The wake word should be detected consistently.
+* It should work when I'm speaking at a normal volume.
+* It should tolerate slight differences in pronunciation, volume, and microphone input.
+* Avoid requiring me to say the wake word unnaturally loudly or perfectly.
+* Make sure the microphone is actually continuously monitoring for the wake word when wake-word mode is enabled.
+* Prevent the wake-word listener from accidentally stopping after one detection.
+* Handle microphone/audio-stream errors gracefully and automatically recover when possible.
+* Prevent duplicate wake-word triggers from a single utterance.
+* Add appropriate debounce/cooldown logic after detecting the wake word.
+* Make sure the wake-word detector does not conflict with the normal speech-to-text system.
+
+**Important:** Don't just increase sensitivity blindly. Diagnose why detection is failing and improve the actual audio/detection pipeline.
+
+### 2. HOLD ORB TO TALK — UNRELIABLE
+
+The existing "hold the orb to talk" functionality frequently doesn't work.
+
+When I press and hold the orb:
+
+* It should immediately enter LISTENING state.
+* The microphone should start recording immediately.
+* Keep recording for the entire duration that I am holding the orb.
+* When I release the orb, stop recording immediately.
+* Send the captured speech for transcription/processing.
+* Do not accidentally trigger a click instead of a hold.
+* Do not stop listening while I'm still holding the orb.
+* Do not require perfect mouse timing.
+
+Make sure this works reliably with:
+
+* Mouse down → start listening
+* Mouse held → continue listening
+* Mouse up → stop listening
+
+Also handle cases where the mouse leaves the orb while I am still holding the button down. Releasing the mouse should still correctly stop the recording.
+
+If the app supports touch/pointer events, make sure those don't conflict with mouse events or cause duplicate start/stop calls.
+
+### 3. AUTOMATICALLY STOP LISTENING AFTER I FINISH SPEAKING
+
+This is currently one of the biggest problems.
+
+After I finish speaking, the assistant **keeps listening instead of recognizing that I'm done**.
+
+Implement proper Voice Activity Detection / silence detection.
+
+Desired behavior:
+
+```text
+Start listening
+      ↓
+Detect speech
+      ↓
+User speaks
+      ↓
+Detect end of speech
+      ↓
+Short silence confirmation
+      ↓
+STOP RECORDING
+      ↓
+Transcribe
+      ↓
+Send to Gemini
+      ↓
+AI responds
+      ↓
+TTS speaks
+```
+
+The silence detection should NOT cut me off if I pause briefly between words or sentences.
+
+Use a reasonable configurable silence threshold and minimum speech duration.
+
+For example:
+
+* Don't stop because of a 200–300 ms pause.
+* Detect sustained silence after speech.
+* Make the exact values configurable so they can be tuned.
+* Don't wait several seconds after I finish talking.
+* Don't start processing immediately because of a tiny pause.
+
+The system should distinguish between:
+
+* Background silence
+* Short pause while speaking
+* Actual end of speech
+
+### IMPORTANT ARCHITECTURE REQUIREMENT
+
+Please inspect the existing voice implementation first.
+
+Do NOT simply patch random event handlers until it appears to work.
+
+Trace the complete pipeline:
+
+```text
+Microphone
+   ↓
+Audio capture
+   ↓
+Wake word detection
+   ↓
+Listening state
+   ↓
+Speech detection / VAD
+   ↓
+Recording
+   ↓
+End-of-speech detection
+   ↓
+Transcription
+   ↓
+Gemini
+   ↓
+TTS
+   ↓
+Speaking state
+```
+
+Identify where the current implementation is failing and fix the underlying race conditions/state-management issues.
+
+### State Management
+
+Make sure the voice system has clear states and cannot enter contradictory states.
+
+Something like:
+
+```text
+IDLE
+LISTENING
+PROCESSING
+SPEAKING
+ERROR
+```
+
+There should never be situations like:
+
+* UI says IDLE but microphone is recording
+* UI says LISTENING but microphone isn't active
+* Two recording sessions running simultaneously
+* Wake-word listener and speech recorder fighting over the same microphone
+* Releasing the orb fails to stop recording
+* Recording continues after transcription starts
+
+Make microphone ownership explicit so only the appropriate component controls the active audio stream.
+
+### Testing
+
+After implementing the fixes, actually test all three workflows repeatedly:
+
+**Wake word:**
+
+1. Wait in idle state.
+2. Say wake word normally.
+3. Confirm detection.
+4. Repeat many times.
+5. Confirm it doesn't randomly stop working.
+
+**Hold-to-talk:**
+
+1. Mouse down on orb.
+2. Speak.
+3. Continue holding.
+4. Pause briefly.
+5. Speak again.
+6. Release mouse.
+7. Confirm recording stops immediately.
+
+**Automatic speech ending:**
+
+1. Start listening.
+2. Speak normally.
+3. Pause briefly.
+4. Continue speaking.
+5. Finish speaking.
+6. Remain silent.
+7. Confirm recording automatically ends after the configured silence duration.
+
+Do not change the visual design. I want the **same existing UI**, just make the voice interaction actually reliable.

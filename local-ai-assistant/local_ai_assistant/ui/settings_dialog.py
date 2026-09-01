@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QDoubleSpinBox,
     QFormLayout,
     QFrame,
     QGroupBox,
@@ -178,8 +179,8 @@ class SettingsDialog(QDialog):
         layout.addWidget(appearance)
 
         note = QLabel(
-            "Wake-word and appearance controls are staged in the new UI. "
-            "The existing local wake-word backend is not enabled yet."
+            "Wake-word listening stays local and automatically retries after "
+            "temporary microphone or transcription errors."
         )
         note.setObjectName("settingsHint")
         note.setWordWrap(True)
@@ -216,10 +217,34 @@ class SettingsDialog(QDialog):
         self.whisper_model_input.setPlaceholderText("base")
         self.whisper_language_input = QLineEdit(config.whisper_language)
         self.whisper_language_input.setPlaceholderText("auto")
+        self.voice_silence_duration_input = QDoubleSpinBox()
+        self.voice_silence_duration_input.setRange(0.5, 3.0)
+        self.voice_silence_duration_input.setSingleStep(0.1)
+        self.voice_silence_duration_input.setDecimals(1)
+        self.voice_silence_duration_input.setValue(config.voice_silence_duration)
+        self.voice_silence_duration_input.setSuffix(" seconds")
+        self.voice_min_speech_duration_input = QDoubleSpinBox()
+        self.voice_min_speech_duration_input.setRange(0.1, 1.0)
+        self.voice_min_speech_duration_input.setSingleStep(0.1)
+        self.voice_min_speech_duration_input.setDecimals(1)
+        self.voice_min_speech_duration_input.setValue(
+            config.voice_min_speech_duration
+        )
+        self.voice_min_speech_duration_input.setSuffix(" seconds")
+        self.voice_vad_threshold_input = QSpinBox()
+        self.voice_vad_threshold_input.setRange(100, 4000)
+        self.voice_vad_threshold_input.setSingleStep(50)
+        self.voice_vad_threshold_input.setValue(config.voice_vad_threshold)
+        self.voice_vad_threshold_input.setSuffix(" level")
         input_form.addRow("", self.voice_input_enabled)
         input_form.addRow("Microphone", microphone_row)
         input_form.addRow("Whisper model", self.whisper_model_input)
         input_form.addRow("Language", self.whisper_language_input)
+        input_form.addRow("End-of-speech silence", self.voice_silence_duration_input)
+        input_form.addRow(
+            "Minimum speech", self.voice_min_speech_duration_input
+        )
+        input_form.addRow("Voice activity threshold", self.voice_vad_threshold_input)
         layout.addWidget(input_group)
 
         output_group, output_form = self._group("VOICE OUTPUT")
@@ -388,6 +413,9 @@ class SettingsDialog(QDialog):
             wake_word_enabled=self.wake_word_enabled.isChecked(),
             wake_word=self.wake_word_input.text(),
             active_listening_duration=self.active_listening_duration.value(),
+            voice_silence_duration=self.voice_silence_duration_input.value(),
+            voice_min_speech_duration=self.voice_min_speech_duration_input.value(),
+            voice_vad_threshold=self.voice_vad_threshold_input.value(),
             theme=str(self.theme_input.currentData()),
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),

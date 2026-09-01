@@ -21,6 +21,9 @@ PIPER_VOICE_PRESETS = (
 DEFAULT_TTS_VOICE = PIPER_VOICE_PRESETS[0][1]
 TTS_ENGINES = ("disabled", "piper")
 TTS_VOICE_PRESETS = PIPER_VOICE_PRESETS
+DEFAULT_VOICE_SILENCE_DURATION = 0.9
+DEFAULT_VOICE_MIN_SPEECH_DURATION = 0.2
+DEFAULT_VOICE_VAD_THRESHOLD = 350
 
 
 @dataclass
@@ -45,6 +48,9 @@ class AppConfig:
     wake_word_enabled: bool = False
     wake_word: str = "Lura"
     active_listening_duration: int = 15
+    voice_silence_duration: float = DEFAULT_VOICE_SILENCE_DURATION
+    voice_min_speech_duration: float = DEFAULT_VOICE_MIN_SPEECH_DURATION
+    voice_vad_threshold: int = DEFAULT_VOICE_VAD_THRESHOLD
     theme: str = "obsidian"
     orb_intensity: int = 65
     animation_intensity: int = 70
@@ -70,6 +76,14 @@ class AppConfig:
         self.telegram_allowed_user_id = str(self.telegram_allowed_user_id).strip()
         self.assistant_name = self.assistant_name.strip() or "Lura"
         self.wake_word = self.wake_word.strip() or self.assistant_name
+        if isinstance(self.voice_silence_duration, str):
+            self.voice_silence_duration = float(self.voice_silence_duration.strip())
+        if isinstance(self.voice_min_speech_duration, str):
+            self.voice_min_speech_duration = float(
+                self.voice_min_speech_duration.strip()
+            )
+        if isinstance(self.voice_vad_threshold, str):
+            self.voice_vad_threshold = int(self.voice_vad_threshold.strip())
         self.theme = self.theme.strip().lower()
         self.validate()
 
@@ -104,6 +118,26 @@ class AppConfig:
             or not 1 <= self.active_listening_duration <= 60
         ):
             raise ValueError("Active listening duration must be between 1 and 60 seconds.")
+        if (
+            isinstance(self.voice_silence_duration, bool)
+            or not isinstance(self.voice_silence_duration, (int, float))
+            or not 0.5 <= self.voice_silence_duration <= 3.0
+        ):
+            raise ValueError("Voice silence duration must be between 0.5 and 3 seconds.")
+        if (
+            isinstance(self.voice_min_speech_duration, bool)
+            or not isinstance(self.voice_min_speech_duration, (int, float))
+            or not 0.1 <= self.voice_min_speech_duration <= 1.0
+        ):
+            raise ValueError(
+                "Minimum speech duration must be between 0.1 and 1 second."
+            )
+        if (
+            isinstance(self.voice_vad_threshold, bool)
+            or not isinstance(self.voice_vad_threshold, int)
+            or not 100 <= self.voice_vad_threshold <= 4000
+        ):
+            raise ValueError("Voice activity threshold must be between 100 and 4000.")
         if self.theme not in {"obsidian"}:
             raise ValueError("Theme must be obsidian.")
         for value, label in (
@@ -182,6 +216,21 @@ class AppConfig:
                 active_listening_duration=_int_setting(
                     raw.get("active_listening_duration", 15), 15
                 ),
+                voice_silence_duration=_float_setting(
+                    raw.get("voice_silence_duration", DEFAULT_VOICE_SILENCE_DURATION),
+                    DEFAULT_VOICE_SILENCE_DURATION,
+                ),
+                voice_min_speech_duration=_float_setting(
+                    raw.get(
+                        "voice_min_speech_duration",
+                        DEFAULT_VOICE_MIN_SPEECH_DURATION,
+                    ),
+                    DEFAULT_VOICE_MIN_SPEECH_DURATION,
+                ),
+                voice_vad_threshold=_int_setting(
+                    raw.get("voice_vad_threshold", DEFAULT_VOICE_VAD_THRESHOLD),
+                    DEFAULT_VOICE_VAD_THRESHOLD,
+                ),
                 theme=str(raw.get("theme", "obsidian")),
                 orb_intensity=_int_setting(raw.get("orb_intensity", 65), 65),
                 animation_intensity=_int_setting(
@@ -223,5 +272,12 @@ def _bool_setting(value: object, default: bool) -> bool:
 def _int_setting(value: object, default: int) -> int:
     try:
         return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _float_setting(value: object, default: float) -> float:
+    try:
+        return float(value)
     except (TypeError, ValueError):
         return default

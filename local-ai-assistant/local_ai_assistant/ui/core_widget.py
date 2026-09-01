@@ -67,11 +67,11 @@ class CoreWidget(QWidget):
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
-            self._pressed = True
-            self._mouse_pressed = True
+            if self._pressed:
+                event.accept()
+                return
+            self._begin_press(mouse=True)
             self.grabMouse()
-            self.set_state("listening")
-            self.pressed.emit()
             event.accept()
             return
         super().mousePressEvent(event)
@@ -117,10 +117,7 @@ class CoreWidget(QWidget):
     def event(self, event) -> bool:
         if event.type() == QEvent.Type.TouchBegin:
             if not self._pressed:
-                self._pressed = True
-                self._mouse_pressed = False
-                self.set_state("listening")
-                self.pressed.emit()
+                self._begin_press(mouse=False)
             event.accept()
             return True
         if event.type() in {
@@ -131,6 +128,15 @@ class CoreWidget(QWidget):
             event.accept()
             return True
         return super().event(event)
+
+    def _begin_press(self, *, mouse: bool) -> None:
+        """Start one press gesture, including touch-to-mouse deduplication."""
+        if self._pressed:
+            return
+        self._pressed = True
+        self._mouse_pressed = mouse
+        self.set_state("listening")
+        self.pressed.emit()
 
     def enterEvent(self, event) -> None:
         self._hovered = True
@@ -145,9 +151,7 @@ class CoreWidget(QWidget):
     def keyPressEvent(self, event) -> None:
         if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space}:
             if not self._pressed:
-                self._pressed = True
-                self.set_state("listening")
-                self.pressed.emit()
+                self._begin_press(mouse=False)
             event.accept()
             return
         super().keyPressEvent(event)
