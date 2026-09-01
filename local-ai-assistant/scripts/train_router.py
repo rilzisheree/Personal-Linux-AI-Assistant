@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import inspect
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -151,6 +152,7 @@ def main() -> int:
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    parameter_names = inspect.signature(TrainingArguments.__init__).parameters
     training_kwargs = dict(
         output_dir=str(args.output_dir),
         num_train_epochs=args.epochs,
@@ -159,7 +161,6 @@ def main() -> int:
         per_device_eval_batch_size=args.batch_size,
         gradient_accumulation_steps=args.gradient_accumulation,
         weight_decay=0.01,
-        warmup_ratio=0.05,
         logging_steps=10,
         save_strategy="epoch",
         load_best_model_at_end=True,
@@ -170,11 +171,35 @@ def main() -> int:
         fp16=False,
         bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
     )
-    parameter_names = inspect.signature(TrainingArguments.__init__).parameters
+    if "warmup_ratio" in parameter_names:
+        training_kwargs["warmup_ratio"] = 0.05
+    elif "warmup_steps" in parameter_names:
+        steps_per_epoch = max(
+            1,
+            math.ceil(
+                len(tokenized["train"])
+                / (args.batch_size * args.gradient_accumulation)
+            ),
+        )
+        training_kwargs["warmup_steps"] = max(
+            1, round(steps_per_epoch * args.epochs * 0.05)
+        )
     if "eval_strategy" in parameter_names:
         training_kwargs["eval_strategy"] = "epoch"
-    else:
+    elif "evaluation_strategy" in parameter_names:
         training_kwargs["evaluation_strategy"] = "epoch"
+    for optional_name in (
+        "save_strategy",
+        "load_best_model_at_end",
+        "metric_for_best_model",
+        "greater_is_better",
+        "report_to",
+        "remove_unused_columns",
+        "fp16",
+        "bf16",
+    ):
+        if optional_name not in parameter_names:
+            training_kwargs.pop(optional_name, None)
     train_args = TrainingArguments(**training_kwargs)
     trainer_kwargs = dict(
         model=model,
