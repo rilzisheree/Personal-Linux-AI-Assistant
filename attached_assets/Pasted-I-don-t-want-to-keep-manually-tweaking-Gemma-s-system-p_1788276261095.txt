@@ -1,0 +1,172 @@
+I don't want to keep manually tweaking Gemma's system prompt.
+
+I want you to investigate and implement an actual **fine-tuned Gemma 3 270M classifier/router for Luna**, if technically feasible.
+
+The goal is to make Gemma extremely reliable at classifying Luna requests while keeping its current extremely low latency.
+
+### Objective
+
+Train/specialize Gemma 3 270M specifically for these three labels:
+
+```text
+SIMPLE
+FUNCTION
+REASONING
+```
+
+Gemma will NOT be Luna's main conversational model.
+
+Its job is only to classify the user's request.
+
+Qwen3.5 2B remains the main model for complex reasoning.
+
+### What I want you to build
+
+Create the complete pipeline yourself:
+
+1. Generate a high-quality dataset of realistic Luna commands.
+2. Generate hundreds/thousands of varied examples across:
+
+   * SIMPLE
+   * FUNCTION
+   * REASONING
+3. Include natural variations, slang, typos, short commands, conversational phrasing, ambiguous requests, and realistic voice-transcription errors.
+4. Make sure the dataset isn't artificially easy.
+5. Split it into:
+
+   * training
+   * validation
+   * test
+6. Fine-tune Gemma 3 270M for classification if supported by the model/tooling.
+7. Keep the output extremely constrained to the three labels.
+8. Evaluate the model on a completely unseen test set.
+9. Report accuracy, precision, recall, F1, confusion matrix, and latency.
+10. Iterate on the dataset/training configuration if performance is poor.
+11. Integrate the resulting model into the existing Luna/Ollama architecture.
+
+### VERY IMPORTANT
+
+Do not simply create a huge system prompt and call that "training."
+
+I specifically want you to investigate whether Gemma 3 270M can be fine-tuned/LoRA-tuned for this classification task.
+
+If full fine-tuning is impractical, use the most appropriate lightweight fine-tuning method available, such as LoRA/QLoRA, if supported.
+
+### Dataset design
+
+The dataset should reflect how I will actually use Luna.
+
+Examples:
+
+SIMPLE:
+
+"Hey Luna"
+"How are you?"
+"Good morning"
+"Thanks"
+"Tell me a joke"
+"What's 2 + 2?"
+"What's the capital of France?"
+
+FUNCTION:
+
+"Open Discord"
+"Close Spotify"
+"Restart Firefox"
+"Take a screenshot"
+"What's my CPU usage?"
+"What's using my GPU?"
+"List my open windows"
+"Turn up the volume"
+"Open this website"
+"Shut down my PC"
+
+REASONING:
+
+"Write a Python program"
+"Explain how black holes work"
+"Plan a trip for me"
+"Debug this error"
+"Compare these two databases"
+"Help me design an application"
+"Analyze these logs"
+"Why is my computer crashing?"
+
+Generate many variations of each concept so the model learns the INTENT rather than memorizing exact phrases.
+
+### Critical classification rule
+
+FUNCTION should take priority when the user wants Luna to interact with or retrieve live information from the computer.
+
+REASONING should take priority when the request requires meaningful analysis, planning, coding, multi-step reasoning, or detailed generation.
+
+SIMPLE should ONLY be used for genuinely trivial requests.
+
+When uncertain between SIMPLE and REASONING, prefer REASONING.
+
+### Voice-specific data
+
+Because Luna is a voice assistant, include realistic speech-to-text mistakes.
+
+Examples:
+
+"Luna open discord"
+"Luna open discourd"
+"open dis cord"
+"check my cpu"
+"what's my c p u"
+"restart firefox"
+"restart fire fox"
+
+The classifier should learn to understand the intent despite minor transcription errors.
+
+### Avoid data leakage
+
+Do NOT evaluate the model on examples it saw during training.
+
+The final test set must contain unseen phrasings and concepts.
+
+I want a realistic estimate of how well the classifier will actually perform.
+
+### Performance requirement
+
+The current Gemma router averages approximately 126 ms.
+
+Do not sacrifice its low latency unnecessarily.
+
+The target is:
+
+* Very high classification accuracy
+* Very low latency
+* Very small output
+* No unnecessary reasoning
+* No verbose output
+
+### Target
+
+Aim for approximately 90–95%+ accuracy on a realistic unseen test set.
+
+Do NOT manipulate the benchmark to achieve a high score.
+
+If it performs poorly, identify why and improve the dataset/training process.
+
+### Before changing the existing Luna application
+
+First inspect the current architecture and determine:
+
+* How Ollama is currently called
+* How the router is implemented
+* How functions/tools are represented
+* How Qwen3.5 2B is invoked
+* Where the classifier should be inserted
+* Whether the fine-tuned model can be packaged and served through Ollama
+
+Do not redesign the UI.
+
+Do not change Luna's personality.
+
+Do not change the existing voice/TTS system.
+
+This task is specifically about creating a **fast, reliable Gemma 270M classification model** and integrating it into the existing two-model architecture.
+
+If the required fine-tuning tools/dependencies aren't installed, set up the necessary environment and explain what you're installing before proceeding.
