@@ -72,6 +72,16 @@ class HostedApiTests(unittest.TestCase):
             payload["tool_calls"][0]["extra_content"],
             {"google": {"thought_signature": "sig-1"}},
         )
+        legacy_payload = HostedApiClient._message_payload(
+            ChatMessage("assistant", "", (ToolCall("web_search", {}, "call-2"),)),
+            gemini=True,
+        )
+        self.assertEqual(
+            legacy_payload["tool_calls"][0]["extra_content"]["google"][
+                "thought_signature"
+            ],
+            "skip_thought_signature_validator",
+        )
 
     def test_stream_chat_sends_openai_compatible_payload(self) -> None:
         response = Mock()

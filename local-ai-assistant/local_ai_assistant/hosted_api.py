@@ -22,6 +22,7 @@ from .errors import (
 HOSTED_CONNECTION_TIMEOUT = 15.0
 HOSTED_GENERATION_TIMEOUT = 180.0
 GEMINI_PRIMARY_ATTEMPT_TIMEOUT = 45.0
+GEMINI_LEGACY_THOUGHT_SIGNATURE = "skip_thought_signature_validator"
 GEMINI_OVERLOAD_FALLBACKS = (
     "gemini-3.6-flash",
     "gemini-3.5-flash",
@@ -119,7 +120,10 @@ class HostedApiClient:
             )
         payload = {
             "model": model,
-            "messages": [self._message_payload(message) for message in messages],
+            "messages": [
+                self._message_payload(message, gemini=self._is_gemini())
+                for message in messages
+            ],
             "stream": True,
         }
         if tools:
@@ -258,7 +262,7 @@ class HostedApiClient:
         )
 
     @staticmethod
-    def _message_payload(message: ChatMessage) -> dict:
+    def _message_payload(message: ChatMessage, *, gemini: bool = False) -> dict:
         payload: dict = {"role": message.role, "content": message.content}
         if message.name:
             payload["name"] = message.name
@@ -277,10 +281,13 @@ class HostedApiClient:
                 for index, call in enumerate(message.tool_calls)
             ]
             for index, call in enumerate(message.tool_calls):
-                if call.thought_signature:
+                if call.thought_signature or gemini:
                     payload["tool_calls"][index]["extra_content"] = {
                         "google": {
-                            "thought_signature": call.thought_signature,
+                            "thought_signature": (
+                                call.thought_signature
+                                or GEMINI_LEGACY_THOUGHT_SIGNATURE
+                            ),
                         }
                     }
         if message.images:
@@ -304,6 +311,9 @@ class HostedApiClient:
                 )
             payload["content"] = content
         return payload
+
+    def _is_gemini(self) -> bool:
+        return "generativelanguage.googleapis.com" in self.base_url
 
     @staticmethod
     def _parse_sse_line(
