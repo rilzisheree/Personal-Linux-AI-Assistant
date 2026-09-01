@@ -23,6 +23,38 @@ class OllamaCancelledError(OllamaError):
     """The active generation was cancelled by the user."""
 
 
+class AssistantBackendError(Exception):
+    """Base class for failures from any selectable AI backend."""
+
+
+class AssistantUnavailableError(AssistantBackendError):
+    """A selected hosted backend could not be reached."""
+
+
+class AssistantAuthenticationError(AssistantBackendError):
+    """A selected hosted backend rejected or lacks credentials."""
+
+
+class AssistantProtocolError(AssistantBackendError):
+    """A selected hosted backend returned an invalid or failed response."""
+
+
+class AssistantCancelledError(AssistantBackendError):
+    """A hosted generation was cancelled by the user."""
+
+
+def format_backend_error(error: Exception, backend_name: str) -> str:
+    if isinstance(error, AssistantAuthenticationError):
+        return f"{backend_name} authentication failed: {error}"
+    if isinstance(error, AssistantUnavailableError):
+        return f"{backend_name} unavailable: {error}"
+    if isinstance(error, AssistantCancelledError):
+        return "Generation stopped."
+    if isinstance(error, AssistantProtocolError):
+        return f"{backend_name} returned an error: {error}"
+    return format_ollama_error(error)
+
+
 def format_ollama_error(error: Exception) -> str:
     """Return a concise message suitable for displaying in the chat UI."""
 

@@ -20,7 +20,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..config import AppConfig, TTS_ENGINES, TTS_VOICE_PRESETS
+from ..config import (
+    AppConfig,
+    HOSTED_PROVIDER_PRESETS,
+    TTS_ENGINES,
+    TTS_VOICE_PRESETS,
+)
 from ..voice import VoiceService
 
 
@@ -33,6 +38,7 @@ class SettingsDialog(QDialog):
         parent=None,
         *,
         telegram_token_present: bool = False,
+        hosted_api_key_present: bool = False,
     ) -> None:
         super().__init__(parent)
         self.setObjectName("settingsDialog")
@@ -227,10 +233,15 @@ class SettingsDialog(QDialog):
         telegram_token_present: bool,
     ) -> QWidget:
         page, layout = self._page_layout(
-            "Local services",
-            "Connect Lura to Ollama and configure optional local background services.",
+            "AI providers",
+            "Choose local Ollama or a hosted OpenAI-compatible API. Hosted keys stay in a separate local permission-restricted file.",
         )
         ai_group, ai_form = self._group("AI RUNTIME")
+        self.ai_provider_input = QComboBox()
+        self.ai_provider_input.addItem("Ollama · local", "ollama")
+        self.ai_provider_input.addItem("Hosted API · key", "hosted")
+        provider_index = self.ai_provider_input.findData(config.ai_provider)
+        self.ai_provider_input.setCurrentIndex(max(0, provider_index))
         self.url_input = QLineEdit(config.ollama_url)
         self.url_input.setPlaceholderText("http://localhost:11434")
         self.model_input = QLineEdit(config.model)
@@ -240,10 +251,38 @@ class SettingsDialog(QDialog):
         self.context_size_input.setSingleStep(1024)
         self.context_size_input.setValue(config.ollama_context_size)
         self.context_size_input.setSuffix(" tokens")
+        ai_form.addRow("Active provider", self.ai_provider_input)
         ai_form.addRow("Ollama URL", self.url_input)
-        ai_form.addRow("Default model", self.model_input)
+        ai_form.addRow("Ollama model", self.model_input)
         ai_form.addRow("Context size", self.context_size_input)
         layout.addWidget(ai_group)
+
+        hosted_group, hosted_form = self._group("HOSTED API")
+        self.hosted_provider_input = QComboBox()
+        for label, key, _, _ in HOSTED_PROVIDER_PRESETS:
+            self.hosted_provider_input.addItem(label, key)
+        hosted_index = self.hosted_provider_input.findData(config.hosted_provider)
+        self.hosted_provider_input.setCurrentIndex(max(0, hosted_index))
+        self.hosted_url_input = QLineEdit(config.hosted_api_url)
+        self.hosted_url_input.setPlaceholderText("https://api.openai.com/v1")
+        self.hosted_model_input = QLineEdit(config.hosted_model)
+        self.hosted_model_input.setPlaceholderText("gpt-4o-mini")
+        self.hosted_api_key_input = QLineEdit()
+        self.hosted_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.hosted_api_key_input.setPlaceholderText(
+            "Saved securely — leave blank to keep it"
+            if hosted_api_key_present
+            else "Paste provider API key"
+        )
+        hosted_form.addRow("Provider preset", self.hosted_provider_input)
+        hosted_form.addRow("API base URL", self.hosted_url_input)
+        hosted_form.addRow("Model", self.hosted_model_input)
+        hosted_form.addRow("API key", self.hosted_api_key_input)
+        layout.addWidget(hosted_group)
+        self.hosted_provider_input.currentIndexChanged.connect(
+            self._hosted_provider_changed
+        )
+        self._hosted_provider_changed(self.hosted_provider_input.currentIndex())
 
         desktop_group, desktop_form = self._group("DESKTOP")
         self.background_mode_enabled = QCheckBox(
@@ -281,6 +320,14 @@ class SettingsDialog(QDialog):
         layout.addWidget(hint)
         layout.addStretch(1)
         return page
+
+    def _hosted_provider_changed(self, index: int) -> None:
+        provider = self.hosted_provider_input.itemData(index)
+        for _, key, url, model in HOSTED_PROVIDER_PRESETS:
+            if provider == key and key != "custom":
+                self.hosted_url_input.setText(url)
+                self.hosted_model_input.setText(model)
+                break
 
     def _security_page(self) -> QWidget:
         page, layout = self._page_layout(
@@ -334,10 +381,17 @@ class SettingsDialog(QDialog):
             theme=str(self.theme_input.currentData()),
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),
+            ai_provider=str(self.ai_provider_input.currentData()),
+            hosted_provider=str(self.hosted_provider_input.currentData()),
+            hosted_api_url=self.hosted_url_input.text(),
+            hosted_model=self.hosted_model_input.text(),
         )
 
     def telegram_token(self) -> str:
         return self.telegram_token_input.text().strip()
+
+    def hosted_api_key(self) -> str:
+        return self.hosted_api_key_input.text().strip()
 
     def _selected_voice(self) -> str:
         return str(self.tts_voice_input.currentData())

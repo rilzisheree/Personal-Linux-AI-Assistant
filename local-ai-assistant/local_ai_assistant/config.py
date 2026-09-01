@@ -13,6 +13,15 @@ DEFAULT_MODEL = "qwen3.5:4b"
 DEFAULT_CONTEXT_SIZE = 8192
 DEFAULT_WHISPER_MODEL = "base"
 DEFAULT_TTS_ENGINE = "piper"
+DEFAULT_AI_PROVIDER = "ollama"
+DEFAULT_HOSTED_PROVIDER = "openai"
+DEFAULT_HOSTED_API_URL = "https://api.openai.com/v1"
+DEFAULT_HOSTED_MODEL = "gpt-4o-mini"
+HOSTED_PROVIDER_PRESETS = (
+    ("OpenAI", "openai", "https://api.openai.com/v1", "gpt-4o-mini"),
+    ("OpenRouter", "openrouter", "https://openrouter.ai/api/v1", "openai/gpt-4o-mini"),
+    ("Custom OpenAI-compatible", "custom", "", ""),
+)
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
@@ -48,10 +57,18 @@ class AppConfig:
     theme: str = "obsidian"
     orb_intensity: int = 65
     animation_intensity: int = 70
+    ai_provider: str = DEFAULT_AI_PROVIDER
+    hosted_provider: str = DEFAULT_HOSTED_PROVIDER
+    hosted_api_url: str = DEFAULT_HOSTED_API_URL
+    hosted_model: str = DEFAULT_HOSTED_MODEL
 
     def __post_init__(self) -> None:
+        self.ai_provider = self.ai_provider.strip().lower()
         self.ollama_url = self.ollama_url.strip().rstrip("/")
         self.model = self.model.strip()
+        self.hosted_provider = self.hosted_provider.strip().lower()
+        self.hosted_api_url = self.hosted_api_url.strip().rstrip("/")
+        self.hosted_model = self.hosted_model.strip()
         if isinstance(self.ollama_context_size, str):
             self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
@@ -74,11 +91,25 @@ class AppConfig:
         self.validate()
 
     def validate(self) -> None:
+        if self.ai_provider not in {"ollama", "hosted"}:
+            raise ValueError("AI provider must be Ollama or hosted API.")
         parsed = urlparse(self.ollama_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
         if not self.model:
             raise ValueError("Ollama model cannot be empty.")
+        if self.hosted_provider not in {"openai", "openrouter", "custom"}:
+            raise ValueError("Hosted provider must be OpenAI, OpenRouter, or custom.")
+        hosted_parsed = urlparse(self.hosted_api_url)
+        if (
+            hosted_parsed.scheme not in {"http", "https"}
+            or not hosted_parsed.netloc
+        ):
+            raise ValueError(
+                "Hosted API URL must be a complete http:// or https:// URL."
+            )
+        if not self.hosted_model:
+            raise ValueError("Hosted API model cannot be empty.")
         if (
             isinstance(self.ollama_context_size, bool)
             or not isinstance(self.ollama_context_size, int)
@@ -147,8 +178,16 @@ class AppConfig:
             if not isinstance(raw, dict):
                 raise ValueError("Configuration must be an object.")
             return cls(
+                ai_provider=str(raw.get("ai_provider", DEFAULT_AI_PROVIDER)),
                 ollama_url=str(raw.get("ollama_url", DEFAULT_OLLAMA_URL)),
                 model=str(raw.get("model", DEFAULT_MODEL)),
+                hosted_provider=str(
+                    raw.get("hosted_provider", DEFAULT_HOSTED_PROVIDER)
+                ),
+                hosted_api_url=str(
+                    raw.get("hosted_api_url", DEFAULT_HOSTED_API_URL)
+                ),
+                hosted_model=str(raw.get("hosted_model", DEFAULT_HOSTED_MODEL)),
                 ollama_context_size=_int_setting(
                     raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
                     DEFAULT_CONTEXT_SIZE,

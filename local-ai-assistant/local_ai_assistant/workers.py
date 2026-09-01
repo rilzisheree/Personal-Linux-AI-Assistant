@@ -11,7 +11,11 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot
 
 from .assistant_core import AssistantService
-from .errors import OllamaCancelledError, format_ollama_error
+from .errors import (
+    AssistantCancelledError,
+    OllamaCancelledError,
+    format_backend_error,
+)
 from .ollama import ChatMessage, OllamaClient, ToolCall
 from .telegram_bot import TelegramBotRunner, TelegramConfig
 from .tools import PermissionLevel, ToolManager, ToolCallResult, ToolConfirmationRequired
@@ -91,8 +95,24 @@ class ChatWorker(QObject):
                         "error",
                     )
                     return
-                messages.append(ChatMessage("assistant", "".join(cycle_response), tuple(tool_calls)))
-                for tool_call in tool_calls:
+                normalized_tool_calls = [
+                    tool_call
+                    if tool_call.id
+                    else ToolCall(
+                        tool_call.name,
+                        tool_call.arguments,
+                        f"call_{uuid.uuid4().hex}",
+                    )
+                    for tool_call in tool_calls
+                ]
+                messages.append(
+                    ChatMessage(
+                        "assistant",
+                        "".join(cycle_response),
+                        tuple(normalized_tool_calls),
+                    )
+                )
+                for tool_call in normalized_tool_calls:
                     if self.cancel_event.is_set():
                         self.conversation_ready.emit(messages)
                         self.failed.emit("Generation stopped.", "cancelled")
@@ -120,19 +140,22 @@ class ChatWorker(QObject):
                             result.content,
                             name=tool_call.name,
                             images=result.images,
+                            tool_call_id=call_id,
                         )
                     )
             self.failed.emit("Generation stopped.", "cancelled")
-        except OllamaCancelledError:
+        except (OllamaCancelledError, AssistantCancelledError):
             self.conversation_ready.emit(messages)
             self.failed.emit("Generation stopped.", "cancelled")
         except Exception as error:
             self.conversation_ready.emit(messages)
-            self.failed.emit(format_ollama_error(error), "error")
+            self.failed.emit(
+                format_backend_error(error, self.service.backend_name), "error"
+            )
 
     def cancel(self) -> None:
         self.cancel_event.set()
-        self.service.ollama.cancel_active_request()
+        self.service.cancel_active_request()
         with self._approval_lock:
             for approval_event in self._approval_events.values():
                 approval_event.set()
@@ -164,7 +187,7 @@ class ConnectionWorker(QObject):
     succeeded = Signal(list)
     failed = Signal(str)
 
-    def __init__(self, client: OllamaClient) -> None:
+    def __init__(self, client) -> None:
         super().__init__()
         self.client = client
 
@@ -173,7 +196,8 @@ class ConnectionWorker(QObject):
         try:
             self.succeeded.emit(self.client.list_models())
         except Exception as error:
-            self.failed.emit(format_ollama_error(error))
+            backend_name = str(getattr(self.client, "display_name", "AI backend"))
+            self.failed.emit(format_backend_error(error, backend_name))
 
     def cancel(self) -> None:
         self.client.cancel_active_request()

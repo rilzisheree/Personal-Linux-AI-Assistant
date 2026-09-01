@@ -205,8 +205,12 @@ is not installed.
 
 Use the settings button in the app to change:
 
+- Active AI provider: **Ollama · local** or **Hosted API · key**
 - Ollama URL, defaulting to `http://localhost:11434`
-- Model name, defaulting to `qwen3.5:4b`
+- Ollama model, defaulting to `qwen3.5:4b`
+- Hosted provider preset: OpenAI, OpenRouter, or a custom OpenAI-compatible API
+- Hosted API base URL and model
+- Hosted API key
 - Ollama context size, defaulting to 8,192 tokens
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
@@ -234,7 +238,9 @@ Settings are stored locally at:
 ```
 
 The Ollama and voice preferences are stored locally. No credentials or prompts
-are written to the settings file. Conversation history is stored in SQLite at
+are written to the settings file. Hosted API keys are stored separately at
+`~/.config/local-ai-assistant/hosted-api.key` with owner-only permissions.
+Conversation history is stored in SQLite at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.db`, or
 `~/.local/share/local-ai-assistant/conversations.db` when `XDG_DATA_HOME` is
 not set. On first launch after upgrading, an existing `conversations.json` file
@@ -318,7 +324,9 @@ local-ai-assistant/
 │   ├── assistant_core.py      # GUI-independent assistant boundary
 │   ├── config.py              # validated local settings
 │   ├── conversations.py       # local conversation model and JSON store
+│   ├── credentials.py         # permission-restricted hosted API key storage
 │   ├── errors.py              # user-facing error categories
+│   ├── hosted_api.py          # OpenAI-compatible hosted API adapter
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
 │   ├── voice.py               # local recording, Whisper, and TTS adapters
 │   ├── tools.py               # tool registry and permission gates

@@ -42,6 +42,7 @@ class ChatMessage:
     tool_calls: tuple[ToolCall, ...] = ()
     name: str = ""
     images: tuple[str, ...] = ()
+    tool_call_id: str = ""
 
     def as_dict(self) -> dict:
         payload: dict = {"role": self.role, "content": self.content}
@@ -51,6 +52,8 @@ class ChatMessage:
             payload["name"] = self.name
         if self.images:
             payload["images"] = list(self.images)
+        if self.tool_call_id:
+            payload["tool_call_id"] = self.tool_call_id
         return payload
 
 
@@ -136,6 +139,8 @@ def parse_stream(lines: Iterable[str | bytes]) -> Iterator[StreamEvent]:
 
 class OllamaClient:
     """Small, synchronous HTTP client intended to run off the Qt UI thread."""
+
+    display_name = "Ollama"
 
     def __init__(self, base_url: str, timeout: float = 8.0) -> None:
         self.base_url = base_url.rstrip("/")

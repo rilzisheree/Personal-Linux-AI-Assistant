@@ -30,7 +30,9 @@ from ..assistant_core import AssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
+from ..credentials import load_hosted_api_key, save_hosted_api_key
 from ..desktop_integration import set_autostart_enabled
+from ..hosted_api import HostedApiClient
 from ..ollama import ChatMessage, OllamaClient
 from ..telegram_bot import (
     TelegramConfig,
@@ -57,7 +59,7 @@ class MainWindow(QMainWindow):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
         self.config = config
-        self.client = OllamaClient(config.ollama_url)
+        self.client = self._create_ai_client(config)
         self.service = AssistantService(self.client)
         self.voice_service = VoiceService(config)
         self.tool_manager = ToolManager()
@@ -141,6 +143,19 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(menu)
         self.tray_icon.activated.connect(self._tray_activated)
         self.tray_icon.show()
+
+    @staticmethod
+    def _configured_model(config: AppConfig) -> str:
+        return config.hosted_model if config.ai_provider == "hosted" else config.model
+
+    @staticmethod
+    def _create_ai_client(config: AppConfig):
+        if config.ai_provider == "hosted":
+            return HostedApiClient(
+                config.hosted_api_url,
+                load_hosted_api_key(),
+            )
+        return OllamaClient(config.ollama_url)
 
     def _sync_quit_behavior(self) -> None:
         app = QApplication.instance()
@@ -246,7 +261,7 @@ class MainWindow(QMainWindow):
         self.model_selector.setObjectName("modelSelector")
         self.model_selector.setMinimumWidth(150)
         self.model_selector.setToolTip("Model used for the next message")
-        self.model_selector.addItem(self.config.model)
+        self.model_selector.addItem(self._configured_model(self.config))
         top_layout.addWidget(self.model_selector)
 
         self.history_list = QComboBox()
@@ -405,7 +420,7 @@ class MainWindow(QMainWindow):
         prompt = self.message_input.text().strip()
         if not prompt or self.chat_worker is not None:
             return
-        model = self.model_selector.currentText().strip() or self.config.model
+        model = self.model_selector.currentText().strip() or self._configured_model(self.config)
         self.messages.append(ChatMessage("user", prompt))
         self._persist_current_conversation()
         self.chat_view.add_message("user", prompt)
@@ -934,7 +949,7 @@ class MainWindow(QMainWindow):
         if self.connection_thread is not None and self.connection_thread.isRunning():
             self._connection_refresh_pending = True
             return
-        self.status_label.setText("Checking Ollama")
+        self.status_label.setText(f"Checking {self.client.display_name}")
         self._set_status("checking")
         self.connection_thread = QThread(self)
         self.connection_worker = ConnectionWorker(self.client)
@@ -950,7 +965,7 @@ class MainWindow(QMainWindow):
     @Slot(list)
     def _connection_succeeded(self, models: list[str]) -> None:
         self.available_models = models
-        current = self.model_selector.currentText() or self.config.model
+        current = self.model_selector.currentText() or self._configured_model(self.config)
         self.model_selector.blockSignals(True)
         self.model_selector.clear()
         self.model_selector.addItems(models)
@@ -964,7 +979,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _connection_failed(self, message: str) -> None:
-        self.status_label.setText("Ollama unavailable")
+        self.status_label.setText(f"{self.client.display_name} unavailable")
         self.status_label.setToolTip(message)
         self.runtime_status_value.setText("OFFLINE")
         self._set_status("error")
@@ -1107,6 +1122,7 @@ class MainWindow(QMainWindow):
             self.config,
             self,
             telegram_token_present=bool(load_telegram_token()),
+            hosted_api_key_present=bool(load_hosted_api_key()),
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
@@ -1114,6 +1130,7 @@ class MainWindow(QMainWindow):
         try:
             next_config = dialog.config()
             token = dialog.telegram_token()
+            hosted_api_key = dialog.hosted_api_key()
             if next_config.telegram_enabled and not token and not load_telegram_token():
                 QMessageBox.warning(
                     self,
@@ -1121,8 +1138,21 @@ class MainWindow(QMainWindow):
                     "Add the Telegram bot token before enabling Telegram.",
                 )
                 return
+            if (
+                next_config.ai_provider == "hosted"
+                and not hosted_api_key
+                and not load_hosted_api_key()
+            ):
+                QMessageBox.warning(
+                    self,
+                    "Hosted API key required",
+                    "Add a hosted API key before selecting the hosted provider.",
+                )
+                return
             if token:
                 save_telegram_token(token)
+            if hosted_api_key:
+                save_hosted_api_key(hosted_api_key)
             set_autostart_enabled(next_config.autostart_enabled)
             next_config.save()
         except (OSError, ValueError, TypeError) as error:
@@ -1141,12 +1171,12 @@ class MainWindow(QMainWindow):
             self._stop_wake_word_listener()
         self.config = next_config
         self._sync_quit_behavior()
-        self.client = OllamaClient(self.config.ollama_url)
+        self.client = self._create_ai_client(self.config)
         self.service = AssistantService(self.client)
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()
         self.model_selector.clear()
-        self.model_selector.addItem(self.config.model)
+        self.model_selector.addItem(self._configured_model(self.config))
         self.runtime_status_value.setText("CHECKING")
         self._refresh_connection()
         if self.telegram_thread is None:

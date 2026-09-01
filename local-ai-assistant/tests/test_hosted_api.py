@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import json
+import stat
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+from local_ai_assistant.credentials import load_hosted_api_key, save_hosted_api_key
+from local_ai_assistant.hosted_api import HostedApiClient
+from local_ai_assistant.ollama import ChatMessage, StreamEvent, ToolCall
+
+
+class HostedApiTests(unittest.TestCase):
+    def test_parses_streamed_text_and_done_sentinel(self) -> None:
+        parts: dict[int, dict[str, str]] = {}
+        first = HostedApiClient._parse_sse_line(
+            'data: {"choices":[{"delta":{"content":"Hello"}}]}',
+            parts,
+        )
+        second = HostedApiClient._parse_sse_line(
+            'data: {"choices":[{"delta":{"content":" there"}}]}',
+            parts,
+        )
+        done = HostedApiClient._parse_sse_line("data: [DONE]", parts)
+        self.assertEqual(first, StreamEvent("Hello"))
+        self.assertEqual(second, StreamEvent(" there"))
+        self.assertEqual(done, StreamEvent(done=True))
+
+    def test_assembles_incremental_tool_call_arguments(self) -> None:
+        parts: dict[int, dict[str, str]] = {}
+        HostedApiClient._parse_sse_line(
+            'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
+            '"id":"call-1","function":{"name":"open_app","arguments":"{\\"app\\":"}}]}}]}',
+            parts,
+        )
+        HostedApiClient._parse_sse_line(
+            'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
+            '"function":{"arguments":"\\"firefox\\"}"}}]}}]}',
+            parts,
+        )
+        done = HostedApiClient._parse_sse_line("data: [DONE]", parts)
+        self.assertEqual(
+            done,
+            StreamEvent(
+                done=True,
+                tool_calls=(ToolCall("open_app", {"app": "firefox"}, "call-1"),),
+            ),
+        )
+
+    def test_stream_chat_sends_openai_compatible_payload(self) -> None:
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.readline.side_effect = [
+            b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
+            b"data: [DONE]\n",
+        ]
+        client = HostedApiClient("https://api.example.test/v1", "secret-key")
+        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
+            events = list(
+                client.stream_chat(
+                    [ChatMessage("user", "Hello")],
+                    "example-model",
+                )
+            )
+        request = urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+        self.assertEqual(payload["model"], "example-model")
+        self.assertEqual(payload["messages"], [{"role": "user", "content": "Hello"}])
+        self.assertEqual(request.get_header("Authorization"), "Bearer secret-key")
+        self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
+
+
+class HostedCredentialTests(unittest.TestCase):
+    def test_key_is_saved_with_restricted_permissions(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "hosted-api.key"
+            with patch("local_ai_assistant.credentials.HOSTED_API_KEY_PATH", path):
+                save_hosted_api_key("  secret-key  ")
+                self.assertEqual(load_hosted_api_key(), "secret-key")
+            mode = stat.S_IMODE(path.stat().st_mode)
+        self.assertEqual(mode, 0o600)
+
+
+if __name__ == "__main__":
+    unittest.main()
