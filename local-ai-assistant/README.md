@@ -312,6 +312,17 @@ loaded model between nearby messages. The native app also logs one
 `first_sentence_available`, `tts_synthesis_started`, `first_audio_playback`,
 and `spoken_response_completed` to locate the slow stage.
 
+For thinking-capable Ollama models such as Qwen3/Qwen3.5, routine short
+requests send `think: false` and a 96-token response budget so greetings,
+lookups, and one-step actions do not spend time on unnecessary reasoning.
+Longer or reasoning-oriented prompts send `think: true`, preserving the
+model's ability to work through complex requests. The client logs an
+`[Ollama] GENERATION_METRICS` JSON record with time to first model token,
+Ollama's aggregate generated-token count, estimated reasoning/output token
+counts, generation time, and tokens per second. Ollama currently reports
+thinking and output as one aggregate `eval_count`, so the separate reasoning
+and output counts are explicitly estimates based on streamed character counts.
+
 When spoken responses are enabled, complete sentences are sent to the local
 TTS worker while Ollama is still generating. The chat continues rendering
 tokens independently, and Piper's in-process voice model cache is reused

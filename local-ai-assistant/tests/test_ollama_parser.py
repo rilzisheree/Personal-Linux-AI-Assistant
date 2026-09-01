@@ -42,6 +42,22 @@ class OllamaParserTests(unittest.TestCase):
             ],
         )
 
+    def test_parses_thinking_chunks_and_generation_metrics(self) -> None:
+        event = parse_stream_line(
+            '{"message":{"role":"assistant","thinking":"short plan"},'
+            '"done":true,"eval_count":12,"eval_duration":2000000000,'
+            '"total_duration":2500000000}'
+        )
+        self.assertEqual(event.thinking, "short plan")
+        self.assertEqual(
+            event.metrics,
+            {
+                "eval_count": 12,
+                "eval_duration": 2000000000,
+                "total_duration": 2500000000,
+            },
+        )
+
     def test_ignores_blank_lines(self) -> None:
         self.assertIsNone(parse_stream_line("\n"))
         self.assertIsNone(parse_stream_line("   "))
@@ -105,8 +121,32 @@ class OllamaParserTests(unittest.TestCase):
             urlopen.return_value = response
             list(client.stream_chat([], "qwen3.5:4b", context_size=8192))
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
-        self.assertEqual(payload["options"], {"num_ctx": 8192})
+        self.assertEqual(
+            payload["options"],
+            {"num_ctx": 8192, "num_predict": OllamaClient.simple_output_token_limit},
+        )
+        self.assertFalse(payload["think"])
         self.assertEqual(payload["keep_alive"], "10m")
+
+    def test_complex_qwen_request_keeps_reasoning_available(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"answer"},"done":true}\n',
+            ]
+            urlopen.return_value = response
+            list(
+                client.stream_chat(
+                    [ChatMessage("user", "Explain why this architecture is resilient.")],
+                    "qwen3.5:2b",
+                )
+            )
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertTrue(payload["think"])
+        self.assertNotIn("num_predict", payload.get("options", {}))
 
     def test_connection_failure_is_distinguished_from_slow_generation(self) -> None:
         client = OllamaClient("http://localhost:11434")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import re
 import socket
 import threading
 import time
@@ -73,6 +74,8 @@ class StreamEvent:
     content: str = ""
     done: bool = False
     tool_calls: tuple[ToolCall, ...] = ()
+    thinking: str = ""
+    metrics: dict[str, int | float] | None = None
 
 
 def parse_stream_line(line: str | bytes) -> StreamEvent | None:
@@ -102,6 +105,9 @@ def parse_stream_line(line: str | bytes) -> StreamEvent | None:
     content = message.get("content", "") if isinstance(message, dict) else ""
     if not isinstance(content, str):
         raise OllamaProtocolError("Ollama sent a non-text message chunk.")
+    thinking = message.get("thinking", "") if isinstance(message, dict) else ""
+    if not isinstance(thinking, str):
+        raise OllamaProtocolError("Ollama sent a non-text thinking chunk.")
     tool_calls: list[ToolCall] = []
     raw_tool_calls = message.get("tool_calls", []) if isinstance(message, dict) else []
     if raw_tool_calls is None:
@@ -130,10 +136,24 @@ def parse_stream_line(line: str | bytes) -> StreamEvent | None:
         if not isinstance(call_id, str):
             call_id = ""
         tool_calls.append(ToolCall(function["name"], arguments, call_id))
+    metrics: dict[str, int | float] = {}
+    for name in (
+        "total_duration",
+        "load_duration",
+        "prompt_eval_count",
+        "prompt_eval_duration",
+        "eval_count",
+        "eval_duration",
+    ):
+        value = payload.get(name)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            metrics[name] = value
     return StreamEvent(
         content=content,
         done=bool(payload.get("done", False)),
         tool_calls=tuple(tool_calls),
+        thinking=thinking,
+        metrics=metrics or None,
     )
 
 
@@ -154,6 +174,23 @@ class OllamaClient:
     default_timeout = 120.0
     default_connection_timeout = 10.0
     default_stream_timeout = 600.0
+    simple_output_token_limit = 96
+    _thinking_boolean_models = (
+        "qwen3",
+        "qwen3.5",
+        "qwq",
+        "deepseek-r1",
+        "deepseek-v3",
+    )
+    _thinking_level_models = ("gpt-oss",)
+    _complexity_markers = re.compile(
+        r"\b("
+        r"analy[sz]e|compare|contrast|debug|derive|design|"
+        r"evaluate|explain|implement|in detail|plan|prove|"
+        r"research|step by step|troubleshoot|why|write|draft|code"
+        r")\b",
+        re.IGNORECASE,
+    )
 
     def __init__(
         self,
@@ -194,8 +231,17 @@ class OllamaClient:
             "stream": True,
             "keep_alive": self.keep_alive,
         }
+        thinking_option = self._thinking_option(model, messages)
+        simple_request = thinking_option is False
+        if thinking_option is not None:
+            payload["think"] = thinking_option
         if context_size:
-            payload["options"] = {"num_ctx": context_size}
+            options: dict[str, int] = {"num_ctx": context_size}
+            if simple_request:
+                options["num_predict"] = self.simple_output_token_limit
+            payload["options"] = options
+        elif simple_request:
+            payload["options"] = {"num_predict": self.simple_output_token_limit}
         if tools:
             payload["tools"] = tools
         body = json.dumps(payload).encode("utf-8")
@@ -228,6 +274,8 @@ class OllamaClient:
             )
             first_token_at: float | None = None
             stream_finished = False
+            thinking_characters = 0
+            output_characters = 0
             try:
                 while True:
                     if cancel_event and cancel_event.is_set():
@@ -254,18 +302,23 @@ class OllamaClient:
                         break
                     event = parse_stream_line(line)
                     if event is not None:
-                        if event.content and first_token_at is None:
+                        if (event.content or event.thinking) and first_token_at is None:
                             first_token_at = time.monotonic()
                             LOGGER.info(
-                                "[Ollama] First token received %.2fs after connection",
+                                "[Ollama] First model token received %.2fs after connection",
                                 first_token_at - request_started,
                             )
+                        thinking_characters += len(event.thinking)
+                        output_characters += len(event.content)
                         yield event
                         if event.done:
                             stream_finished = True
-                            LOGGER.info(
-                                "[Ollama] Generation completed in %.2fs",
-                                time.monotonic() - request_started,
+                            self._log_generation_metrics(
+                                request_started,
+                                first_token_at,
+                                thinking_characters,
+                                output_characters,
+                                event.metrics or {},
                             )
                             break
                 if not stream_finished:
@@ -331,6 +384,91 @@ class OllamaClient:
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
+
+    @classmethod
+    def _thinking_option(
+        cls,
+        model: str,
+        messages: list[ChatMessage],
+    ) -> bool | str | None:
+        """Choose Ollama's real reasoning mode for the current request.
+
+        Ollama enables thinking by default for supported models when omitted.
+        Routine requests explicitly disable it; complex requests leave it on
+        so the model can still reason when that is actually useful.
+        """
+        normalized_model = model.strip().casefold()
+        if normalized_model.startswith(cls._thinking_boolean_models):
+            if cls._is_simple_request(messages):
+                return False
+            return True
+        if normalized_model.startswith(cls._thinking_level_models):
+            if cls._is_simple_request(messages):
+                return "low"
+        return None
+
+    @classmethod
+    def _is_simple_request(cls, messages: list[ChatMessage]) -> bool:
+        user_prompt = next(
+            (
+                message.content.strip()
+                for message in reversed(messages)
+                if message.role == "user" and message.content.strip()
+            ),
+            "",
+        )
+        if not user_prompt:
+            return True
+        normalized = re.sub(r"\s+", " ", user_prompt)
+        if len(normalized) > 220 or normalized.count(".") + normalized.count("?") > 1:
+            return False
+        return cls._complexity_markers.search(normalized) is None
+
+    @staticmethod
+    def _log_generation_metrics(
+        request_started: float,
+        first_token_at: float | None,
+        thinking_characters: int,
+        output_characters: int,
+        metrics: dict[str, int | float],
+    ) -> None:
+        elapsed = time.monotonic() - request_started
+        eval_duration_ns = metrics.get("eval_duration")
+        generation_seconds = (
+            float(eval_duration_ns) / 1_000_000_000
+            if isinstance(eval_duration_ns, (int, float)) and eval_duration_ns > 0
+            else elapsed
+        )
+        generated_tokens = metrics.get("eval_count")
+        tokens_per_second = (
+            float(generated_tokens) / generation_seconds
+            if isinstance(generated_tokens, (int, float)) and generation_seconds > 0
+            else None
+        )
+        summary = {
+            "time_to_first_token_seconds": (
+                round(first_token_at - request_started, 3)
+                if first_token_at is not None
+                else None
+            ),
+            "reasoning_characters": thinking_characters,
+            "reasoning_tokens_estimate": round(thinking_characters / 4)
+            if thinking_characters
+            else 0,
+            "output_characters": output_characters,
+            "output_tokens_estimate": round(output_characters / 4)
+            if output_characters
+            else 0,
+            "generated_tokens": generated_tokens,
+            "tokens_per_second": (
+                round(tokens_per_second, 2)
+                if tokens_per_second is not None
+                else None
+            ),
+            "generation_seconds": round(generation_seconds, 3),
+            "total_elapsed_seconds": round(elapsed, 3),
+        }
+        LOGGER.info("[Ollama] GENERATION_METRICS %s", json.dumps(summary, sort_keys=True))
 
     @staticmethod
     def _set_response_timeout(response: HTTPResponse, timeout: float) -> None:

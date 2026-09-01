@@ -1,0 +1,88 @@
+I found a major performance issue with the Ollama model.
+
+I tested:
+
+```bash
+time ollama run qwen3.5:2b "How are you today? Answer in one short sentence."
+```
+
+The second run took approximately **9.8 seconds**.
+
+The model is also generating an extremely long visible "Thinking..." process for a very simple question before answering.
+
+For example, it spends many paragraphs deciding between responses like:
+
+"I'm doing well, thank you!"
+
+This is unacceptable for a real-time voice assistant.
+
+### Fix the reasoning behavior
+
+I want Luna to prioritize **fast conversational responses**.
+
+For simple requests such as:
+
+* "How are you?"
+* "What's the time?"
+* "Hello"
+* "What's 2 + 2?"
+* "Turn the lights on"
+* "Open Discord"
+* "What's my name?"
+
+the model should NOT spend a huge amount of time reasoning.
+
+It should answer directly and concisely.
+
+### Important
+
+Do NOT simply hide the thinking text in the UI.
+
+The goal is to actually reduce the amount of unnecessary reasoning/generation.
+
+Inspect the current Ollama configuration and determine why Qwen3.5 2B is producing such a large reasoning process.
+
+Check whether the model supports a reasoning/thinking control and whether the current API configuration is enabling it.
+
+If supported, configure normal conversational requests to use **minimal or disabled reasoning**, while preserving the ability to reason when a genuinely complex request requires it.
+
+### Voice assistant priority
+
+Luna should behave like a fast personal assistant, not like a model writing an essay internally for every question.
+
+For example:
+
+User:
+"How are you?"
+
+Bad:
+
+```text
+[Several seconds of thinking]
+[Huge reasoning process]
+"I'm doing well..."
+```
+
+Good:
+
+```text
+"I'm doing well, Sir. How can I help?"
+```
+
+The response should begin as quickly as possible.
+
+### Also investigate
+
+Measure:
+
+* Time to first token
+* Number of reasoning tokens
+* Number of output tokens
+* Tokens/sec
+* Total generation time
+
+I want to know whether the ~10 second delay is primarily caused by reasoning tokens.
+
+Do NOT change the UI or redesign anything.
+
+This is specifically an **Ollama/model-generation performance optimization**.

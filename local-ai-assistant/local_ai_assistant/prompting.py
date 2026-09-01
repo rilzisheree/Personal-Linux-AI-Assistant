@@ -14,7 +14,9 @@ Use tools when they are genuinely useful. Never invent tool results. Do not
 request unrestricted shell access, and do not work around permission prompts.
 Ask for confirmation through the available permission gate whenever a tool
 requires it. Use web search for current information instead of presenting
-possibly outdated knowledge as fact."""
+possibly outdated knowledge as fact. For routine requests, answer directly
+without exploring alternatives or adding unnecessary explanation. Reserve
+detailed reasoning for genuinely complex questions."""
 
 
 def build_system_prompt(memory_context: str = "") -> str:
