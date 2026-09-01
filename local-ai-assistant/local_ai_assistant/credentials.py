@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 
@@ -11,6 +12,9 @@ HOSTED_API_KEY_PATH = (
 
 
 def load_hosted_api_key() -> str:
+    environment_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if environment_key:
+        return environment_key
     try:
         return HOSTED_API_KEY_PATH.read_text(encoding="utf-8").strip()
     except FileNotFoundError:

@@ -8,7 +8,10 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from local_ai_assistant.credentials import load_hosted_api_key, save_hosted_api_key
-from local_ai_assistant.hosted_api import HostedApiClient
+from local_ai_assistant.hosted_api import (
+    HOSTED_CONNECTION_TIMEOUT,
+    HostedApiClient,
+)
 from local_ai_assistant.ollama import ChatMessage, StreamEvent, ToolCall
 
 
@@ -71,6 +74,18 @@ class HostedApiTests(unittest.TestCase):
         self.assertEqual(payload["messages"], [{"role": "user", "content": "Hello"}])
         self.assertEqual(request.get_header("Authorization"), "Bearer secret-key")
         self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
+
+    def test_model_check_uses_short_connection_timeout(self) -> None:
+        response = Mock()
+        response.read.return_value = b'{"data":[{"id":"example-model"}]}'
+        response.close = Mock()
+        client = HostedApiClient("https://api.example.test/v1", "secret-key")
+        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
+            self.assertEqual(client.list_models(), ["example-model"])
+        self.assertEqual(
+            urlopen.call_args.kwargs["timeout"],
+            HOSTED_CONNECTION_TIMEOUT,
+        )
 
 
 class HostedCredentialTests(unittest.TestCase):

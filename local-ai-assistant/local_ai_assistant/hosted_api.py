@@ -19,6 +19,9 @@ from .errors import (
     AssistantUnavailableError,
 )
 
+HOSTED_CONNECTION_TIMEOUT = 15.0
+HOSTED_GENERATION_TIMEOUT = 180.0
+
 
 class HostedApiClient:
     """Synchronous streaming client for OpenAI-compatible APIs."""
@@ -29,7 +32,7 @@ class HostedApiClient:
         self,
         base_url: str,
         api_key: str,
-        timeout: float = 30.0,
+        timeout: float = HOSTED_GENERATION_TIMEOUT,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key.strip()
@@ -38,7 +41,11 @@ class HostedApiClient:
         self._response_lock = threading.Lock()
 
     def list_models(self) -> list[str]:
-        payload = self._request_json("GET", "/models")
+        payload = self._request_json(
+            "GET",
+            "/models",
+            timeout=min(self.timeout, HOSTED_CONNECTION_TIMEOUT),
+        )
         models = payload.get("data", [])
         if not isinstance(models, list):
             raise AssistantProtocolError("Hosted API returned an invalid model list.")
@@ -108,7 +115,9 @@ class HostedApiClient:
                 raise AssistantAuthenticationError(message) from error
             raise AssistantProtocolError(message) from error
         except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
-            raise AssistantUnavailableError(str(error) or "Could not reach the hosted API.") from error
+            raise AssistantUnavailableError(
+                self._timeout_message(error, "hosted generation")
+            ) from error
 
     def cancel_active_request(self) -> None:
         with self._response_lock:
@@ -116,7 +125,13 @@ class HostedApiClient:
         if response is not None:
             response.close()
 
-    def _request_json(self, method: str, path: str) -> dict:
+    def _request_json(
+        self,
+        method: str,
+        path: str,
+        *,
+        timeout: float | None = None,
+    ) -> dict:
         if not self.api_key:
             raise AssistantAuthenticationError(
                 "No hosted API key is configured. Add one in Settings."
@@ -124,7 +139,10 @@ class HostedApiClient:
         request = Request(self._url(path), headers=self._headers("application/json"), method=method)
         response = None
         try:
-            response = urlopen(request, timeout=self.timeout)
+            response = urlopen(
+                request,
+                timeout=self.timeout if timeout is None else timeout,
+            )
             with self._response_lock:
                 self._response = response
             payload = json.loads(response.read().decode("utf-8"))
@@ -143,7 +161,9 @@ class HostedApiClient:
                 raise AssistantAuthenticationError(message) from error
             raise AssistantProtocolError(message) from error
         except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
-            raise AssistantUnavailableError(str(error) or "Could not reach the hosted API.") from error
+            raise AssistantUnavailableError(
+                self._timeout_message(error, "hosted connection")
+            ) from error
         except json.JSONDecodeError as error:
             raise AssistantProtocolError("Hosted API returned invalid JSON.") from error
         finally:
@@ -162,6 +182,19 @@ class HostedApiClient:
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
+
+    def _timeout_message(self, error: Exception, operation: str) -> str:
+        detail = str(error).strip()
+        if "timed out" in detail.casefold() or isinstance(
+            error,
+            (TimeoutError, socket.timeout),
+        ):
+            return (
+                f"Timed out waiting for {operation} after {self.timeout:g} seconds. "
+                "The API key and connection check may still be valid; try again or "
+                "choose a faster model."
+            )
+        return detail or "Could not reach the hosted API."
 
     @staticmethod
     def _message_payload(message: ChatMessage) -> dict:

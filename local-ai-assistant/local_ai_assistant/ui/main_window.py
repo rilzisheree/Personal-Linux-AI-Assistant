@@ -896,7 +896,9 @@ class MainWindow(QMainWindow):
             if self.active_assistant_bubble:
                 self.active_assistant_bubble.set_content(message)
             self._set_status("error")
-            self.status_label.setText("Ollama error")
+            self.status_label.setText(
+                "Hosted API error" if self.config.ai_provider == "hosted" else "Ollama error"
+            )
         self._persist_current_conversation()
         self._set_generating(False)
 
