@@ -21,6 +21,11 @@ from .errors import (
 
 HOSTED_CONNECTION_TIMEOUT = 15.0
 HOSTED_GENERATION_TIMEOUT = 180.0
+GEMINI_OVERLOAD_FALLBACKS = (
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3-flash-preview",
+)
 
 
 class HostedApiClient:
@@ -39,6 +44,7 @@ class HostedApiClient:
         self.timeout = timeout
         self._response = None
         self._response_lock = threading.Lock()
+        self.last_model_fallback: tuple[str, str] | None = None
 
     def list_models(self) -> list[str]:
         payload = self._request_json(
@@ -49,14 +55,49 @@ class HostedApiClient:
         models = payload.get("data", [])
         if not isinstance(models, list):
             raise AssistantProtocolError("Hosted API returned an invalid model list.")
-        names = [
-            model["id"]
-            for model in models
-            if isinstance(model, dict) and isinstance(model.get("id"), str)
-        ]
+        names = []
+        for model in models:
+            if not isinstance(model, dict) or not isinstance(model.get("id"), str):
+                continue
+            name = model["id"]
+            names.append(name.removeprefix("models/"))
         return names
 
     def stream_chat(
+        self,
+        messages: list[ChatMessage],
+        model: str,
+        cancel_event: threading.Event | None = None,
+        tools: list[dict] | None = None,
+        context_size: int | None = None,
+    ) -> Iterator[StreamEvent]:
+        self.last_model_fallback = None
+        candidates = [model]
+        if (
+            "generativelanguage.googleapis.com" in self.base_url
+            and model == "gemini-3.7-flash"
+        ):
+            candidates.extend(GEMINI_OVERLOAD_FALLBACKS)
+        candidates = list(dict.fromkeys(candidates))
+        for index, candidate in enumerate(candidates):
+            try:
+                yield from self._stream_chat_model(
+                    messages,
+                    candidate,
+                    cancel_event,
+                    tools,
+                    context_size,
+                )
+                if candidate != model:
+                    self.last_model_fallback = (model, candidate)
+                return
+            except AssistantProtocolError as error:
+                if index == len(candidates) - 1 or not self._is_overload_error(error):
+                    raise
+                if cancel_event and cancel_event.is_set():
+                    raise AssistantCancelledError()
+
+    def _stream_chat_model(
         self,
         messages: list[ChatMessage],
         model: str,
@@ -195,6 +236,15 @@ class HostedApiClient:
                 "choose a faster model."
             )
         return detail or "Could not reach the hosted API."
+
+    @staticmethod
+    def _is_overload_error(error: AssistantProtocolError) -> bool:
+        detail = str(error).casefold()
+        return (
+            "503" in detail
+            or "high demand" in detail
+            or "temporarily unavailable" in detail
+        )
 
     @staticmethod
     def _message_payload(message: ChatMessage) -> dict:

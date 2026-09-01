@@ -30,7 +30,11 @@ from ..assistant_core import AssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
-from ..credentials import load_hosted_api_key, save_hosted_api_key
+from ..credentials import (
+    load_gemini_api_key,
+    load_hosted_api_key,
+    save_hosted_api_key,
+)
 from ..desktop_integration import set_autostart_enabled
 from ..hosted_api import HostedApiClient
 from ..memory import MemoryStore
@@ -163,7 +167,11 @@ class MainWindow(QMainWindow):
         if config.ai_provider == "hosted":
             return HostedApiClient(
                 config.hosted_api_url,
-                load_hosted_api_key(),
+                (
+                    load_gemini_api_key()
+                    if config.hosted_provider == "gemini"
+                    else load_hosted_api_key()
+                ),
             )
         return OllamaClient(config.ollama_url)
 
@@ -880,7 +888,14 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
-        self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
+        fallback = getattr(self.client, "last_model_fallback", None)
+        if fallback:
+            self.status_label.setText(
+                f"Connected · {fallback[1]} "
+                f"(fallback; {fallback[0]} busy)"
+            )
+        else:
+            self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
         self._speak_response(response)
 
@@ -1139,7 +1154,11 @@ class MainWindow(QMainWindow):
             self.config,
             self,
             telegram_token_present=bool(load_telegram_token()),
-            hosted_api_key_present=bool(load_hosted_api_key()),
+            hosted_api_key_present=bool(
+                load_gemini_api_key()
+                if self.config.hosted_provider == "gemini"
+                else load_hosted_api_key()
+            ),
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
@@ -1158,7 +1177,11 @@ class MainWindow(QMainWindow):
             if (
                 next_config.ai_provider == "hosted"
                 and not hosted_api_key
-                and not load_hosted_api_key()
+                and not (
+                    load_gemini_api_key()
+                    if next_config.hosted_provider == "gemini"
+                    else load_hosted_api_key()
+                )
             ):
                 QMessageBox.warning(
                     self,

@@ -22,7 +22,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
-from .credentials import load_hosted_api_key
+from .credentials import load_gemini_api_key
 
 
 class VoiceError(RuntimeError):
@@ -499,7 +499,7 @@ class VoiceService:
     @staticmethod
     def _gemini_key() -> str:
         try:
-            key = load_hosted_api_key()
+            key = load_gemini_api_key()
         except (OSError, RuntimeError) as error:
             raise VoiceError(f"Could not read the Gemini API key: {error}") from error
         if not key:

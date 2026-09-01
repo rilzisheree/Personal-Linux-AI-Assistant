@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
 import tempfile
 import unittest
@@ -87,6 +88,14 @@ class HostedApiTests(unittest.TestCase):
             HOSTED_CONNECTION_TIMEOUT,
         )
 
+    def test_model_list_strips_google_models_prefix(self) -> None:
+        response = Mock()
+        response.read.return_value = b'{"data":[{"id":"models/gemini-3.6-flash"}]}'
+        response.close = Mock()
+        client = HostedApiClient("https://generativelanguage.googleapis.com/v1beta/openai/", "secret-key")
+        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response):
+            self.assertEqual(client.list_models(), ["gemini-3.6-flash"])
+
 
 class HostedCredentialTests(unittest.TestCase):
     def test_key_is_saved_with_restricted_permissions(self) -> None:
@@ -94,7 +103,8 @@ class HostedCredentialTests(unittest.TestCase):
             path = Path(directory) / "hosted-api.key"
             with patch("local_ai_assistant.credentials.HOSTED_API_KEY_PATH", path):
                 save_hosted_api_key("  secret-key  ")
-                self.assertEqual(load_hosted_api_key(), "secret-key")
+                with patch.dict(os.environ, {"GEMINI_API_KEY": ""}):
+                    self.assertEqual(load_hosted_api_key(), "secret-key")
             mode = stat.S_IMODE(path.stat().st_mode)
         self.assertEqual(mode, 0o600)
 

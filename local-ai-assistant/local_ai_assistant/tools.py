@@ -22,7 +22,7 @@ from urllib.parse import quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from .config import DEFAULT_GEMINI_IMAGE_MODEL
-from .credentials import load_hosted_api_key
+from .credentials import load_gemini_api_key
 from .memory import MemoryStore
 
 class PermissionLevel(str, Enum):
@@ -616,7 +616,7 @@ class ToolManager:
         if len(prompt) > 4_000:
             prompt = prompt[:3_997] + "..."
         try:
-            api_key = load_hosted_api_key()
+            api_key = load_gemini_api_key()
         except (OSError, RuntimeError) as error:
             return ToolCallResult(False, f"Could not read the Gemini API key: {error}")
         if not api_key:
