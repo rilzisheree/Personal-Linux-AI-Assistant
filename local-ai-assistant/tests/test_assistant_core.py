@@ -113,7 +113,7 @@ class RoutedAssistantServiceTests(unittest.TestCase):
 
         decision = service.route_request(self.messages, self.tools)
 
-        self.assertEqual(decision, RouteDecision("reasoning"))
+        self.assertEqual(decision, RouteDecision("reasoning", used_fallback=True))
 
     def test_json_encoded_route_is_accepted_for_schema_compatibility(self) -> None:
         backend = FakeBackend('"REASONING"')
@@ -122,6 +122,15 @@ class RoutedAssistantServiceTests(unittest.TestCase):
         decision = service.route_request(self.messages, self.tools)
 
         self.assertEqual(decision.route, "reasoning")
+
+    def test_route_only_json_object_is_accepted_for_schema_compatibility(self) -> None:
+        self.assertEqual(
+            RoutedAssistantService._parse_decision(
+                '{"route":"FUNCTION"}',
+                self.tools,
+            ),
+            RouteDecision("function"),
+        )
 
     def test_legacy_json_objects_are_rejected(self) -> None:
         tools = self.tools

@@ -67,6 +67,7 @@ def main() -> int:
                     "expected": expected_route,
                     "actual": decision.route,
                     "expected_function": expected_function,
+                    "router_output_valid": not decision.used_fallback,
                     "function_classification_correct": (
                         route_correct if expected_route == "function" else None
                     ),
@@ -94,9 +95,13 @@ def main() -> int:
         function_correct = sum(
             result["function_classification_correct"] for result in function_cases
         )
+        invalid_outputs = sum(
+            not result["router_output_valid"] for result in results
+        )
         return {
             "cases": total,
             "routing_accuracy": round(correct / total, 4) if total else 0,
+            "invalid_router_outputs": invalid_outputs,
             "false_simple": false_simple,
             "false_reasoning": false_reasoning,
             "function_classification_accuracy": (
