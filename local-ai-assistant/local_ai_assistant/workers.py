@@ -111,6 +111,7 @@ class ChatWorker(QObject):
                         tool_call.name,
                         tool_call.arguments,
                         f"call_{uuid.uuid4().hex}",
+                        tool_call.thought_signature,
                     )
                     for tool_call in tool_calls
                 ]

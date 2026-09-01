@@ -53,6 +53,26 @@ class HostedApiTests(unittest.TestCase):
             ),
         )
 
+    def test_preserves_gemini_thought_signature_for_tool_calls(self) -> None:
+        parts: dict[int, dict[str, str]] = {}
+        HostedApiClient._parse_sse_line(
+            'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
+            '"id":"call-1","extra_content":{"google":{"thought_signature":"sig-1"}},'
+            '"function":{"name":"web_search","arguments":"{\\"query\\":\\"weather\\"}"}}]}}]}',
+            parts,
+        )
+        done = HostedApiClient._parse_sse_line("data: [DONE]", parts)
+        self.assertIsNotNone(done)
+        assert done is not None
+        self.assertEqual(done.tool_calls[0].thought_signature, "sig-1")
+        payload = HostedApiClient._message_payload(
+            ChatMessage("assistant", "", done.tool_calls)
+        )
+        self.assertEqual(
+            payload["tool_calls"][0]["extra_content"],
+            {"google": {"thought_signature": "sig-1"}},
+        )
+
     def test_stream_chat_sends_openai_compatible_payload(self) -> None:
         response = Mock()
         response.__enter__ = Mock(return_value=response)

@@ -21,6 +21,7 @@ from .errors import (
 
 HOSTED_CONNECTION_TIMEOUT = 15.0
 HOSTED_GENERATION_TIMEOUT = 180.0
+GEMINI_PRIMARY_ATTEMPT_TIMEOUT = 45.0
 GEMINI_OVERLOAD_FALLBACKS = (
     "gemini-3.6-flash",
     "gemini-3.5-flash",
@@ -87,11 +88,16 @@ class HostedApiClient:
                     cancel_event,
                     tools,
                     context_size,
+                    request_timeout=(
+                        min(self.timeout, GEMINI_PRIMARY_ATTEMPT_TIMEOUT)
+                        if index < len(candidates) - 1
+                        else self.timeout
+                    ),
                 )
                 if candidate != model:
                     self.last_model_fallback = (model, candidate)
                 return
-            except AssistantProtocolError as error:
+            except (AssistantProtocolError, AssistantUnavailableError) as error:
                 if index == len(candidates) - 1 or not self._is_overload_error(error):
                     raise
                 if cancel_event and cancel_event.is_set():
@@ -104,6 +110,7 @@ class HostedApiClient:
         cancel_event: threading.Event | None = None,
         tools: list[dict] | None = None,
         context_size: int | None = None,
+        request_timeout: float | None = None,
     ) -> Iterator[StreamEvent]:
         del context_size
         if not self.api_key:
@@ -124,7 +131,10 @@ class HostedApiClient:
             method="POST",
         )
         try:
-            with urlopen(request, timeout=self.timeout) as response:
+            with urlopen(
+                request,
+                timeout=self.timeout if request_timeout is None else request_timeout,
+            ) as response:
                 with self._response_lock:
                     self._response = response
                 try:
@@ -238,12 +248,13 @@ class HostedApiClient:
         return detail or "Could not reach the hosted API."
 
     @staticmethod
-    def _is_overload_error(error: AssistantProtocolError) -> bool:
+    def _is_overload_error(error: Exception) -> bool:
         detail = str(error).casefold()
         return (
             "503" in detail
             or "high demand" in detail
             or "temporarily unavailable" in detail
+            or "timed out" in detail
         )
 
     @staticmethod
@@ -265,6 +276,13 @@ class HostedApiClient:
                 }
                 for index, call in enumerate(message.tool_calls)
             ]
+            for index, call in enumerate(message.tool_calls):
+                if call.thought_signature:
+                    payload["tool_calls"][index]["extra_content"] = {
+                        "google": {
+                            "thought_signature": call.thought_signature,
+                        }
+                    }
         if message.images:
             content: list[dict] = []
             if message.content:
@@ -327,15 +345,40 @@ class HostedApiClient:
             index = raw_call.get("index", 0)
             if not isinstance(index, int):
                 index = 0
-            part = tool_call_parts.setdefault(index, {"id": "", "name": "", "arguments": ""})
+            part = tool_call_parts.setdefault(
+                index,
+                {"id": "", "name": "", "arguments": "", "thought_signature": ""},
+            )
             if isinstance(raw_call.get("id"), str):
                 part["id"] = raw_call["id"]
+            extra_content = raw_call.get("extra_content") or {}
+            google_content = (
+                extra_content.get("google", {})
+                if isinstance(extra_content, dict)
+                else {}
+            )
+            if isinstance(google_content, dict) and isinstance(
+                google_content.get("thought_signature"), str
+            ):
+                part["thought_signature"] = google_content["thought_signature"]
+            if isinstance(raw_call.get("thought_signature"), str):
+                part["thought_signature"] = raw_call["thought_signature"]
             function = raw_call.get("function") or {}
             if isinstance(function, dict):
                 if isinstance(function.get("name"), str):
                     part["name"] += function["name"]
                 if isinstance(function.get("arguments"), str):
                     part["arguments"] += function["arguments"]
+            delta_extra = delta.get("extra_content") or {}
+            delta_google = (
+                delta_extra.get("google", {})
+                if isinstance(delta_extra, dict)
+                else {}
+            )
+            if isinstance(delta_google, dict) and isinstance(
+                delta_google.get("thought_signature"), str
+            ):
+                part["thought_signature"] = delta_google["thought_signature"]
         # The final [DONE] sentinel is the single completion boundary. A
         # finish_reason can arrive before the last tool-call fragments.
         return StreamEvent(content=content)
@@ -353,7 +396,14 @@ class HostedApiClient:
                 continue
             if not isinstance(arguments, dict):
                 raise AssistantProtocolError("Hosted API sent non-object tool arguments.")
-            calls.append(ToolCall(part["name"], arguments, part["id"]))
+            calls.append(
+                ToolCall(
+                    part["name"],
+                    arguments,
+                    part["id"],
+                    part.get("thought_signature", ""),
+                )
+            )
         return tuple(calls)
 
     @staticmethod
