@@ -280,33 +280,101 @@ QDialog, QDialog#unlockDialog {
     color: #d8e9f5;
 }
 
+QDialog#settingsDialog {
+    font-size: 13px;
+}
+
+QDialog#settingsDialog QScrollArea,
+QDialog#settingsDialog QScrollArea > QWidget > QWidget {
+    background: transparent;
+    border: 0;
+}
+
+QDialog#settingsDialog QTabWidget::pane {
+    background: #03070d;
+    border: 1px solid #112438;
+    border-radius: 8px;
+    top: -1px;
+}
+
+QDialog#settingsDialog QTabBar::tab {
+    min-width: 72px;
+    min-height: 30px;
+    padding: 6px 13px;
+    color: #7899b0;
+    background: #050b13;
+    border: 1px solid #14283b;
+    border-bottom: 0;
+}
+
+QDialog#settingsDialog QTabBar::tab:selected {
+    color: #d8efff;
+    background: #0a1623;
+    border-color: #326b98;
+}
+
+QDialog#settingsDialog QLabel#settingsIntro {
+    color: #adc9dc;
+    font-size: 14px;
+}
+
+QDialog#settingsDialog QLabel#settingsPageTitle {
+    color: #d8efff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QDialog#settingsDialog QLabel#settingsPageDescription {
+    color: #7899b0;
+    font-size: 12px;
+}
+
+QDialog#settingsDialog QLabel#settingsHint {
+    color: #66849b;
+    font-size: 11px;
+}
+
 QDialog QLabel {
     color: #adc9dc;
 }
 
-QDialog QGroupBox {
+QDialog#settingsDialog QGroupBox {
     background: #050b13;
     border: 1px solid #112438;
     border-radius: 10px;
-    margin-top: 16px;
-    padding: 18px 12px 12px;
+    margin-top: 18px;
+    padding: 20px 16px 14px;
 }
 
-QDialog QGroupBox::title {
+QDialog#settingsDialog QGroupBox::title {
     subcontrol-origin: margin;
     left: 12px;
     padding: 0 5px;
     color: #75a7c7;
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 1px;
 }
 
-QDialog QCheckBox {
-    color: #9ebbcf;
-    spacing: 8px;
+QDialog#settingsDialog QLineEdit,
+QDialog#settingsDialog QComboBox,
+QDialog#settingsDialog QSpinBox {
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 12px;
 }
 
-QDialog QCheckBox::indicator {
+QDialog#settingsDialog QSpinBox {
+    padding-right: 28px;
+}
+
+QDialog#settingsDialog QCheckBox {
+    min-height: 30px;
+    color: #9ebbcf;
+    spacing: 8px;
+    font-size: 12px;
+}
+
+QDialog#settingsDialog QCheckBox::indicator {
     width: 15px;
     height: 15px;
     border: 1px solid #23435c;
@@ -314,13 +382,15 @@ QDialog QCheckBox::indicator {
     background: #050b13;
 }
 
-QDialog QCheckBox::indicator:checked {
+QDialog#settingsDialog QCheckBox::indicator:checked {
     background: #1d5c86;
     border-color: #4b94c5;
 }
 
-QDialogButtonBox QPushButton {
-    min-width: 90px;
+QDialog#settingsDialog QDialogButtonBox QPushButton {
+    min-width: 96px;
+    min-height: 34px;
+    font-size: 12px;
 }
 
 QLabel#unlockMark {

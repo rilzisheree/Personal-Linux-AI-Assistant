@@ -9,11 +9,14 @@ from PySide6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QFrame,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -43,7 +46,8 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setObjectName("settingsDialog")
         self.setWindowTitle("Lura // Settings")
-        self.setMinimumSize(620, 520)
+        self.setMinimumSize(680, 540)
+        self.resize(780, 700)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 22)
@@ -59,17 +63,19 @@ class SettingsDialog(QDialog):
         tabs = QTabWidget()
         tabs.setObjectName("settingsTabs")
         layout.addWidget(tabs, 1)
-        tabs.addTab(self._assistant_page(config), "Assistant")
-        tabs.addTab(self._voice_page(config), "Voice")
+        tabs.addTab(self._scroll_page(self._assistant_page(config)), "Assistant")
+        tabs.addTab(self._scroll_page(self._voice_page(config)), "Voice")
         tabs.addTab(
-            self._connection_page(
-                config,
-                telegram_token_present,
-                hosted_api_key_present,
+            self._scroll_page(
+                self._connection_page(
+                    config,
+                    telegram_token_present,
+                    hosted_api_key_present,
+                )
             ),
             "AI & System",
         )
-        tabs.addTab(self._security_page(), "Security")
+        tabs.addTab(self._scroll_page(self._security_page()), "Security")
 
         self.error_label = QLabel()
         self.error_label.setObjectName("settingsError")
@@ -86,10 +92,27 @@ class SettingsDialog(QDialog):
         layout.addWidget(buttons)
 
     @staticmethod
+    def _scroll_page(page: QWidget) -> QScrollArea:
+        """Keep every settings page usable on short or scaled displays."""
+        page.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred,
+        )
+        scroll_area = QScrollArea()
+        scroll_area.setObjectName("settingsScrollArea")
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        scroll_area.setWidget(page)
+        return scroll_area
+
+    @staticmethod
     def _page_layout(title: str, description: str) -> tuple[QWidget, QVBoxLayout]:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(8, 16, 8, 8)
+        layout.setContentsMargins(12, 16, 12, 16)
         layout.setSpacing(12)
         title_label = QLabel(title)
         title_label.setObjectName("settingsPageTitle")
