@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -33,6 +34,28 @@ class SettingsDialogTests(unittest.TestCase):
         self.assertEqual(updated.active_listening_duration, 30)
         self.assertEqual(updated.orb_intensity, 80)
         self.assertEqual(updated.animation_intensity, 45)
+        dialog.close()
+
+    def test_microphone_picker_round_trips_selected_source(self) -> None:
+        with patch(
+            "local_ai_assistant.ui.settings_dialog.VoiceService.list_microphones",
+            return_value=[
+                (
+                    "alsa_input.usb-hyperx.analog-stereo",
+                    "HyperX SoloCast",
+                )
+            ],
+        ):
+            dialog = SettingsDialog(AppConfig())
+        index = dialog.microphone_input.findData(
+            "alsa_input.usb-hyperx.analog-stereo"
+        )
+        self.assertGreaterEqual(index, 0)
+        dialog.microphone_input.setCurrentIndex(index)
+        self.assertEqual(
+            dialog.config().microphone_device,
+            "alsa_input.usb-hyperx.analog-stereo",
+        )
         dialog.close()
 
 

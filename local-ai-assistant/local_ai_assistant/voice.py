@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import shlex
 import signal
@@ -20,6 +21,35 @@ from .config import AppConfig, DEFAULT_TTS_VOICE
 
 class VoiceError(RuntimeError):
     """A user-facing error from an unavailable or failed local voice backend."""
+
+
+def _is_monitor_source(
+    name: str,
+    source: dict[str, Any] | None = None,
+    properties: dict[str, Any] | None = None,
+) -> bool:
+    """Exclude sink monitor streams from the microphone picker."""
+    source = source or {}
+    properties = properties or {}
+    media_class = str(properties.get("media.class", "")).casefold()
+    return (
+        name.casefold().endswith(".monitor")
+        or "monitor" in media_class
+        or source.get("monitor_of_sink") not in (None, -1)
+    )
+
+
+def _dedupe_microphones(
+    microphones: list[tuple[str, str]],
+) -> list[tuple[str, str]]:
+    seen: set[str] = set()
+    result: list[tuple[str, str]] = []
+    for name, label in microphones:
+        if name in seen:
+            continue
+        seen.add(name)
+        result.append((name, label))
+    return result
 
 
 class VoiceService:
@@ -43,6 +73,99 @@ class VoiceService:
         self.recordings_directory().mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
         return self.recordings_directory() / f"recording-{stamp}.wav"
+
+    @staticmethod
+    def list_microphones() -> list[tuple[str, str]]:
+        """Return selectable physical input sources as (source_name, label)."""
+        pactl = shutil.which("pactl")
+        if pactl:
+            try:
+                result = subprocess.run(
+                    [pactl, "-f", "json", "list", "sources"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                    check=False,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    sources = json.loads(result.stdout)
+                    microphones = []
+                    for source in sources if isinstance(sources, list) else []:
+                        if not isinstance(source, dict):
+                            continue
+                        properties = source.get("properties", {})
+                        name = source.get("name") or properties.get("node.name")
+                        if not isinstance(name, str) or _is_monitor_source(
+                            name, source, properties
+                        ):
+                            continue
+                        description = (
+                            source.get("description")
+                            or properties.get("device.description")
+                            or properties.get("node.description")
+                            or name
+                        )
+                        microphones.append((name, str(description)))
+                    if microphones:
+                        return _dedupe_microphones(microphones)
+            except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+                pass
+
+            try:
+                result = subprocess.run(
+                    [pactl, "list", "short", "sources"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                    check=False,
+                )
+                if result.returncode == 0:
+                    microphones = []
+                    for line in result.stdout.splitlines():
+                        fields = line.split()
+                        if len(fields) < 2 or _is_monitor_source(fields[1]):
+                            continue
+                        microphones.append((fields[1], fields[1]))
+                    if microphones:
+                        return _dedupe_microphones(microphones)
+            except (OSError, subprocess.SubprocessError):
+                pass
+
+        pw_dump = shutil.which("pw-dump")
+        if pw_dump:
+            try:
+                result = subprocess.run(
+                    [pw_dump],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                    check=False,
+                )
+                objects = json.loads(result.stdout)
+                microphones = []
+                for item in objects if isinstance(objects, list) else []:
+                    if not isinstance(item, dict):
+                        continue
+                    info = item.get("info", {})
+                    properties = info.get("props", {})
+                    media_class = str(properties.get("media.class", ""))
+                    name = properties.get("node.name")
+                    if (
+                        not isinstance(name, str)
+                        or "Audio/Source" not in media_class
+                        or _is_monitor_source(name, item, properties)
+                    ):
+                        continue
+                    label = (
+                        properties.get("node.description")
+                        or properties.get("device.description")
+                        or name
+                    )
+                    microphones.append((name, str(label)))
+                return _dedupe_microphones(microphones)
+            except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+                pass
+        return []
 
     def recorder_command(self, destination: Path) -> list[str]:
         device = self.config.microphone_device

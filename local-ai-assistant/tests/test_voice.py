@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 import signal
@@ -12,6 +13,36 @@ from local_ai_assistant.voice import VoiceError, VoiceService
 
 
 class VoiceServiceTests(unittest.TestCase):
+    def test_list_microphones_filters_monitors_and_keeps_source_names(self) -> None:
+        pactl_output = json.dumps(
+            [
+                {
+                    "name": "alsa_input.usb-hyperx.analog-stereo",
+                    "description": "HyperX SoloCast",
+                    "properties": {},
+                    "monitor_of_sink": None,
+                },
+                {
+                    "name": "alsa_output.pci.monitor",
+                    "description": "Built-in Audio Monitor",
+                    "properties": {},
+                    "monitor_of_sink": 12,
+                },
+            ]
+        )
+        with patch(
+            "local_ai_assistant.voice.shutil.which",
+            side_effect=lambda name: "/usr/bin/pactl" if name == "pactl" else None,
+        ), patch(
+            "local_ai_assistant.voice.subprocess.run",
+            return_value=Mock(returncode=0, stdout=pactl_output),
+        ):
+            microphones = VoiceService.list_microphones()
+        self.assertEqual(
+            microphones,
+            [("alsa_input.usb-hyperx.analog-stereo", "HyperX SoloCast")],
+        )
+
     def test_recorder_prefers_pipewire_and_passes_device(self) -> None:
         config = AppConfig(microphone_device="my-mic")
         service = VoiceService(config)

@@ -503,12 +503,17 @@ class MainWindow(QMainWindow):
             self.chat_view.add_message("tool", content, image_paths)
 
     @Slot()
-    def _start_recording(self, automatic: bool = False) -> None:
+    def _start_recording(
+        self,
+        automatic: bool = False,
+        manual_handoff: bool = False,
+    ) -> None:
         if (
             not self.config.voice_input_enabled
             or self.chat_worker is not None
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
+            or (self.wake_word_worker is not None and not manual_handoff)
         ):
             self._set_orb_state("idle")
             return
@@ -516,6 +521,8 @@ class MainWindow(QMainWindow):
             if not automatic:
                 self._manual_recording_pending = True
                 self._stop_wake_word_listener()
+                self._set_voice_status("SWITCHING TO MANUAL MICROPHONE…")
+                self._start_manual_recording_when_ready()
             return
         self.last_voice_error = None
         self._wake_command_recording = automatic
@@ -744,8 +751,7 @@ class MainWindow(QMainWindow):
             self.wake_word_worker = None
             self.wake_word_thread = None
             if self._manual_recording_pending and not self._quitting:
-                self._manual_recording_pending = False
-                QTimer.singleShot(0, self._start_recording)
+                self._start_manual_recording_when_ready()
 
     def _wake_word_thread_finished(self) -> None:
         if self.wake_word_worker:
@@ -758,10 +764,24 @@ class MainWindow(QMainWindow):
             self._wake_restart_pending = False
             QTimer.singleShot(0, self._start_wake_word_listener)
         elif self._manual_recording_pending:
-            self._manual_recording_pending = False
-            QTimer.singleShot(0, self._start_recording)
+            self._start_manual_recording_when_ready()
         else:
             self._start_pending_wake_command()
+
+    def _start_manual_recording_when_ready(self) -> None:
+        if (
+            not self._manual_recording_pending
+            or self._quitting
+            or self.voice_record_worker is not None
+        ):
+            return
+        wake_worker = self.wake_word_worker
+        process = getattr(wake_worker, "_process", None) if wake_worker else None
+        if process is not None and process.poll() is None:
+            QTimer.singleShot(50, self._start_manual_recording_when_ready)
+            return
+        self._manual_recording_pending = False
+        self._start_recording(manual_handoff=True)
 
     def _start_pending_wake_command(self) -> None:
         if self._wake_command_pending and self.wake_word_worker is None:

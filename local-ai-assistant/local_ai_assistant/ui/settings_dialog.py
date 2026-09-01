@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFormLayout,
     QGroupBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -19,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..config import AppConfig, TTS_ENGINES, TTS_VOICE_PRESETS
+from ..voice import VoiceService
 
 
 class SettingsDialog(QDialog):
@@ -155,9 +158,23 @@ class SettingsDialog(QDialog):
         self.voice_input_enabled.setChecked(config.voice_input_enabled)
         self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
         self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
-        self.microphone_input = QLineEdit(config.microphone_device)
-        self.microphone_input.setPlaceholderText("Default microphone")
-        self.microphone_input.setToolTip("Optional PipeWire node name or ALSA device.")
+        self.microphone_input = QComboBox()
+        self.microphone_input.setEditable(True)
+        self.microphone_input.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.microphone_input.setToolTip(
+            "Choose the exact PipeWire/PulseAudio input source used for recording."
+        )
+        self.refresh_microphones_button = QPushButton("Refresh")
+        self.refresh_microphones_button.setObjectName("quietButton")
+        self.refresh_microphones_button.setToolTip("Rescan available microphones")
+        self.refresh_microphones_button.clicked.connect(self._populate_microphones)
+        microphone_row = QWidget()
+        microphone_layout = QHBoxLayout(microphone_row)
+        microphone_layout.setContentsMargins(0, 0, 0, 0)
+        microphone_layout.setSpacing(8)
+        microphone_layout.addWidget(self.microphone_input, 1)
+        microphone_layout.addWidget(self.refresh_microphones_button)
+        self._populate_microphones(config.microphone_device)
         self.whisper_model_input = QLineEdit(config.whisper_model)
         self.whisper_model_input.setPlaceholderText("base")
         self.whisper_language_input = QLineEdit(config.whisper_language)
@@ -187,7 +204,7 @@ class SettingsDialog(QDialog):
         self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
         form.addRow("", self.voice_input_enabled)
         form.addRow("", self.voice_responses_enabled)
-        form.addRow("Microphone", self.microphone_input)
+        form.addRow("Microphone", microphone_row)
         form.addRow("Whisper model", self.whisper_model_input)
         form.addRow("Language", self.whisper_language_input)
         form.addRow("TTS engine", self.tts_engine_input)
@@ -292,13 +309,16 @@ class SettingsDialog(QDialog):
         return page
 
     def config(self) -> AppConfig:
+        microphone_device = self.microphone_input.currentData()
+        if not isinstance(microphone_device, str):
+            microphone_device = self.microphone_input.currentText()
         return AppConfig(
             ollama_url=self.url_input.text(),
             model=self.model_input.text(),
             ollama_context_size=self.context_size_input.value(),
             voice_input_enabled=self.voice_input_enabled.isChecked(),
             voice_responses_enabled=self.voice_responses_enabled.isChecked(),
-            microphone_device=self.microphone_input.text(),
+            microphone_device=microphone_device,
             whisper_model=self.whisper_model_input.text(),
             whisper_language=self.whisper_language_input.text(),
             tts_engine=str(self.tts_engine_input.currentData()),
@@ -326,6 +346,28 @@ class SettingsDialog(QDialog):
         voice = self.tts_voice_input.itemData(index)
         if isinstance(voice, str) and voice.lower().endswith(".onnx"):
             self.tts_engine_input.setCurrentIndex(self.tts_engine_input.findData("piper"))
+
+    def _populate_microphones(self, selected: str | None = None) -> None:
+        if selected is None:
+            selected = self.microphone_input.currentData()
+        if not isinstance(selected, str):
+            selected = ""
+        selected = selected.strip()
+        microphones = VoiceService.list_microphones()
+        self.microphone_input.blockSignals(True)
+        self.microphone_input.clear()
+        self.microphone_input.addItem("System default microphone", "")
+        for name, label in microphones:
+            display = label if label == name else f"{label}  ({name})"
+            self.microphone_input.addItem(display, name)
+        if selected and self.microphone_input.findData(selected) < 0:
+            self.microphone_input.addItem(
+                f"Saved microphone unavailable  ({selected})",
+                selected,
+            )
+        index = self.microphone_input.findData(selected)
+        self.microphone_input.setCurrentIndex(max(0, index))
+        self.microphone_input.blockSignals(False)
 
     def _accept(self) -> None:
         try:
