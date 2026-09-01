@@ -148,6 +148,34 @@ class OllamaParserTests(unittest.TestCase):
         self.assertTrue(payload["think"])
         self.assertNotIn("num_predict", payload.get("options", {}))
 
+    def test_router_request_can_set_deterministic_json_options(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"{\\"route\\":\\"reasoning\\"}"},'
+                b'"done":true}\n',
+            ]
+            urlopen.return_value = response
+            list(
+                client.stream_chat(
+                    [ChatMessage("user", "Route this.")],
+                    "gemma3:270m",
+                    context_size=2048,
+                    options={"num_predict": 64, "temperature": 0},
+                    response_format="json",
+                )
+            )
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertEqual(payload["model"], "gemma3:270m")
+        self.assertEqual(payload["format"], "json")
+        self.assertEqual(
+            payload["options"],
+            {"num_ctx": 2048, "num_predict": 64, "temperature": 0},
+        )
+
     def test_connection_failure_is_distinguished_from_slow_generation(self) -> None:
         client = OllamaClient("http://localhost:11434")
         with patch(

@@ -224,6 +224,8 @@ class OllamaClient:
         cancel_event: threading.Event | None = None,
         tools: list[dict] | None = None,
         context_size: int | None = None,
+        options: dict[str, int | float | str | bool] | None = None,
+        response_format: str | dict | None = None,
     ) -> Iterator[StreamEvent]:
         payload = {
             "model": model,
@@ -235,13 +237,17 @@ class OllamaClient:
         simple_request = thinking_option is False
         if thinking_option is not None:
             payload["think"] = thinking_option
+        request_options = dict(options or {})
         if context_size:
-            options: dict[str, int] = {"num_ctx": context_size}
+            request_options["num_ctx"] = context_size
             if simple_request:
-                options["num_predict"] = self.simple_output_token_limit
-            payload["options"] = options
+                request_options.setdefault("num_predict", self.simple_output_token_limit)
         elif simple_request:
-            payload["options"] = {"num_predict": self.simple_output_token_limit}
+            request_options.setdefault("num_predict", self.simple_output_token_limit)
+        if request_options:
+            payload["options"] = request_options
+        if response_format is not None:
+            payload["format"] = response_format
         if tools:
             payload["tools"] = tools
         body = json.dumps(payload).encode("utf-8")

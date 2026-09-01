@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..assistant_core import AssistantService
+from ..assistant_core import RoutedAssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config = config
         self.client = self._create_ai_client(config)
-        self.service = AssistantService(self.client)
+        self.service = RoutedAssistantService(self.client)
         self.voice_service = VoiceService(config)
         self.memory_store = MemoryStore()
         self.tool_manager = ToolManager(memory_store=self.memory_store)
@@ -1415,7 +1415,7 @@ class MainWindow(QMainWindow):
         self.config = next_config
         self._sync_quit_behavior()
         self.client = self._create_ai_client(self.config)
-        self.service = AssistantService(self.client)
+        self.service = RoutedAssistantService(self.client)
         self.tool_manager = ToolManager(memory_store=self.memory_store)
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()

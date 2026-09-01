@@ -323,6 +323,19 @@ counts, generation time, and tokens per second. Ollama currently reports
 thinking and output as one aggregate `eval_count`, so the separate reasoning
 and output counts are explicitly estimates based on streamed character counts.
 
+The desktop app can use `gemma3:270m` as a local routing model while keeping the
+configured Qwen model for complex turns. Install both models once with:
+
+```bash
+ollama pull gemma3:270m
+ollama pull qwen3.5:2b
+```
+
+If Gemma is unavailable, Luna logs the routing failure and falls back to the
+configured Qwen model so existing functionality remains available. Ollama
+decides GPU placement automatically; use `ollama ps` while testing to confirm
+that both models remain resident on an 8 GB GPU.
+
 When spoken responses are enabled, complete sentences are sent to the local
 TTS worker while Ollama is still generating. The chat continues rendering
 tokens independently, and Piper's in-process voice model cache is reused

@@ -75,27 +75,52 @@ class ChatWorker(QObject):
             if self.system_prompt
             else list(visible_messages)
         )
+        ollama_tools = self.tool_manager.definitions_for_ollama()
         complete_response: list[str] = []
         tool_rounds = 0
         try:
+            self.ollama_started.emit()
+            route = self.service.route_request(
+                messages,
+                ollama_tools,
+                self.cancel_event,
+            )
+            if self.cancel_event.is_set():
+                self.conversation_ready.emit(visible_messages)
+                self.failed.emit("Generation stopped.", "cancelled")
+                return
+            if route.route == "simple":
+                self._finish_direct_response(visible_messages, route.response)
+                return
+
+            routed_tool_call = (
+                ToolCall(route.function, route.arguments, f"router_{uuid.uuid4().hex}")
+                if route.route == "function" and route.function
+                else None
+            )
+            direct_tool_route = routed_tool_call is not None
             while not self.cancel_event.is_set():
                 cycle_response: list[str] = []
                 tool_calls: list[ToolCall] = []
-                self.ollama_started.emit()
-                for event in self.service.stream_reply(
-                    messages,
-                    self.model,
-                    self.cancel_event,
-                    self.tool_manager.definitions_for_ollama(),
-                    self.context_size,
-                ):
-                    if event.content:
-                        cycle_response.append(event.content)
-                        complete_response.append(event.content)
-                        self.chunk.emit(event.content)
-                    tool_calls.extend(event.tool_calls)
-                    if event.done:
-                        break
+                if routed_tool_call is not None:
+                    tool_calls.append(routed_tool_call)
+                    routed_tool_call = None
+                else:
+                    self.ollama_started.emit()
+                    for event in self.service.stream_reply(
+                        messages,
+                        self.model,
+                        self.cancel_event,
+                        ollama_tools,
+                        self.context_size,
+                    ):
+                        if event.content:
+                            cycle_response.append(event.content)
+                            complete_response.append(event.content)
+                            self.chunk.emit(event.content)
+                        tool_calls.extend(event.tool_calls)
+                        if event.done:
+                            break
                 if self.cancel_event.is_set():
                     self.conversation_ready.emit(visible_messages)
                     self.failed.emit("Generation stopped.", "cancelled")
@@ -135,6 +160,7 @@ class ChatWorker(QObject):
                 )
                 messages.append(assistant_message)
                 visible_messages.append(assistant_message)
+                tool_results = []
                 for tool_call in normalized_tool_calls:
                     if self.cancel_event.is_set():
                         self.conversation_ready.emit(visible_messages)
@@ -150,6 +176,7 @@ class ChatWorker(QObject):
                         result = self.tool_manager.execute(tool_call.name, tool_call.arguments, approved)
                     except ToolConfirmationRequired:
                         result = ToolCallResult(False, "The user did not approve this action.")
+                    tool_results.append(result)
                     self.tool_completed.emit(
                         call_id,
                         tool_call.name,
@@ -166,6 +193,12 @@ class ChatWorker(QObject):
                     )
                     messages.append(tool_message)
                     visible_messages.append(tool_message)
+                if direct_tool_route:
+                    response = "\n".join(
+                        result.content for result in tool_results if result.content
+                    ).strip()
+                    self._finish_direct_response(visible_messages, response)
+                    return
             self.failed.emit("Generation stopped.", "cancelled")
         except (OllamaCancelledError, AssistantCancelledError):
             self.conversation_ready.emit(visible_messages)
@@ -175,6 +208,20 @@ class ChatWorker(QObject):
             self.failed.emit(
                 format_backend_error(error, self.service.backend_name), "error"
             )
+
+    def _finish_direct_response(
+        self,
+        visible_messages: list[ChatMessage],
+        response: str,
+    ) -> None:
+        response = response.strip()
+        if response:
+            assistant_message = ChatMessage("assistant", response)
+            self.messages.append(assistant_message)
+            visible_messages.append(assistant_message)
+            self.chunk.emit(response)
+        self.conversation_ready.emit(visible_messages)
+        self.finished.emit(response)
 
     def cancel(self) -> None:
         self.cancel_event.set()
