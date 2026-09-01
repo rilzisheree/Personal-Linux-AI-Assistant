@@ -45,7 +45,7 @@ these environment variables when needed:
   source code
 - `LURA_AI_PROVIDER` — `gemini` or `ollama`; defaults to `gemini` when
   `GEMINI_API_KEY` is present
-- `LURA_GEMINI_MODEL` — Gemini model, defaulting to `gemini-2.5-flash`
+- `LURA_GEMINI_MODEL` — Gemini model, defaulting to `gemini-3.6-flash`
 - `LURA_OLLAMA_URL` — Ollama base URL, defaulting to `http://localhost:11434`
 - `LURA_MODEL` — Ollama model, defaulting to `qwen3.5:4b`
 - `LURA_API_DATABASE` — optional API SQLite path

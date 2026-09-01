@@ -50,8 +50,8 @@ class GeminiApiClient:
                 "No Gemini API key is configured. Add GEMINI_API_KEY or add one in Settings."
             )
         request = Request(
-            self._url("/models", {"key": self.api_key}),
-            headers={"Accept": "application/json"},
+            self._url("/models"),
+            headers=self._headers("application/json"),
             method="GET",
         )
         response = None
@@ -121,10 +121,10 @@ class GeminiApiClient:
         request = Request(
             self._url(
                 f"/models/{quote(model.strip(), safe='')}:streamGenerateContent",
-                {"alt": "sse", "key": self.api_key},
+                {"alt": "sse"},
             ),
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Accept": "text/event-stream"},
+            headers=self._headers("text/event-stream"),
             method="POST",
         )
         response = None
@@ -292,8 +292,16 @@ class GeminiApiClient:
                         tool_calls.append(ToolCall(name, arguments))
         return StreamEvent(content="".join(text_parts))
 
-    def _url(self, path: str, query: dict[str, str]) -> str:
-        return f"{self.base_url}/{path.lstrip('/')}?{urlencode(query)}"
+    def _headers(self, accept: str) -> dict[str, str]:
+        return {
+            "Content-Type": "application/json",
+            "Accept": accept,
+            "x-goog-api-key": self.api_key,
+        }
+
+    def _url(self, path: str, query: dict[str, str] | None = None) -> str:
+        url = f"{self.base_url}/{path.lstrip('/')}"
+        return f"{url}?{urlencode(query)}" if query else url
 
     @staticmethod
     def _http_error(error: HTTPError) -> AssistantBackendError:

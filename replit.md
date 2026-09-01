@@ -19,7 +19,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   The URL and model are configurable in Settings.
 - The API service uses Gemini when `GEMINI_API_KEY` is configured. Set
   `LURA_AI_PROVIDER=gemini` and optionally `LURA_GEMINI_MODEL` to select it
-  explicitly. Keep the key in Replit Secrets.
+  explicitly. Keep the key in Replit Secrets. The default is
+  `gemini-3.6-flash`.
 - Settings includes optional system-tray background mode and user-level Linux
   autostart. Autostart creates `~/.config/autostart/lura.desktop` and launches
   Lura with `--background`; both options are disabled by default.

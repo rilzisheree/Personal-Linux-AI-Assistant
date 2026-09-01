@@ -63,11 +63,12 @@ class GeminiApiTests(unittest.TestCase):
         self.assertEqual(declarations[0]["name"], "open_app")
         self.assertEqual(declarations[0]["parameters"]["type"], "object")
 
-    def test_builds_gemini_stream_url_with_encoded_model_and_key(self) -> None:
+    def test_builds_gemini_stream_url_without_leaking_key(self) -> None:
         client = GeminiApiClient("test-key")
-        url = client._url("/models/gemini-2.5-flash", {"alt": "sse", "key": "test-key"})
-        self.assertIn("/models/gemini-2.5-flash?", url)
-        self.assertIn("key=test-key", url)
+        url = client._url("/models/gemini-3.6-flash", {"alt": "sse"})
+        self.assertIn("/models/gemini-3.6-flash?", url)
+        self.assertNotIn("key=test-key", url)
+        self.assertEqual(client._headers("text/event-stream")["x-goog-api-key"], "test-key")
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ DEFAULT_TTS_ENGINE = "piper"
 DEFAULT_AI_PROVIDER = "ollama"
 DEFAULT_HOSTED_API_URL = "https://openrouter.ai/api/v1"
 DEFAULT_HOSTED_MODEL = "openai/gpt-4o-mini"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
