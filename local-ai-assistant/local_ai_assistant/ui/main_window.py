@@ -824,6 +824,9 @@ class MainWindow(QMainWindow):
             self.chat_worker.cancel()
 
     def _refresh_connection(self) -> None:
+        if self.connection_thread is not None and self.connection_thread.isRunning():
+            self._connection_refresh_pending = True
+            return
         self.status_label.setText("Checking Ollama")
         self._set_status("checking")
         self.connection_thread = QThread(self)
@@ -870,6 +873,9 @@ class MainWindow(QMainWindow):
             self.connection_thread = None
         if finished_thread is not None:
             finished_thread.deleteLater()
+        if self._connection_refresh_pending and not self._quitting:
+            self._connection_refresh_pending = False
+            QTimer.singleShot(0, self._refresh_connection)
 
     def _start_telegram_bot(self) -> None:
         if not self.config.telegram_enabled:
@@ -960,6 +966,9 @@ class MainWindow(QMainWindow):
             self.telegram_thread.deleteLater()
         self.telegram_worker = None
         self.telegram_thread = None
+        if self._telegram_restart_pending and not self._quitting:
+            self._telegram_restart_pending = False
+            QTimer.singleShot(0, self._start_telegram_bot)
 
     def _stop_telegram_bot(self) -> None:
         worker = self.telegram_worker
@@ -967,11 +976,9 @@ class MainWindow(QMainWindow):
         if worker is not None:
             worker.cancel()
         if thread is not None and thread.isRunning():
-            # Telegram polling is a Python call stack. Terminating its QThread
-            # can leave the C++ QThread object alive with a Python worker
-            # underneath it, which makes Qt abort later during Settings.
             thread.quit()
-            thread.wait()
+            # Never wait from the GUI thread. The finished signal owns cleanup.
+            return
         if self.telegram_thread is thread:
             if worker is not None:
                 worker.deleteLater()
@@ -996,15 +1003,6 @@ class MainWindow(QMainWindow):
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
-        if self.connection_thread is not None and self.connection_thread.isRunning():
-            if not self._cancel_connection_check():
-                QMessageBox.warning(
-                    self,
-                    "Connection check still running",
-                    "Lura is still checking Ollama. Please wait a moment and "
-                    "try saving Settings again.",
-                )
-                return
         previous_autostart = self.config.autostart_enabled
         try:
             next_config = dialog.config()
@@ -1029,6 +1027,7 @@ class MainWindow(QMainWindow):
             return
         if next_config.autostart_enabled != previous_autostart:
             self.config.autostart_enabled = next_config.autostart_enabled
+        self._cancel_connection_check()
         self._stop_telegram_bot()
         self.config = next_config
         self._sync_quit_behavior()
@@ -1040,29 +1039,28 @@ class MainWindow(QMainWindow):
         self.model_selector.addItem(self.config.model)
         self.runtime_status_value.setText("CHECKING")
         self._refresh_connection()
-        self._start_telegram_bot()
+        if self.telegram_thread is None:
+            self._start_telegram_bot()
+        else:
+            self._telegram_restart_pending = self.config.telegram_enabled
 
-    def _cancel_connection_check(self) -> bool:
+    def _cancel_connection_check(self) -> None:
         thread = self.connection_thread
         worker = self.connection_worker
         if thread is None:
-            return True
+            return
         if worker is not None:
             worker.cancel()
         if thread is not None and thread.isRunning():
             thread.quit()
-            # OllamaClient has an eight-second network timeout. Never release
-            # the QThread while urlopen may still be executing: Qt aborts the
-            # process when a live QThread is destroyed.
-            if not thread.wait(10_000):
-                return False
+            self._connection_refresh_pending = True
+            return
         if self.connection_thread is thread:
             if worker is not None:
                 worker.deleteLater()
             thread.deleteLater()
             self.connection_worker = None
             self.connection_thread = None
-        return True
 
     @Slot()
     def _new_chat(self) -> None:
