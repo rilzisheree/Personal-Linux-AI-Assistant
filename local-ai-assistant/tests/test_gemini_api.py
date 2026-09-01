@@ -18,13 +18,14 @@ class GeminiApiTests(unittest.TestCase):
     def test_parses_function_call_stream_event(self) -> None:
         tool_calls = []
         event = GeminiApiClient._parse_sse_line(
-            'data: {"candidates":[{"content":{"parts":[{"functionCall":{"name":"open_app","args":{"app":"firefox"}}}]}}]}',
+            'data: {"candidates":[{"content":{"parts":[{"functionCall":{"name":"open_app","args":{"app":"firefox"},"thoughtSignature":"sig-123"}}]}}]}',
             tool_calls,
         )
         self.assertIsNotNone(event)
         self.assertEqual(event.content, "")
         self.assertEqual(tool_calls[0].name, "open_app")
         self.assertEqual(tool_calls[0].arguments, {"app": "firefox"})
+        self.assertEqual(tool_calls[0].thought_signature, "sig-123")
 
     def test_maps_roles_system_tools_and_function_declarations(self) -> None:
         system, contents = GeminiApiClient._contents(
@@ -35,7 +36,11 @@ class GeminiApiTests(unittest.TestCase):
                     "assistant",
                     "",
                     tool_calls=(
-                        ToolCall("open_app", {"app": "firefox"}),
+                        ToolCall(
+                            "open_app",
+                            {"app": "firefox"},
+                            thought_signature="sig-123",
+                        ),
                     ),
                 ),
                 ChatMessage("tool", "Opened.", name="open_app"),
@@ -45,6 +50,10 @@ class GeminiApiTests(unittest.TestCase):
         self.assertEqual(contents[0]["role"], "user")
         self.assertEqual(contents[1]["role"], "model")
         self.assertIn("functionCall", contents[1]["parts"][0])
+        self.assertEqual(
+            contents[1]["parts"][0]["functionCall"]["thoughtSignature"],
+            "sig-123",
+        )
         self.assertEqual(contents[2]["role"], "user")
         self.assertIn("functionResponse", contents[2]["parts"][0])
 

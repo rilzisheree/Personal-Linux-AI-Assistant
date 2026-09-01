@@ -209,12 +209,17 @@ class GeminiApiClient:
                     }
                 )
             for tool_call in message.tool_calls:
+                function_call = {
+                    "name": tool_call.name,
+                    "args": tool_call.arguments,
+                }
+                if tool_call.thought_signature:
+                    # Gemini requires the signature returned with a thought-enabled
+                    # function call to be replayed on the matching model turn.
+                    function_call["thoughtSignature"] = tool_call.thought_signature
                 parts.append(
                     {
-                        "functionCall": {
-                            "name": tool_call.name,
-                            "args": tool_call.arguments,
-                        }
+                        "functionCall": function_call,
                     }
                 )
             if parts:
@@ -289,7 +294,16 @@ class GeminiApiClient:
                         and name.strip()
                         and isinstance(arguments, dict)
                     ):
-                        tool_calls.append(ToolCall(name, arguments))
+                        thought_signature = function_call.get("thoughtSignature", "")
+                        if not isinstance(thought_signature, str):
+                            thought_signature = ""
+                        tool_calls.append(
+                            ToolCall(
+                                name,
+                                arguments,
+                                thought_signature=thought_signature,
+                            )
+                        )
         return StreamEvent(content="".join(text_parts))
 
     def _headers(self, accept: str) -> dict[str, str]:

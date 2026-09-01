@@ -67,7 +67,14 @@ class ConversationTests(unittest.TestCase):
                     ChatMessage(
                         "assistant",
                         "",
-                        (ToolCall("open_app", {"app": "firefox"}, "call-1"),),
+                        (
+                            ToolCall(
+                                "open_app",
+                                {"app": "firefox"},
+                                "call-1",
+                                "sig-123",
+                            ),
+                        ),
                     ),
                     ChatMessage("tool", "firefox opened.", name="open_app"),
                 ]

@@ -26,12 +26,15 @@ class ToolCall:
     name: str
     arguments: dict
     id: str = ""
+    thought_signature: str = ""
 
     def as_dict(self) -> dict:
         function = {"name": self.name, "arguments": self.arguments}
         payload = {"function": function}
         if self.id:
             payload["id"] = self.id
+        if self.thought_signature:
+            payload["thought_signature"] = self.thought_signature
         return payload
 
 

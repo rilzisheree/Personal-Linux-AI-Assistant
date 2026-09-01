@@ -89,7 +89,17 @@ class Conversation:
                     raise ValueError("Conversation tool call has invalid fields.")
                 if not isinstance(call_id, str):
                     call_id = ""
-                tool_calls.append(ToolCall(name, arguments, call_id))
+                thought_signature = raw_tool_call.get("thought_signature", "")
+                if not isinstance(thought_signature, str):
+                    thought_signature = ""
+                tool_calls.append(
+                    ToolCall(
+                        name,
+                        arguments,
+                        call_id,
+                        thought_signature,
+                    )
+                )
             name = raw_message.get("name", "")
             if not isinstance(name, str):
                 name = ""
