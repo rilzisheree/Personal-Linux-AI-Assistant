@@ -213,15 +213,13 @@ class GeminiApiClient:
                     "name": tool_call.name,
                     "args": tool_call.arguments,
                 }
+                function_call_part = {"functionCall": function_call}
                 if tool_call.thought_signature:
                     # Gemini requires the signature returned with a thought-enabled
-                    # function call to be replayed on the matching model turn.
-                    function_call["thoughtSignature"] = tool_call.thought_signature
-                parts.append(
-                    {
-                        "functionCall": function_call,
-                    }
-                )
+                    # function call to be replayed on the matching model turn. It
+                    # belongs to the Part, alongside functionCall, not inside it.
+                    function_call_part["thoughtSignature"] = tool_call.thought_signature
+                parts.append(function_call_part)
             if parts:
                 role = "model" if message.role == "assistant" else "user"
                 contents.append({"role": role, "parts": parts})
@@ -294,7 +292,7 @@ class GeminiApiClient:
                         and name.strip()
                         and isinstance(arguments, dict)
                     ):
-                        thought_signature = function_call.get("thoughtSignature", "")
+                        thought_signature = part.get("thoughtSignature", "")
                         if not isinstance(thought_signature, str):
                             thought_signature = ""
                         tool_calls.append(
