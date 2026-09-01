@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import glob
+import base64
 import json
 import os
 import re
@@ -16,7 +17,13 @@ from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Callable
+from html.parser import HTMLParser
+from urllib.parse import quote, urlencode, urlparse
+from urllib.request import Request, urlopen
 
+from .config import DEFAULT_GEMINI_IMAGE_MODEL
+from .credentials import load_hosted_api_key
+from .memory import MemoryStore
 
 class PermissionLevel(str, Enum):
     SAFE = "safe"
@@ -68,11 +75,69 @@ _MAX_SEARCH_DIRECTORIES = 10_000
 _MAX_SCREENSHOTS = 20
 
 
+class _DuckDuckGoParser(HTMLParser):
+    """Extract the small result fields needed by the assistant."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.items: list[dict[str, str]] = []
+        self._current: dict[str, str] | None = None
+        self._field: str | None = None
+        self._field_tag: str | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attributes = dict(attrs)
+        classes = set((attributes.get("class") or "").split())
+        if tag == "a" and "result__a" in classes:
+            self._current = {
+                "title": "",
+                "url": attributes.get("href") or "",
+                "snippet": "",
+            }
+            self._field = "title"
+        elif self._current is not None and "result__snippet" in classes:
+            self._field = "snippet"
+            self._field_tag = tag
+
+    def handle_data(self, data: str) -> None:
+        if self._current is not None and self._field:
+            self._current[self._field] += " ".join(data.split())
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._current is None:
+            return
+        if tag == "a" and self._field == "title":
+            self._field = None
+        elif self._field == "snippet" and tag == self._field_tag:
+            self.items.append(self._current)
+            self._current = None
+            self._field = None
+            self._field_tag = None
+
+
 def _string_argument(arguments: dict, name: str) -> str:
     value = arguments.get(name)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"Tool argument '{name}' must be a non-empty string.")
     return value.strip()
+
+
+def _first_inline_data(payload: object) -> str | None:
+    if isinstance(payload, dict):
+        for key in ("inlineData", "inline_data"):
+            value = payload.get(key)
+            if isinstance(value, dict) and isinstance(value.get("data"), str):
+                return value["data"]
+        for value in payload.values():
+            found = _first_inline_data(value)
+            if found:
+                return found
+    elif isinstance(payload, list):
+        for value in payload:
+            found = _first_inline_data(value)
+            if found:
+                return found
+    return None
 
 
 def _failed(error: Exception) -> ToolCallResult:
@@ -82,7 +147,13 @@ def _failed(error: Exception) -> ToolCallResult:
 class ToolManager:
     """Registry and safety gate for tools callable by the local model."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        memory_store: MemoryStore | None = None,
+        image_model: str = DEFAULT_GEMINI_IMAGE_MODEL,
+    ) -> None:
+        self.memory_store = memory_store or MemoryStore()
+        self.image_model = image_model
         self._definitions = {
             "open_app": ToolDefinition(
                 "open_app",
@@ -323,6 +394,69 @@ class ToolManager:
             "get_volume": self._system_definition(
                 "get_volume", "Get the current default audio output volume.", self._get_volume
             ),
+            "open_website": ToolDefinition(
+                "open_website",
+                "Open an http or https website in the user's default browser.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {"url": {"type": "string", "description": "Website URL"}},
+                    "required": ["url"],
+                },
+                self._open_website,
+            ),
+            "web_search": ToolDefinition(
+                "web_search",
+                "Search the public web for current information and return concise results.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "A focused web search query"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 8},
+                    },
+                    "required": ["query"],
+                },
+                self._web_search,
+            ),
+            "remember": ToolDefinition(
+                "remember",
+                "Save one user-approved fact or preference for future conversations.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {"fact": {"type": "string", "description": "Fact to remember"}},
+                    "required": ["fact"],
+                },
+                self._remember,
+            ),
+            "forget_memory": ToolDefinition(
+                "forget_memory",
+                "Remove an exact fact from Lura's local memory.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {"fact": {"type": "string", "description": "Exact fact to forget"}},
+                    "required": ["fact"],
+                },
+                self._forget_memory,
+            ),
+            "list_memory": self._system_definition(
+                "list_memory", "List facts the user explicitly asked Lura to remember.", self._list_memory
+            ),
+            "generate_image": ToolDefinition(
+                "generate_image",
+                "Generate an image from a user-requested description using the configured Gemini image model.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "prompt": {"type": "string", "description": "Image description"},
+                    },
+                    "required": ["prompt"],
+                },
+                self._generate_image,
+            ),
         }
 
     @staticmethod
@@ -420,6 +554,122 @@ class ToolManager:
             start_new_session=True,
         )
         return ToolCallResult(True, f"{command[0]} opened.")
+
+    @staticmethod
+    def _open_website(arguments: dict) -> ToolCallResult:
+        url = _string_argument(arguments, "url")
+        parsed = urlparse(url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("Website URL must start with http:// or https://.")
+        executable = shutil.which("xdg-open")
+        if not executable:
+            raise ValueError("xdg-open is not available.")
+        subprocess.Popen(
+            [executable, url],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return ToolCallResult(True, f"Opened {url}.")
+
+    @staticmethod
+    def _web_search(arguments: dict) -> ToolCallResult:
+        query = _string_argument(arguments, "query")
+        max_results = _integer_argument(arguments, "max_results", 1, 8) if "max_results" in arguments else 5
+        request = Request(
+            "https://html.duckduckgo.com/html/?" + urlencode({"q": query}),
+            headers={"User-Agent": "Lura/1.0 (personal desktop assistant)"},
+        )
+        try:
+            with urlopen(request, timeout=15) as response:
+                html = response.read(1_000_000).decode("utf-8", errors="replace")
+        except Exception as error:
+            return ToolCallResult(False, f"Web search failed: {error}")
+        results = _DuckDuckGoParser()
+        results.feed(html)
+        if not results.items:
+            return ToolCallResult(False, f"No web results found for '{query}'.")
+        lines = [f"Web results for: {query}"]
+        for index, item in enumerate(results.items[:max_results], start=1):
+            lines.append(f"{index}. {item['title']}\n   {item['url']}\n   {item['snippet']}")
+        return ToolCallResult(True, "\n".join(lines))
+
+    def _remember(self, arguments: dict) -> ToolCallResult:
+        fact = _string_argument(arguments, "fact")
+        self.memory_store.add(fact)
+        return ToolCallResult(True, f"Remembered: {fact}")
+
+    def _forget_memory(self, arguments: dict) -> ToolCallResult:
+        fact = _string_argument(arguments, "fact")
+        if not self.memory_store.forget(fact):
+            return ToolCallResult(False, f"That memory was not found: {fact}")
+        return ToolCallResult(True, f"Forgotten: {fact}")
+
+    def _list_memory(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        context = self.memory_store.context()
+        return ToolCallResult(True, context or "No saved memories.")
+
+    def _generate_image(self, arguments: dict) -> ToolCallResult:
+        prompt = _string_argument(arguments, "prompt")
+        if len(prompt) > 4_000:
+            prompt = prompt[:3_997] + "..."
+        try:
+            api_key = load_hosted_api_key()
+        except (OSError, RuntimeError) as error:
+            return ToolCallResult(False, f"Could not read the Gemini API key: {error}")
+        if not api_key:
+            return ToolCallResult(False, "No Gemini API key is configured. Add one in Settings.")
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{quote(self.image_model, safe='')}:generateContent"
+            f"?key={quote(api_key, safe='')}"
+        )
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
+        }
+        request = Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=120) as response:
+                result = json.loads(response.read().decode("utf-8"))
+        except HTTPError as error:
+            detail = error.read().decode("utf-8", errors="replace")
+            return ToolCallResult(False, f"Image generation failed ({error.code}): {detail[:300]}")
+        except (URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
+            return ToolCallResult(False, f"Could not reach Gemini image service: {error}")
+        if not isinstance(result, dict):
+            return ToolCallResult(False, "Gemini image service returned invalid JSON.")
+        if result.get("error"):
+            return ToolCallResult(False, f"Gemini image service error: {result['error']}")
+        encoded = _first_inline_data(result)
+        if encoded is None:
+            return ToolCallResult(False, "Gemini returned no image.")
+        try:
+            image_bytes = base64.b64decode(encoded, validate=True)
+        except (ValueError, base64.binascii.Error) as error:
+            return ToolCallResult(False, f"Gemini returned invalid image data: {error}")
+        directory = Path.home() / ".cache" / "local-ai-assistant" / "generated"
+        try:
+            directory.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                prefix="lura-image-",
+                suffix=".png",
+                dir=directory,
+                delete=False,
+            ) as file:
+                file.write(image_bytes)
+                path = Path(file.name)
+            path.chmod(0o600)
+        except OSError as error:
+            return ToolCallResult(False, f"Could not save generated image: {error}")
+        return ToolCallResult(True, f"Generated image for: {prompt}", (str(path),))
 
     def _close_app(self, arguments: dict) -> ToolCallResult:
         command = self._application_command(arguments)

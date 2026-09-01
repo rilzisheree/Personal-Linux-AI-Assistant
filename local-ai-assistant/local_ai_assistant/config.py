@@ -17,9 +17,21 @@ DEFAULT_AI_PROVIDER = "ollama"
 DEFAULT_HOSTED_PROVIDER = "openai"
 DEFAULT_HOSTED_API_URL = "https://api.openai.com/v1"
 DEFAULT_HOSTED_MODEL = "gpt-4o-mini"
+DEFAULT_GEMINI_PRIMARY_MODEL = "gemini-3.7-flash"
+DEFAULT_GEMINI_REASONING_MODEL = "gemini-3.1-pro-preview"
+DEFAULT_GEMINI_STT_MODEL = "gemini-3.5-transcribe"
+DEFAULT_GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview"
+DEFAULT_GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image"
+DEFAULT_GEMINI_TTS_VOICE = "Kore"
 HOSTED_PROVIDER_PRESETS = (
     ("OpenAI", "openai", "https://api.openai.com/v1", "gpt-4o-mini"),
     ("OpenRouter", "openrouter", "https://openrouter.ai/api/v1", "openai/gpt-4o-mini"),
+    (
+        "Google Gemini · AI Studio",
+        "gemini",
+        "https://generativelanguage.googleapis.com/v1beta/openai/",
+        DEFAULT_GEMINI_PRIMARY_MODEL,
+    ),
     ("Custom OpenAI-compatible", "custom", "", ""),
 )
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
@@ -61,6 +73,13 @@ class AppConfig:
     hosted_provider: str = DEFAULT_HOSTED_PROVIDER
     hosted_api_url: str = DEFAULT_HOSTED_API_URL
     hosted_model: str = DEFAULT_HOSTED_MODEL
+    voice_backend: str = "local"
+    gemini_primary_model: str = DEFAULT_GEMINI_PRIMARY_MODEL
+    gemini_reasoning_model: str = DEFAULT_GEMINI_REASONING_MODEL
+    gemini_stt_model: str = DEFAULT_GEMINI_STT_MODEL
+    gemini_tts_model: str = DEFAULT_GEMINI_TTS_MODEL
+    gemini_tts_voice: str = DEFAULT_GEMINI_TTS_VOICE
+    gemini_image_model: str = DEFAULT_GEMINI_IMAGE_MODEL
 
     def __post_init__(self) -> None:
         self.ai_provider = self.ai_provider.strip().lower()
@@ -69,6 +88,13 @@ class AppConfig:
         self.hosted_provider = self.hosted_provider.strip().lower()
         self.hosted_api_url = self.hosted_api_url.strip().rstrip("/")
         self.hosted_model = self.hosted_model.strip()
+        self.voice_backend = self.voice_backend.strip().lower()
+        self.gemini_primary_model = self.gemini_primary_model.strip()
+        self.gemini_reasoning_model = self.gemini_reasoning_model.strip()
+        self.gemini_stt_model = self.gemini_stt_model.strip()
+        self.gemini_tts_model = self.gemini_tts_model.strip()
+        self.gemini_tts_voice = self.gemini_tts_voice.strip()
+        self.gemini_image_model = self.gemini_image_model.strip()
         if isinstance(self.ollama_context_size, str):
             self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
@@ -98,8 +124,10 @@ class AppConfig:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
         if not self.model:
             raise ValueError("Ollama model cannot be empty.")
-        if self.hosted_provider not in {"openai", "openrouter", "custom"}:
-            raise ValueError("Hosted provider must be OpenAI, OpenRouter, or custom.")
+        if self.hosted_provider not in {"openai", "openrouter", "gemini", "custom"}:
+            raise ValueError(
+                "Hosted provider must be OpenAI, OpenRouter, Gemini, or custom."
+            )
         hosted_parsed = urlparse(self.hosted_api_url)
         if (
             hosted_parsed.scheme not in {"http", "https"}
@@ -110,6 +138,18 @@ class AppConfig:
             )
         if not self.hosted_model:
             raise ValueError("Hosted API model cannot be empty.")
+        if self.voice_backend not in {"local", "gemini"}:
+            raise ValueError("Voice backend must be local or Gemini.")
+        for value, label in (
+            (self.gemini_primary_model, "Gemini primary model"),
+            (self.gemini_reasoning_model, "Gemini reasoning model"),
+            (self.gemini_stt_model, "Gemini speech-to-text model"),
+            (self.gemini_tts_model, "Gemini text-to-speech model"),
+            (self.gemini_tts_voice, "Gemini voice"),
+            (self.gemini_image_model, "Gemini image model"),
+        ):
+            if not value:
+                raise ValueError(f"{label} cannot be empty.")
         if (
             isinstance(self.ollama_context_size, bool)
             or not isinstance(self.ollama_context_size, int)
@@ -188,6 +228,25 @@ class AppConfig:
                     raw.get("hosted_api_url", DEFAULT_HOSTED_API_URL)
                 ),
                 hosted_model=str(raw.get("hosted_model", DEFAULT_HOSTED_MODEL)),
+                voice_backend=str(raw.get("voice_backend", "local")),
+                gemini_primary_model=str(
+                    raw.get("gemini_primary_model", DEFAULT_GEMINI_PRIMARY_MODEL)
+                ),
+                gemini_reasoning_model=str(
+                    raw.get("gemini_reasoning_model", DEFAULT_GEMINI_REASONING_MODEL)
+                ),
+                gemini_stt_model=str(
+                    raw.get("gemini_stt_model", DEFAULT_GEMINI_STT_MODEL)
+                ),
+                gemini_tts_model=str(
+                    raw.get("gemini_tts_model", DEFAULT_GEMINI_TTS_MODEL)
+                ),
+                gemini_tts_voice=str(
+                    raw.get("gemini_tts_voice", DEFAULT_GEMINI_TTS_VOICE)
+                ),
+                gemini_image_model=str(
+                    raw.get("gemini_image_model", DEFAULT_GEMINI_IMAGE_MODEL)
+                ),
                 ollama_context_size=_int_setting(
                     raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
                     DEFAULT_CONTEXT_SIZE,

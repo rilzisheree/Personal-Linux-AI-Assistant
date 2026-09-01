@@ -1,0 +1,189 @@
+I don't want you to redesign, replace, or restructure my existing UI.
+
+
+
+Keep the current design exactly as it is. I only want you to ADD functionality to the existing app.
+
+
+
+1. Better Gemini model setup
+
+I'm using a Google AI Studio API key that has access to these models.
+
+
+
+Use:
+
+
+
+Main AI: gemini-3.7-flash
+
+Advanced reasoning/coding when needed: gemini-3.1-pro-preview
+
+Speech-to-text: gemini-3.5-transcribe
+
+Text-to-speech: gemini-3.1-flash-tts-preview
+
+Image generation when requested: gemini-3.1-flash-image
+
+
+
+Create a clean model configuration so I can easily change these later.
+
+2. Voice interaction
+
+Add voice functionality to my EXISTING interface.
+
+
+
+I want:
+
+
+
+Microphone → Speech-to-text → Gemini → Response → Text-to-speech
+
+
+
+Add:
+
+
+
+Microphone input
+
+Speech-to-text
+
+AI voice responses
+
+Ability to interrupt the AI while it's speaking
+
+Listening/speaking states
+
+Proper microphone permission/error handling
+
+
+
+Do NOT redesign the existing voice UI. Integrate it into what already exists.
+
+3. JARVIS-style personality
+
+Update the AI's system prompt/personality so it behaves like a sophisticated personal assistant.
+
+
+
+Personality:
+
+
+
+Intelligent
+
+Calm
+
+Professional
+
+Concise
+
+Confident
+
+Slightly witty
+
+Helpful
+
+Addresses me as "Sir" naturally, but doesn't overuse it
+
+
+
+It should feel like a personal computer assistant rather than a normal chatbot.
+
+4. AI status
+
+Connect the existing UI/orb/animation to the actual AI state if my app already has one.
+
+
+
+The AI should have states such as:
+
+
+
+Idle
+
+Listening
+
+Thinking
+
+Speaking
+
+Error
+
+
+
+If the current UI already has animations for these, connect the functionality to those animations instead of creating new ones.
+
+5. Web access
+
+Add web search capability so the AI can get current information when necessary.
+
+
+
+The AI should be able to decide when it needs web information instead of relying entirely on Gemini's knowledge.
+
+6. Computer tools
+
+Add a secure tool system that can eventually let the AI interact with my computer.
+
+
+
+Examples:
+
+
+
+Open applications
+
+Open websites
+
+Control volume
+
+Get system information
+
+Take screenshots
+
+Read/manage files
+
+Control media
+
+Run approved commands
+
+
+
+Do NOT give Gemini unrestricted terminal/shell access.
+
+
+
+Use a permission-based system and require confirmation for potentially destructive or dangerous actions.
+
+7. Memory
+
+Add conversation/context memory so the assistant can remember useful information from previous conversations where appropriate.
+
+IMPORTANT
+
+Do NOT redesign the application.
+
+
+
+Do NOT replace my existing components.
+
+
+
+Do NOT change the current visual style.
+
+
+
+Work with the code that already exists and add these capabilities to it.
+
+
+
+Before modifying anything, inspect the existing project and understand how the current AI, UI, API calls, animations, and state management work.
+
+
+
+Make the smallest necessary changes to integrate these features cleanly

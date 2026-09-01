@@ -194,6 +194,12 @@ class SettingsDialog(QDialog):
         self.voice_input_enabled.setChecked(config.voice_input_enabled)
         self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
         self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
+        self.voice_backend_input = QComboBox()
+        self.voice_backend_input.addItem("Local Whisper + Piper", "local")
+        self.voice_backend_input.addItem("Google Gemini voice models", "gemini")
+        self.voice_backend_input.setCurrentIndex(
+            max(0, self.voice_backend_input.findData(config.voice_backend))
+        )
         self.microphone_input = QComboBox()
         self.microphone_input.setEditable(False)
         self.microphone_input.setMinimumWidth(320)
@@ -240,6 +246,7 @@ class SettingsDialog(QDialog):
         self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
         form.addRow("", self.voice_input_enabled)
         form.addRow("", self.voice_responses_enabled)
+        form.addRow("Voice backend", self.voice_backend_input)
         form.addRow("Microphone", microphone_row)
         form.addRow("Whisper model", self.whisper_model_input)
         form.addRow("Language", self.whisper_language_input)
@@ -314,6 +321,21 @@ class SettingsDialog(QDialog):
             self._hosted_provider_changed
         )
         self._hosted_provider_changed(self.hosted_provider_input.currentIndex())
+
+        gemini_group, gemini_form = self._group("GEMINI MODEL ROLES")
+        self.gemini_primary_model_input = QLineEdit(config.gemini_primary_model)
+        self.gemini_reasoning_model_input = QLineEdit(config.gemini_reasoning_model)
+        self.gemini_stt_model_input = QLineEdit(config.gemini_stt_model)
+        self.gemini_tts_model_input = QLineEdit(config.gemini_tts_model)
+        self.gemini_tts_voice_input = QLineEdit(config.gemini_tts_voice)
+        self.gemini_image_model_input = QLineEdit(config.gemini_image_model)
+        gemini_form.addRow("Main AI", self.gemini_primary_model_input)
+        gemini_form.addRow("Reasoning / coding", self.gemini_reasoning_model_input)
+        gemini_form.addRow("Speech to text", self.gemini_stt_model_input)
+        gemini_form.addRow("Text to speech", self.gemini_tts_model_input)
+        gemini_form.addRow("TTS voice", self.gemini_tts_voice_input)
+        gemini_form.addRow("Image generation", self.gemini_image_model_input)
+        layout.addWidget(gemini_group)
 
         desktop_group, desktop_form = self._group("DESKTOP")
         self.background_mode_enabled = QCheckBox(
@@ -416,6 +438,13 @@ class SettingsDialog(QDialog):
             hosted_provider=str(self.hosted_provider_input.currentData()),
             hosted_api_url=self.hosted_url_input.text(),
             hosted_model=self.hosted_model_input.text(),
+            voice_backend=str(self.voice_backend_input.currentData()),
+            gemini_primary_model=self.gemini_primary_model_input.text(),
+            gemini_reasoning_model=self.gemini_reasoning_model_input.text(),
+            gemini_stt_model=self.gemini_stt_model_input.text(),
+            gemini_tts_model=self.gemini_tts_model_input.text(),
+            gemini_tts_voice=self.gemini_tts_voice_input.text(),
+            gemini_image_model=self.gemini_image_model_input.text(),
         )
 
     def telegram_token(self) -> str:

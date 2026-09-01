@@ -41,6 +41,7 @@ class ChatWorker(QObject):
         model: str,
         tool_manager: ToolManager,
         context_size: int | None = None,
+        system_prompt: str = "",
     ) -> None:
         super().__init__()
         self.service = service
@@ -48,6 +49,7 @@ class ChatWorker(QObject):
         self.model = model
         self.tool_manager = tool_manager
         self.context_size = context_size
+        self.system_prompt = system_prompt.strip()
         self.cancel_event = threading.Event()
         self._approval_events: dict[str, threading.Event] = {}
         self._approval_results: dict[str, bool] = {}
@@ -55,7 +57,12 @@ class ChatWorker(QObject):
 
     @Slot()
     def run(self) -> None:
-        messages = list(self.messages)
+        visible_messages = list(self.messages)
+        messages = (
+            [ChatMessage("system", self.system_prompt), *visible_messages]
+            if self.system_prompt
+            else list(visible_messages)
+        )
         complete_response: list[str] = []
         tool_rounds = 0
         try:
@@ -77,19 +84,21 @@ class ChatWorker(QObject):
                     if event.done:
                         break
                 if self.cancel_event.is_set():
-                    self.conversation_ready.emit(messages)
+                    self.conversation_ready.emit(visible_messages)
                     self.failed.emit("Generation stopped.", "cancelled")
                     return
                 if not tool_calls:
                     response = "".join(cycle_response)
-                    messages.append(ChatMessage("assistant", response))
-                    self.conversation_ready.emit(messages)
+                    assistant_message = ChatMessage("assistant", response)
+                    messages.append(assistant_message)
+                    visible_messages.append(assistant_message)
+                    self.conversation_ready.emit(visible_messages)
                     self.finished.emit("".join(complete_response))
                     return
 
                 tool_rounds += 1
                 if tool_rounds > MAX_TOOL_ROUNDS:
-                    self.conversation_ready.emit(messages)
+                    self.conversation_ready.emit(visible_messages)
                     self.failed.emit(
                         f"Stopped after {MAX_TOOL_ROUNDS} tool rounds to prevent an endless loop.",
                         "error",
@@ -105,16 +114,16 @@ class ChatWorker(QObject):
                     )
                     for tool_call in tool_calls
                 ]
-                messages.append(
-                    ChatMessage(
-                        "assistant",
-                        "".join(cycle_response),
-                        tuple(normalized_tool_calls),
-                    )
+                assistant_message = ChatMessage(
+                    "assistant",
+                    "".join(cycle_response),
+                    tuple(normalized_tool_calls),
                 )
+                messages.append(assistant_message)
+                visible_messages.append(assistant_message)
                 for tool_call in normalized_tool_calls:
                     if self.cancel_event.is_set():
-                        self.conversation_ready.emit(messages)
+                        self.conversation_ready.emit(visible_messages)
                         self.failed.emit("Generation stopped.", "cancelled")
                         return
                     call_id = tool_call.id or f"{tool_call.name}-{uuid.uuid4().hex}"
@@ -134,21 +143,21 @@ class ChatWorker(QObject):
                         result.success,
                         result.images,
                     )
-                    messages.append(
-                        ChatMessage(
-                            "tool",
-                            result.content,
-                            name=tool_call.name,
-                            images=result.images,
-                            tool_call_id=call_id,
-                        )
+                    tool_message = ChatMessage(
+                        "tool",
+                        result.content,
+                        name=tool_call.name,
+                        images=result.images,
+                        tool_call_id=call_id,
                     )
+                    messages.append(tool_message)
+                    visible_messages.append(tool_message)
             self.failed.emit("Generation stopped.", "cancelled")
         except (OllamaCancelledError, AssistantCancelledError):
-            self.conversation_ready.emit(messages)
+            self.conversation_ready.emit(visible_messages)
             self.failed.emit("Generation stopped.", "cancelled")
         except Exception as error:
-            self.conversation_ready.emit(messages)
+            self.conversation_ready.emit(visible_messages)
             self.failed.emit(
                 format_backend_error(error, self.service.backend_name), "error"
             )
