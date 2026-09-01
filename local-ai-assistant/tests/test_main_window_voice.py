@@ -47,6 +47,20 @@ class MainWindowVoiceTests(unittest.TestCase):
         window._start_manual_recording_when_ready.assert_not_called()
         window._set_orb_state.assert_called_once_with("idle")
 
+    def test_wake_detection_keeps_command_pending_until_listener_stops(self) -> None:
+        window = MainWindow.__new__(MainWindow)
+        window._wake_command_pending = False
+        window.wake_word_thread = Mock()
+        window._set_voice_status = Mock()
+
+        MainWindow._wake_word_detected(window)
+
+        self.assertTrue(window._wake_command_pending)
+        window.wake_word_thread.quit.assert_called_once_with()
+        window._set_voice_status.assert_called_once_with(
+            "WAKE WORD DETECTED // LISTENING…"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

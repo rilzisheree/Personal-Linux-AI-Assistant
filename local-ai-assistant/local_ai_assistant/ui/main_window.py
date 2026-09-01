@@ -723,7 +723,6 @@ class MainWindow(QMainWindow):
         self.wake_word_thread.started.connect(self.wake_word_worker.run)
         self.wake_word_worker.detected.connect(self._wake_word_detected)
         self.wake_word_worker.failed.connect(self._wake_word_failed)
-        self.wake_word_worker.detected.connect(self.wake_word_thread.quit)
         self.wake_word_worker.failed.connect(self.wake_word_thread.quit)
         self.wake_word_thread.finished.connect(self._wake_word_thread_finished)
         self.wake_word_thread.start()
@@ -733,6 +732,11 @@ class MainWindow(QMainWindow):
     def _wake_word_detected(self) -> None:
         self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
         self._wake_command_pending = True
+        # Keep detection state and listener shutdown in the same queued
+        # callback. Separate signal connections can let the thread finish
+        # before _wake_command_pending is set, losing the command.
+        if self.wake_word_thread is not None:
+            self.wake_word_thread.quit()
 
     @Slot(str)
     def _wake_word_failed(self, message: str) -> None:
