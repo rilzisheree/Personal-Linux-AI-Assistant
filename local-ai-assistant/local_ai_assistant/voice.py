@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import time
+import wave
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,8 @@ class VoiceService:
         self._last_recorder_command: list[str] = []
         self._whisper_model: Any | None = None
         self._whisper_model_name: str | None = None
+        self._piper_voice: Any | None = None
+        self._piper_model_path: Path | None = None
 
     @staticmethod
     def recordings_directory() -> Path:
@@ -274,30 +277,33 @@ class VoiceService:
     def _synthesize(self, text: str, audio_path: Path) -> None:
         if self.config.tts_engine == "piper":
             model = Path(self.config.tts_voice).expanduser()
-            executable = shutil.which("piper")
-            if executable:
-                command_prefix = [executable]
-            else:
-                try:
-                    import piper  # noqa: F401
-                except ImportError as error:
-                    raise VoiceError(
-                        "Piper is not installed. Install piper-tts in the same "
-                        "Python environment Lura uses."
-                    ) from error
-                command_prefix = [sys.executable, "-m", "piper"]
             if not model.is_file():
                 model = self._ensure_piper_model(model)
             if not model.is_file():
                 raise VoiceError(
                     f"The {self._voice_label(model)} Piper model is missing."
                 )
-            self._run_checked(
-                [*command_prefix, "--model", str(model), "--output_file", str(audio_path)],
-                120,
-                "Piper",
-                input_text=text,
-            )
+            if model.with_suffix(".onnx.json").is_file():
+                self._synthesize_piper(text, model, audio_path)
+            else:
+                executable = shutil.which("piper")
+                if not executable:
+                    raise VoiceError(
+                        f"The {self._voice_label(model)} Piper model is missing "
+                        "its .onnx.json config file."
+                    )
+                self._run_checked(
+                    [
+                        executable,
+                        "--model",
+                        str(model),
+                        "--output_file",
+                        str(audio_path),
+                    ],
+                    120,
+                    "Piper",
+                    input_text=text,
+                )
             if not audio_path.is_file() or audio_path.stat().st_size == 0:
                 raise VoiceError("Piper completed without producing an audio file.")
             return
@@ -315,6 +321,23 @@ class VoiceService:
             "en_GB-alan-medium": "Jarvis",
             "en_US-amy-medium": "Laura",
         }.get(model.stem, "selected")
+
+    def _synthesize_piper(self, text: str, model: Path, audio_path: Path) -> None:
+        try:
+            from piper import PiperVoice
+        except ImportError as error:
+            raise VoiceError(
+                "Piper is not installed. Install piper-tts in the same "
+                "Python environment Lura uses."
+            ) from error
+        try:
+            if self._piper_voice is None or self._piper_model_path != model:
+                self._piper_voice = PiperVoice.load(model)
+                self._piper_model_path = model
+            with wave.open(str(audio_path), "wb") as wav_file:
+                self._piper_voice.synthesize_wav(text, wav_file)
+        except Exception as error:
+            raise VoiceError(f"Piper could not synthesize the response: {error}") from error
 
     def _ensure_piper_model(self, model: Path) -> Path:
         if model.is_file():

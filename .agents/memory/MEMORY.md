@@ -2,3 +2,4 @@
 - [PipeWire recorder exit status](pipewire-recorder.md) — `pw-record` can return exit code 1 after a user stop while still producing a valid WAV; validate the file before failing.
 - [Local Piper setup](local-piper-setup.md) — On Arch, install `piper-tts` inside Lura’s `.venv`; system Python is protected by PEP 668.
 - [Railway local API bridge](railway-local-api.md) — A Railway HTTPS frontend needs a secure tunnel to a local API; cross-origin sessions use a bearer-token fallback.
+- [Qt worker shutdown](qt-worker-shutdown.md) — Never synchronously wait on network or polling QThreads from the GUI; cancel and let finished callbacks own cleanup.

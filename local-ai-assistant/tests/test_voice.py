@@ -125,9 +125,8 @@ class VoiceServiceTests(unittest.TestCase):
                     "/usr/bin/espeak-ng" if name == "espeak-ng" else None
                 ),
             ) as run_mock:
-                with self.assertRaisesRegex(VoiceError, "Piper is not installed"):
+                with self.assertRaisesRegex(VoiceError, "model was not found"):
                     service._synthesize("Hello locally", output)
-                run_mock.assert_called_once_with("piper")
 
 
 if __name__ == "__main__":

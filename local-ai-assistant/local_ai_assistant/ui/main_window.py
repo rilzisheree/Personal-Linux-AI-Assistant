@@ -353,9 +353,9 @@ class MainWindow(QMainWindow):
         self.mic_button.setVisible(False)
         self.mic_button.setObjectName("micButton")
 
-        self.stop_button = QPushButton("×")
+        self.stop_button = QPushButton("STOP")
         self.stop_button.setObjectName("stopButton")
-        self.stop_button.setToolTip("Stop generation")
+        self.stop_button.setToolTip("Stop the active operation")
         self.stop_button.setEnabled(False)
         self.stop_button.setVisible(False)
         self.stop_button.clicked.connect(self._stop_generation)
@@ -539,6 +539,7 @@ class MainWindow(QMainWindow):
         self._set_voice_status("STARTING MICROPHONE…")
         self.message_input.setEnabled(False)
         self.send_button.setEnabled(False)
+        self._sync_stop_button()
 
     @Slot()
     def _recording_started(self) -> None:
@@ -557,6 +558,13 @@ class MainWindow(QMainWindow):
             self.mic_button.setEnabled(False)
             self.voice_record_worker.stop()
             self._set_voice_status("PROCESSING LOCAL AUDIO…")
+        elif self._manual_recording_pending:
+            # The wake sampler may need a moment to release the microphone
+            # before a manual press can start recording. Preserve the normal
+            # press/release semantics: a release before that handoff means
+            # cancel the pending press rather than starting dead-air capture.
+            self._manual_recording_pending = False
+            self._wake_restart_pending = self.config.wake_word_enabled
         else:
             self._set_orb_state("idle")
 
@@ -602,6 +610,7 @@ class MainWindow(QMainWindow):
             self.voice_record_thread.deleteLater()
         self.voice_record_worker = None
         self.voice_record_thread = None
+        self._sync_stop_button()
         if self.voice_transcription_worker is None:
             self._set_voice_idle()
             if self.last_voice_error:
@@ -649,6 +658,7 @@ class MainWindow(QMainWindow):
             self.voice_transcription_thread.deleteLater()
         self.voice_transcription_worker = None
         self.voice_transcription_thread = None
+        self._sync_stop_button()
 
     @staticmethod
     def _remove_recording(audio_path: str) -> None:
@@ -717,6 +727,22 @@ class MainWindow(QMainWindow):
         self._set_voice_status(f"WAKE LISTENER ERROR // {message[:180]}")
         self.status_label.setToolTip(message)
 
+    def _stop_wake_word_listener(self) -> None:
+        worker = self.wake_word_worker
+        thread = self.wake_word_thread
+        if worker is not None:
+            worker.cancel()
+        if thread is not None and thread.isRunning():
+            thread.quit()
+            return
+        if self.wake_word_thread is thread:
+            if worker is not None:
+                worker.deleteLater()
+            if thread is not None:
+                thread.deleteLater()
+            self.wake_word_worker = None
+            self.wake_word_thread = None
+
     def _wake_word_thread_finished(self) -> None:
         if self.wake_word_worker:
             self.wake_word_worker.deleteLater()
@@ -724,7 +750,14 @@ class MainWindow(QMainWindow):
             self.wake_word_thread.deleteLater()
         self.wake_word_worker = None
         self.wake_word_thread = None
-        self._start_pending_wake_command()
+        if self._wake_restart_pending and not self._quitting:
+            self._wake_restart_pending = False
+            QTimer.singleShot(0, self._start_wake_word_listener)
+        elif self._manual_recording_pending:
+            self._manual_recording_pending = False
+            QTimer.singleShot(0, self._start_recording)
+        else:
+            self._start_pending_wake_command()
 
     def _start_pending_wake_command(self) -> None:
         if self._wake_command_pending and self.wake_word_worker is None:
@@ -752,11 +785,13 @@ class MainWindow(QMainWindow):
         self.speech_thread.finished.connect(self._speech_thread_finished)
         self.speech_thread.start()
         self._set_voice_status("SPEAKING LOCAL RESPONSE…")
+        self._sync_stop_button()
 
     @Slot()
     def _speech_finished(self) -> None:
         self._set_orb_state("idle")
         self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        self._sync_stop_button()
 
     @Slot(str)
     def _speech_failed(self, message: str) -> None:
@@ -772,6 +807,7 @@ class MainWindow(QMainWindow):
             self.speech_thread.deleteLater()
         self.speech_worker = None
         self.speech_thread = None
+        self._sync_stop_button()
         self._start_wake_word_listener()
 
     @Slot(str)
@@ -811,8 +847,7 @@ class MainWindow(QMainWindow):
         if generating:
             self._set_orb_state("thinking")
         self.send_button.setEnabled(not generating)
-        self.stop_button.setEnabled(generating)
-        self.stop_button.setVisible(generating)
+        self._sync_stop_button()
         self.message_input.setEnabled(not generating)
         self.model_selector.setEnabled(not generating)
         self.history_list.setEnabled(not generating)
@@ -828,6 +863,34 @@ class MainWindow(QMainWindow):
     def _stop_generation(self) -> None:
         if self.chat_worker:
             self.chat_worker.cancel()
+        elif self.speech_worker:
+            self.speech_worker.cancel()
+        elif self.voice_record_worker:
+            self.voice_record_worker.stop()
+        elif self.wake_word_worker:
+            self._wake_command_pending = False
+            self._stop_wake_word_listener()
+
+    def _sync_stop_button(self) -> None:
+        active = any(
+            worker is not None
+            for worker in (
+                self.chat_worker,
+                self.speech_worker,
+                self.voice_record_worker,
+                self.wake_word_worker,
+            )
+        )
+        self.stop_button.setEnabled(active)
+        self.stop_button.setVisible(active)
+        if self.chat_worker is not None:
+            self.stop_button.setToolTip("Stop thinking")
+        elif self.speech_worker is not None:
+            self.stop_button.setToolTip("Stop talking")
+        elif self.wake_word_worker is not None:
+            self.stop_button.setToolTip("Stop wake-word listening")
+        else:
+            self.stop_button.setToolTip("Stop recording")
 
     def _refresh_connection(self) -> None:
         if self.connection_thread is not None and self.connection_thread.isRunning():
@@ -1035,6 +1098,9 @@ class MainWindow(QMainWindow):
             self.config.autostart_enabled = next_config.autostart_enabled
         self._cancel_connection_check()
         self._stop_telegram_bot()
+        if self.wake_word_worker is not None:
+            self._wake_restart_pending = True
+            self._stop_wake_word_listener()
         self.config = next_config
         self._sync_quit_behavior()
         self.client = OllamaClient(self.config.ollama_url)
@@ -1049,6 +1115,8 @@ class MainWindow(QMainWindow):
             self._start_telegram_bot()
         else:
             self._telegram_restart_pending = self.config.telegram_enabled
+        if self.wake_word_thread is None:
+            self._start_wake_word_listener()
 
     def _cancel_connection_check(self) -> None:
         thread = self.connection_thread
