@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import base64
-import re
 import shutil
 import shlex
 import signal
@@ -17,12 +15,9 @@ import wave
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.error import HTTPError, URLError
-from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
-from .credentials import load_gemini_api_key
 
 
 class VoiceError(RuntimeError):
@@ -259,8 +254,6 @@ class VoiceService:
     def transcribe(self, audio_path: Path, *, device: str | None = None) -> str:
         if not audio_path.is_file():
             raise VoiceError(f"Recording not found: {audio_path}")
-        if self.config.voice_backend == "gemini":
-            return self._transcribe_gemini(audio_path)
         whisper = shutil.which("whisper")
         if whisper:
             return self._transcribe_openai_whisper(whisper, audio_path, device=device)
@@ -419,147 +412,13 @@ class VoiceService:
         with tempfile.NamedTemporaryFile(suffix=".wav", prefix="lura-tts-", delete=False) as file:
             audio_path = Path(file.name)
         try:
-            if self.config.voice_backend == "gemini":
-                self._synthesize_gemini(text, audio_path)
-            else:
-                self._synthesize(text, audio_path)
+            self._synthesize(text, audio_path)
             self._play(audio_path, cancel_event)
         finally:
             try:
                 audio_path.unlink()
             except OSError:
                 pass
-
-    def _transcribe_gemini(self, audio_path: Path) -> str:
-        try:
-            encoded = base64.b64encode(audio_path.read_bytes()).decode("ascii")
-        except OSError as error:
-            raise VoiceError(f"Could not read the recording: {error}") from error
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "inline_data": {
-                                "mime_type": "audio/wav",
-                                "data": encoded,
-                            }
-                        },
-                        {
-                            "text": (
-                                "Transcribe this recording exactly. Return only the "
-                                "spoken words, with no commentary."
-                            )
-                        },
-                    ]
-                }
-            ],
-            "generationConfig": {"temperature": 0},
-        }
-        response = self._gemini_generate(
-            self.config.gemini_stt_model,
-            payload,
-        )
-        return self._gemini_response_text(response)
-
-    def _synthesize_gemini(self, text: str, audio_path: Path) -> None:
-        payload = {
-            "contents": [{"parts": [{"text": text}]}],
-            "generationConfig": {
-                "responseModalities": ["AUDIO"],
-                "speechConfig": {
-                    "voiceConfig": {
-                        "prebuiltVoiceConfig": {
-                            "voiceName": self.config.gemini_tts_voice,
-                        }
-                    }
-                },
-            },
-        }
-        response = self._gemini_generate(self.config.gemini_tts_model, payload)
-        audio_data, mime_type = self._gemini_audio(response)
-        try:
-            decoded = base64.b64decode(audio_data, validate=True)
-        except (ValueError, base64.binascii.Error) as error:
-            raise VoiceError("Gemini returned invalid speech audio.") from error
-        if "wav" in mime_type.casefold():
-            audio_path.write_bytes(decoded)
-            return
-        sample_rate_match = re.search(r"rate=(\d+)", mime_type)
-        sample_rate = int(sample_rate_match.group(1)) if sample_rate_match else 24000
-        try:
-            with wave.open(str(audio_path), "wb") as wav_file:
-                wav_file.setnchannels(1)
-                wav_file.setsampwidth(2)
-                wav_file.setframerate(sample_rate)
-                wav_file.writeframes(decoded)
-        except (OSError, wave.Error) as error:
-            raise VoiceError(f"Could not prepare Gemini speech audio: {error}") from error
-
-    @staticmethod
-    def _gemini_key() -> str:
-        try:
-            key = load_gemini_api_key()
-        except (OSError, RuntimeError) as error:
-            raise VoiceError(f"Could not read the Gemini API key: {error}") from error
-        if not key:
-            raise VoiceError("No Gemini API key is configured. Add one in Settings.")
-        return key
-
-    @classmethod
-    def _gemini_generate(cls, model: str, payload: dict) -> dict:
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{quote(model, safe='')}:generateContent?key={quote(cls._gemini_key(), safe='')}"
-        )
-        request = Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            method="POST",
-        )
-        try:
-            with urlopen(request, timeout=60) as response:
-                result = json.loads(response.read().decode("utf-8"))
-        except HTTPError as error:
-            detail = error.read().decode("utf-8", errors="replace")
-            raise VoiceError(f"Gemini voice request failed ({error.code}): {detail[:300]}") from error
-        except (URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
-            raise VoiceError(f"Could not reach Gemini voice service: {error}") from error
-        if not isinstance(result, dict):
-            raise VoiceError("Gemini voice service returned invalid JSON.")
-        if result.get("error"):
-            raise VoiceError(f"Gemini voice service error: {result['error']}")
-        return result
-
-    @staticmethod
-    def _gemini_response_text(response: dict) -> str:
-        candidates = response.get("candidates", [])
-        if not isinstance(candidates, list) or not candidates:
-            raise VoiceError("Gemini returned no transcription.")
-        content = candidates[0].get("content", {})
-        parts = content.get("parts", []) if isinstance(content, dict) else []
-        text = " ".join(
-            part.get("text", "").strip()
-            for part in parts
-            if isinstance(part, dict) and isinstance(part.get("text"), str)
-        )
-        return VoiceService._read_transcript_from_text(text)
-
-    @staticmethod
-    def _gemini_audio(response: dict) -> tuple[str, str]:
-        candidates = response.get("candidates", [])
-        if not isinstance(candidates, list) or not candidates:
-            raise VoiceError("Gemini returned no speech audio.")
-        content = candidates[0].get("content", {})
-        parts = content.get("parts", []) if isinstance(content, dict) else []
-        for part in parts:
-            if not isinstance(part, dict):
-                continue
-            inline = part.get("inlineData") or part.get("inline_data")
-            if isinstance(inline, dict) and isinstance(inline.get("data"), str):
-                return inline["data"], str(inline.get("mimeType") or inline.get("mime_type") or "")
-        raise VoiceError("Gemini returned no playable speech audio.")
 
     def _synthesize(self, text: str, audio_path: Path) -> None:
         if self.config.tts_engine == "piper":

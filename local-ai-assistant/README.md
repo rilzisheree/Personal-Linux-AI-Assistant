@@ -205,12 +205,11 @@ is not installed.
 
 Use the settings button in the app to change:
 
-- Active AI provider: **Ollama · local** or **Hosted API · key**
+- Active AI provider: **Ollama · local** or **OpenRouter · hosted**
 - Ollama URL, defaulting to `http://localhost:11434`
 - Ollama model, defaulting to `qwen3.5:4b`
-- Hosted provider preset: OpenAI, OpenRouter, or a custom OpenAI-compatible API
-- Hosted API base URL and model
-- Hosted API key
+- OpenRouter model, defaulting to `openai/gpt-4o-mini`
+- OpenRouter API key
 - Ollama context size, defaulting to 8,192 tokens
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
@@ -298,8 +297,7 @@ OpenAI Whisper) or model file path (for whisper.cpp) in Settings.
 
 ### Voice output is unavailable
 
-Enable spoken responses in Settings. eSpeak-NG is the easiest local option
-and uses a voice name such as `en-us`. Piper requires both the `piper`
+Enable spoken responses in Settings. Piper requires both the `piper`
 executable and a local `.onnx` voice model path. Playback prefers `pw-play`,
 then `aplay`/`paplay`. Text responses are still displayed if speech fails.
 
@@ -313,7 +311,7 @@ python -m unittest discover -s tests -v
 
 They cover Ollama's newline-delimited JSON stream parsing, configuration
 defaults/round-tripping, conversations, permission gates, local tool handlers,
-and voice backend selection/error handling.
+and local voice discovery/error handling.
 
 ## Project structure
 

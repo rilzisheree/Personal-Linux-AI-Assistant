@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from ..config import (
     AppConfig,
-    HOSTED_PROVIDER_PRESETS,
+    DEFAULT_HOSTED_API_URL,
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
 )
@@ -64,16 +64,19 @@ class SettingsDialog(QDialog):
         tabs.setObjectName("settingsTabs")
         layout.addWidget(tabs, 1)
         tabs.addTab(self._scroll_page(self._assistant_page(config)), "Assistant")
+        tabs.addTab(
+            self._scroll_page(self._ai_page(config, hosted_api_key_present)),
+            "AI & Models",
+        )
         tabs.addTab(self._scroll_page(self._voice_page(config)), "Voice")
         tabs.addTab(
             self._scroll_page(
-                self._connection_page(
+                self._integrations_page(
                     config,
                     telegram_token_present,
-                    hosted_api_key_present,
                 )
             ),
-            "AI & System",
+            "Integrations",
         )
         tabs.addTab(self._scroll_page(self._security_page()), "Security")
 
@@ -189,17 +192,9 @@ class SettingsDialog(QDialog):
             "Local voice",
             "Audio is processed on this host through your selected local tools.",
         )
-        group, form = self._group("VOICE")
+        input_group, input_form = self._group("VOICE INPUT")
         self.voice_input_enabled = QCheckBox("Enable hold-to-talk orb input")
         self.voice_input_enabled.setChecked(config.voice_input_enabled)
-        self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
-        self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
-        self.voice_backend_input = QComboBox()
-        self.voice_backend_input.addItem("Local Whisper + Piper", "local")
-        self.voice_backend_input.addItem("Google Gemini voice models", "gemini")
-        self.voice_backend_input.setCurrentIndex(
-            max(0, self.voice_backend_input.findData(config.voice_backend))
-        )
         self.microphone_input = QComboBox()
         self.microphone_input.setEditable(False)
         self.microphone_input.setMinimumWidth(320)
@@ -221,6 +216,15 @@ class SettingsDialog(QDialog):
         self.whisper_model_input.setPlaceholderText("base")
         self.whisper_language_input = QLineEdit(config.whisper_language)
         self.whisper_language_input.setPlaceholderText("auto")
+        input_form.addRow("", self.voice_input_enabled)
+        input_form.addRow("Microphone", microphone_row)
+        input_form.addRow("Whisper model", self.whisper_model_input)
+        input_form.addRow("Language", self.whisper_language_input)
+        layout.addWidget(input_group)
+
+        output_group, output_form = self._group("VOICE OUTPUT")
+        self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
+        self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
         self.tts_engine_input = QComboBox()
         engine_labels = {
             "disabled": "Disabled",
@@ -244,18 +248,13 @@ class SettingsDialog(QDialog):
         )
         self.tts_voice_input.setCurrentIndex(preset_index)
         self.tts_voice_input.currentIndexChanged.connect(self._voice_changed)
-        form.addRow("", self.voice_input_enabled)
-        form.addRow("", self.voice_responses_enabled)
-        form.addRow("Voice backend", self.voice_backend_input)
-        form.addRow("Microphone", microphone_row)
-        form.addRow("Whisper model", self.whisper_model_input)
-        form.addRow("Language", self.whisper_language_input)
-        form.addRow("TTS engine", self.tts_engine_input)
-        form.addRow("TTS voice", self.tts_voice_input)
-        layout.addWidget(group)
+        output_form.addRow("", self.voice_responses_enabled)
+        output_form.addRow("TTS engine", self.tts_engine_input)
+        output_form.addRow("TTS voice", self.tts_voice_input)
+        layout.addWidget(output_group)
         hint = QLabel(
-            "Hold the central orb to record. Voice responses use the local "
-            "Piper models for Jarvis or Laura."
+            "Hold the central orb to record. Whisper handles transcription and "
+            "Piper handles speech output locally."
         )
         hint.setObjectName("settingsHint")
         hint.setWordWrap(True)
@@ -264,20 +263,16 @@ class SettingsDialog(QDialog):
         self._voice_changed(self.tts_voice_input.currentIndex())
         return page
 
-    def _connection_page(
-        self,
-        config: AppConfig,
-        telegram_token_present: bool,
-        hosted_api_key_present: bool,
-    ) -> QWidget:
+    def _ai_page(self, config: AppConfig, hosted_api_key_present: bool) -> QWidget:
         page, layout = self._page_layout(
             "AI providers",
-            "Choose local Ollama or a hosted OpenAI-compatible API. Hosted keys stay in a separate local permission-restricted file.",
+            "Choose between private local Ollama models and OpenRouter. "
+            "Hosted keys stay in a separate local permission-restricted file.",
         )
         ai_group, ai_form = self._group("AI RUNTIME")
         self.ai_provider_input = QComboBox()
         self.ai_provider_input.addItem("Ollama · local", "ollama")
-        self.ai_provider_input.addItem("Hosted API · key", "hosted")
+        self.ai_provider_input.addItem("OpenRouter · hosted", "hosted")
         provider_index = self.ai_provider_input.findData(config.ai_provider)
         self.ai_provider_input.setCurrentIndex(max(0, provider_index))
         self.url_input = QLineEdit(config.ollama_url)
@@ -295,16 +290,11 @@ class SettingsDialog(QDialog):
         ai_form.addRow("Context size", self.context_size_input)
         layout.addWidget(ai_group)
 
-        hosted_group, hosted_form = self._group("HOSTED API")
-        self.hosted_provider_input = QComboBox()
-        for label, key, _, _ in HOSTED_PROVIDER_PRESETS:
-            self.hosted_provider_input.addItem(label, key)
-        hosted_index = self.hosted_provider_input.findData(config.hosted_provider)
-        self.hosted_provider_input.setCurrentIndex(max(0, hosted_index))
-        self.hosted_url_input = QLineEdit(config.hosted_api_url)
-        self.hosted_url_input.setPlaceholderText("https://api.openai.com/v1")
+        hosted_group, hosted_form = self._group("OPENROUTER")
+        self.hosted_url_input = QLineEdit(DEFAULT_HOSTED_API_URL)
+        self.hosted_url_input.setReadOnly(True)
         self.hosted_model_input = QLineEdit(config.hosted_model)
-        self.hosted_model_input.setPlaceholderText("gpt-4o-mini")
+        self.hosted_model_input.setPlaceholderText("openai/gpt-4o-mini")
         self.hosted_api_key_input = QLineEdit()
         self.hosted_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.hosted_api_key_input.setPlaceholderText(
@@ -312,31 +302,30 @@ class SettingsDialog(QDialog):
             if hosted_api_key_present
             else "Paste provider API key"
         )
-        hosted_form.addRow("Provider preset", self.hosted_provider_input)
         hosted_form.addRow("API base URL", self.hosted_url_input)
         hosted_form.addRow("Model", self.hosted_model_input)
         hosted_form.addRow("API key", self.hosted_api_key_input)
         layout.addWidget(hosted_group)
-        self.hosted_provider_input.currentIndexChanged.connect(
-            self._hosted_provider_changed
+        hint = QLabel(
+            "OpenRouter model IDs use the provider/model format, for example "
+            "openai/gpt-4o-mini or anthropic/claude-3.5-sonnet."
         )
-        self._hosted_provider_changed(self.hosted_provider_input.currentIndex())
+        hint.setObjectName("settingsHint")
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        layout.addStretch(1)
+        return page
 
-        gemini_group, gemini_form = self._group("GEMINI MODEL ROLES")
-        self.gemini_primary_model_input = QLineEdit(config.gemini_primary_model)
-        self.gemini_reasoning_model_input = QLineEdit(config.gemini_reasoning_model)
-        self.gemini_stt_model_input = QLineEdit(config.gemini_stt_model)
-        self.gemini_tts_model_input = QLineEdit(config.gemini_tts_model)
-        self.gemini_tts_voice_input = QLineEdit(config.gemini_tts_voice)
-        self.gemini_image_model_input = QLineEdit(config.gemini_image_model)
-        gemini_form.addRow("Main AI", self.gemini_primary_model_input)
-        gemini_form.addRow("Reasoning / coding", self.gemini_reasoning_model_input)
-        gemini_form.addRow("Speech to text", self.gemini_stt_model_input)
-        gemini_form.addRow("Text to speech", self.gemini_tts_model_input)
-        gemini_form.addRow("TTS voice", self.gemini_tts_voice_input)
-        gemini_form.addRow("Image generation", self.gemini_image_model_input)
-        layout.addWidget(gemini_group)
-
+    def _integrations_page(
+        self,
+        config: AppConfig,
+        telegram_token_present: bool,
+    ) -> QWidget:
+        page, layout = self._page_layout(
+            "Desktop integrations",
+            "Control how Lura stays available in the background and how Telegram "
+            "can reach this machine.",
+        )
         desktop_group, desktop_form = self._group("DESKTOP")
         self.background_mode_enabled = QCheckBox(
             "Keep running in the system tray when the window is closed"
@@ -373,14 +362,6 @@ class SettingsDialog(QDialog):
         layout.addWidget(hint)
         layout.addStretch(1)
         return page
-
-    def _hosted_provider_changed(self, index: int) -> None:
-        provider = self.hosted_provider_input.itemData(index)
-        for _, key, url, model in HOSTED_PROVIDER_PRESETS:
-            if provider == key and key != "custom":
-                self.hosted_url_input.setText(url)
-                self.hosted_model_input.setText(model)
-                break
 
     def _security_page(self) -> QWidget:
         page, layout = self._page_layout(
@@ -435,16 +416,8 @@ class SettingsDialog(QDialog):
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),
             ai_provider=str(self.ai_provider_input.currentData()),
-            hosted_provider=str(self.hosted_provider_input.currentData()),
-            hosted_api_url=self.hosted_url_input.text(),
+            hosted_api_url=DEFAULT_HOSTED_API_URL,
             hosted_model=self.hosted_model_input.text(),
-            voice_backend=str(self.voice_backend_input.currentData()),
-            gemini_primary_model=self.gemini_primary_model_input.text(),
-            gemini_reasoning_model=self.gemini_reasoning_model_input.text(),
-            gemini_stt_model=self.gemini_stt_model_input.text(),
-            gemini_tts_model=self.gemini_tts_model_input.text(),
-            gemini_tts_voice=self.gemini_tts_voice_input.text(),
-            gemini_image_model=self.gemini_image_model_input.text(),
         )
 
     def telegram_token(self) -> str:

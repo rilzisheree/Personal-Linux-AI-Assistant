@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 
@@ -20,15 +19,6 @@ def load_hosted_api_key() -> str:
         raise RuntimeError(
             f"Could not read the hosted API key file: {error}"
         ) from error
-
-
-def load_gemini_api_key() -> str:
-    """Load the Gemini key from a secure environment secret or local file."""
-
-    environment_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if environment_key:
-        return environment_key
-    return load_hosted_api_key()
 
 
 def save_hosted_api_key(api_key: str) -> None:

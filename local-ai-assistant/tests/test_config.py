@@ -10,6 +10,8 @@ from local_ai_assistant.config import (
     DEFAULT_MODEL,
     DEFAULT_OLLAMA_URL,
     DEFAULT_CONTEXT_SIZE,
+    DEFAULT_HOSTED_API_URL,
+    DEFAULT_HOSTED_MODEL,
     DEFAULT_TTS_ENGINE,
     DEFAULT_WHISPER_MODEL,
 )
@@ -21,6 +23,8 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.ollama_url, DEFAULT_OLLAMA_URL)
         self.assertEqual(config.model, DEFAULT_MODEL)
         self.assertEqual(config.ollama_context_size, DEFAULT_CONTEXT_SIZE)
+        self.assertEqual(config.hosted_api_url, DEFAULT_HOSTED_API_URL)
+        self.assertEqual(config.hosted_model, DEFAULT_HOSTED_MODEL)
         self.assertTrue(config.voice_input_enabled)
         self.assertFalse(config.voice_responses_enabled)
         self.assertEqual(config.whisper_model, DEFAULT_WHISPER_MODEL)
@@ -80,3 +84,21 @@ class ConfigTests(unittest.TestCase):
             path = Path(directory) / "config.json"
             path.write_text("{not json", encoding="utf-8")
             self.assertEqual(AppConfig.load(path), AppConfig.defaults())
+
+    def test_legacy_hosted_endpoint_migrates_to_openrouter(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "ai_provider": "hosted",
+                        "hosted_provider": "legacy",
+                        "hosted_api_url": "https://legacy.example.test/v1",
+                        "hosted_model": "legacy-model",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            loaded = AppConfig.load(path)
+        self.assertEqual(loaded.hosted_api_url, DEFAULT_HOSTED_API_URL)
+        self.assertEqual(loaded.hosted_model, DEFAULT_HOSTED_MODEL)

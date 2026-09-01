@@ -85,26 +85,11 @@ class Conversation:
                 name = function.get("name")
                 arguments = function.get("arguments", {})
                 call_id = raw_tool_call.get("id", "")
-                extra_content = raw_tool_call.get("extra_content", {})
-                google_content = (
-                    extra_content.get("google", {})
-                    if isinstance(extra_content, dict)
-                    else {}
-                )
-                thought_signature = (
-                    google_content.get("thought_signature", "")
-                    if isinstance(google_content, dict)
-                    else ""
-                )
                 if not isinstance(name, str) or not isinstance(arguments, dict):
                     raise ValueError("Conversation tool call has invalid fields.")
                 if not isinstance(call_id, str):
                     call_id = ""
-                if not isinstance(thought_signature, str):
-                    thought_signature = ""
-                tool_calls.append(
-                    ToolCall(name, arguments, call_id, thought_signature)
-                )
+                tool_calls.append(ToolCall(name, arguments, call_id))
             name = raw_message.get("name", "")
             if not isinstance(name, str):
                 name = ""

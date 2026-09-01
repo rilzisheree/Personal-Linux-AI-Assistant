@@ -30,11 +30,7 @@ from ..assistant_core import AssistantService
 from ..api import ApiServer, start_background_server
 from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
-from ..credentials import (
-    load_gemini_api_key,
-    load_hosted_api_key,
-    save_hosted_api_key,
-)
+from ..credentials import load_hosted_api_key, save_hosted_api_key
 from ..desktop_integration import set_autostart_enabled
 from ..hosted_api import HostedApiClient
 from ..memory import MemoryStore
@@ -69,10 +65,7 @@ class MainWindow(QMainWindow):
         self.service = AssistantService(self.client)
         self.voice_service = VoiceService(config)
         self.memory_store = MemoryStore()
-        self.tool_manager = ToolManager(
-            memory_store=self.memory_store,
-            image_model=config.gemini_image_model,
-        )
+        self.tool_manager = ToolManager(memory_store=self.memory_store)
         self.api_server: ApiServer | None = None
         self.api_thread = None
         self.telegram_thread: QThread | None = None
@@ -158,8 +151,6 @@ class MainWindow(QMainWindow):
     def _configured_model(config: AppConfig) -> str:
         if config.ai_provider != "hosted":
             return config.model
-        if config.hosted_provider == "gemini":
-            return config.gemini_primary_model
         return config.hosted_model
 
     @staticmethod
@@ -167,11 +158,7 @@ class MainWindow(QMainWindow):
         if config.ai_provider == "hosted":
             return HostedApiClient(
                 config.hosted_api_url,
-                (
-                    load_gemini_api_key()
-                    if config.hosted_provider == "gemini"
-                    else load_hosted_api_key()
-                ),
+                load_hosted_api_key(),
             )
         return OllamaClient(config.ollama_url)
 
@@ -731,11 +718,7 @@ class MainWindow(QMainWindow):
                 f"WAKE LISTENING // SAY {self.config.wake_word}"
             )
         else:
-            self._set_voice_status(
-                "GEMINI VOICE CHANNEL"
-                if self.config.voice_backend == "gemini"
-                else "DIRECT LOCAL CHANNEL // NO CLOUD ROUTING"
-            )
+            self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         if self.chat_worker is None and self.speech_worker is None:
             self._set_orb_state("idle")
 
@@ -888,14 +871,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
-        fallback = getattr(self.client, "last_model_fallback", None)
-        if fallback:
-            self.status_label.setText(
-                f"Connected · {fallback[1]} "
-                f"(fallback; {fallback[0]} busy)"
-            )
-        else:
-            self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
+        self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
         self._speak_response(response)
 
@@ -1154,11 +1130,7 @@ class MainWindow(QMainWindow):
             self.config,
             self,
             telegram_token_present=bool(load_telegram_token()),
-            hosted_api_key_present=bool(
-                load_gemini_api_key()
-                if self.config.hosted_provider == "gemini"
-                else load_hosted_api_key()
-            ),
+            hosted_api_key_present=bool(load_hosted_api_key()),
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return
@@ -1177,11 +1149,7 @@ class MainWindow(QMainWindow):
             if (
                 next_config.ai_provider == "hosted"
                 and not hosted_api_key
-                and not (
-                    load_gemini_api_key()
-                    if next_config.hosted_provider == "gemini"
-                    else load_hosted_api_key()
-                )
+                and not load_hosted_api_key()
             ):
                 QMessageBox.warning(
                     self,
@@ -1213,10 +1181,7 @@ class MainWindow(QMainWindow):
         self._sync_quit_behavior()
         self.client = self._create_ai_client(self.config)
         self.service = AssistantService(self.client)
-        self.tool_manager = ToolManager(
-            memory_store=self.memory_store,
-            image_model=self.config.gemini_image_model,
-        )
+        self.tool_manager = ToolManager(memory_store=self.memory_store)
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()
         self.model_selector.clear()
@@ -1348,22 +1313,14 @@ class MainWindow(QMainWindow):
 
     def _set_orb_state(self, state: str) -> None:
         self.core_widget.set_state(state)
-        runtime = (
-            "GEMINI"
-            if self.config.ai_provider == "hosted"
-            else "LOCAL MODEL"
-        )
+        runtime = "OPENROUTER" if self.config.ai_provider == "hosted" else "LOCAL MODEL"
         labels = {
             "idle": "READY // HOLD TO SPEAK"
             if self.config.voice_input_enabled
             else "READY // TYPE TO SPEAK",
             "listening": "LISTENING // RELEASE TO SEND",
             "thinking": f"THINKING // {runtime}",
-            "speaking": (
-                "SPEAKING // GEMINI VOICE"
-                if self.config.voice_backend == "gemini"
-                else "SPEAKING // LOCAL VOICE"
-            ),
+            "speaking": "SPEAKING // LOCAL VOICE",
             "error": "CHANNEL ERROR // CHECK STATUS",
         }
         self.core_status.setText(labels.get(state, labels["idle"]))

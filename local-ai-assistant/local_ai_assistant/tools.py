@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import glob
-import base64
 import json
 import os
 import re
@@ -18,11 +17,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable
 from html.parser import HTMLParser
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
-from .config import DEFAULT_GEMINI_IMAGE_MODEL
-from .credentials import load_gemini_api_key
 from .memory import MemoryStore
 
 class PermissionLevel(str, Enum):
@@ -150,10 +147,8 @@ class ToolManager:
     def __init__(
         self,
         memory_store: MemoryStore | None = None,
-        image_model: str = DEFAULT_GEMINI_IMAGE_MODEL,
     ) -> None:
         self.memory_store = memory_store or MemoryStore()
-        self.image_model = image_model
         self._definitions = {
             "open_app": ToolDefinition(
                 "open_app",
@@ -444,19 +439,6 @@ class ToolManager:
             "list_memory": self._system_definition(
                 "list_memory", "List facts the user explicitly asked Lura to remember.", self._list_memory
             ),
-            "generate_image": ToolDefinition(
-                "generate_image",
-                "Generate an image from a user-requested description using the configured Gemini image model.",
-                PermissionLevel.CONFIRMATION_REQUIRED,
-                {
-                    "type": "object",
-                    "properties": {
-                        "prompt": {"type": "string", "description": "Image description"},
-                    },
-                    "required": ["prompt"],
-                },
-                self._generate_image,
-            ),
         }
 
     @staticmethod
@@ -610,66 +592,6 @@ class ToolManager:
         del arguments
         context = self.memory_store.context()
         return ToolCallResult(True, context or "No saved memories.")
-
-    def _generate_image(self, arguments: dict) -> ToolCallResult:
-        prompt = _string_argument(arguments, "prompt")
-        if len(prompt) > 4_000:
-            prompt = prompt[:3_997] + "..."
-        try:
-            api_key = load_gemini_api_key()
-        except (OSError, RuntimeError) as error:
-            return ToolCallResult(False, f"Could not read the Gemini API key: {error}")
-        if not api_key:
-            return ToolCallResult(False, "No Gemini API key is configured. Add one in Settings.")
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{quote(self.image_model, safe='')}:generateContent"
-            f"?key={quote(api_key, safe='')}"
-        )
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
-        }
-        request = Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Accept": "application/json"},
-            method="POST",
-        )
-        try:
-            with urlopen(request, timeout=120) as response:
-                result = json.loads(response.read().decode("utf-8"))
-        except HTTPError as error:
-            detail = error.read().decode("utf-8", errors="replace")
-            return ToolCallResult(False, f"Image generation failed ({error.code}): {detail[:300]}")
-        except (URLError, TimeoutError, OSError, json.JSONDecodeError) as error:
-            return ToolCallResult(False, f"Could not reach Gemini image service: {error}")
-        if not isinstance(result, dict):
-            return ToolCallResult(False, "Gemini image service returned invalid JSON.")
-        if result.get("error"):
-            return ToolCallResult(False, f"Gemini image service error: {result['error']}")
-        encoded = _first_inline_data(result)
-        if encoded is None:
-            return ToolCallResult(False, "Gemini returned no image.")
-        try:
-            image_bytes = base64.b64decode(encoded, validate=True)
-        except (ValueError, base64.binascii.Error) as error:
-            return ToolCallResult(False, f"Gemini returned invalid image data: {error}")
-        directory = Path.home() / ".cache" / "local-ai-assistant" / "generated"
-        try:
-            directory.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(
-                prefix="lura-image-",
-                suffix=".png",
-                dir=directory,
-                delete=False,
-            ) as file:
-                file.write(image_bytes)
-                path = Path(file.name)
-            path.chmod(0o600)
-        except OSError as error:
-            return ToolCallResult(False, f"Could not save generated image: {error}")
-        return ToolCallResult(True, f"Generated image for: {prompt}", (str(path),))
 
     def _close_app(self, arguments: dict) -> ToolCallResult:
         command = self._application_command(arguments)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import stat
 import tempfile
 import unittest
@@ -53,36 +52,6 @@ class HostedApiTests(unittest.TestCase):
             ),
         )
 
-    def test_preserves_gemini_thought_signature_for_tool_calls(self) -> None:
-        parts: dict[int, dict[str, str]] = {}
-        HostedApiClient._parse_sse_line(
-            'data: {"choices":[{"delta":{"tool_calls":[{"index":0,'
-            '"id":"call-1","extra_content":{"google":{"thought_signature":"sig-1"}},'
-            '"function":{"name":"web_search","arguments":"{\\"query\\":\\"weather\\"}"}}]}}]}',
-            parts,
-        )
-        done = HostedApiClient._parse_sse_line("data: [DONE]", parts)
-        self.assertIsNotNone(done)
-        assert done is not None
-        self.assertEqual(done.tool_calls[0].thought_signature, "sig-1")
-        payload = HostedApiClient._message_payload(
-            ChatMessage("assistant", "", done.tool_calls)
-        )
-        self.assertEqual(
-            payload["tool_calls"][0]["extra_content"],
-            {"google": {"thought_signature": "sig-1"}},
-        )
-        legacy_payload = HostedApiClient._message_payload(
-            ChatMessage("assistant", "", (ToolCall("web_search", {}, "call-2"),)),
-            gemini=True,
-        )
-        self.assertEqual(
-            legacy_payload["tool_calls"][0]["extra_content"]["google"][
-                "thought_signature"
-            ],
-            "skip_thought_signature_validator",
-        )
-
     def test_stream_chat_sends_openai_compatible_payload(self) -> None:
         response = Mock()
         response.__enter__ = Mock(return_value=response)
@@ -106,7 +75,7 @@ class HostedApiTests(unittest.TestCase):
         self.assertEqual(request.get_header("Authorization"), "Bearer secret-key")
         self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
 
-    def test_gemini_omits_multi_tool_list_for_text_chat_compatibility(self) -> None:
+    def test_openrouter_sends_multiple_tools(self) -> None:
         response = Mock()
         response.__enter__ = Mock(return_value=response)
         response.__exit__ = Mock(return_value=False)
@@ -125,52 +94,18 @@ class HostedApiTests(unittest.TestCase):
             }
             for name in ("open_app", "list_windows")
         ]
-        client = HostedApiClient(
-            "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "secret-key",
-        )
+        client = HostedApiClient("https://openrouter.ai/api/v1", "secret-key")
         with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
             events = list(
                 client.stream_chat(
                     [ChatMessage("user", "Hello")],
-                    "gemini-3.7-flash",
+                    "openai/gpt-4o-mini",
                     tools=tools,
                 )
             )
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
-        self.assertNotIn("tools", payload)
+        self.assertEqual(payload["tools"], tools)
         self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
-
-    def test_gemini_keeps_single_tool_compatibility(self) -> None:
-        response = Mock()
-        response.__enter__ = Mock(return_value=response)
-        response.__exit__ = Mock(return_value=False)
-        response.readline.side_effect = [
-            b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
-            b"data: [DONE]\n",
-        ]
-        tool = {
-            "type": "function",
-            "function": {
-                "name": "open_app",
-                "description": "Open an application",
-                "parameters": {"type": "object", "properties": {}},
-            },
-        }
-        client = HostedApiClient(
-            "https://generativelanguage.googleapis.com/v1beta/openai/",
-            "secret-key",
-        )
-        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
-            list(
-                client.stream_chat(
-                    [ChatMessage("user", "Open Firefox")],
-                    "gemini-3.7-flash",
-                    tools=[tool],
-                )
-            )
-        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
-        self.assertEqual(payload["tools"], [tool])
 
     def test_model_check_uses_short_connection_timeout(self) -> None:
         response = Mock()
@@ -184,13 +119,6 @@ class HostedApiTests(unittest.TestCase):
             HOSTED_CONNECTION_TIMEOUT,
         )
 
-    def test_model_list_strips_google_models_prefix(self) -> None:
-        response = Mock()
-        response.read.return_value = b'{"data":[{"id":"models/gemini-3.6-flash"}]}'
-        response.close = Mock()
-        client = HostedApiClient("https://generativelanguage.googleapis.com/v1beta/openai/", "secret-key")
-        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response):
-            self.assertEqual(client.list_models(), ["gemini-3.6-flash"])
 
 
 class HostedCredentialTests(unittest.TestCase):
@@ -199,8 +127,7 @@ class HostedCredentialTests(unittest.TestCase):
             path = Path(directory) / "hosted-api.key"
             with patch("local_ai_assistant.credentials.HOSTED_API_KEY_PATH", path):
                 save_hosted_api_key("  secret-key  ")
-                with patch.dict(os.environ, {"GEMINI_API_KEY": ""}):
-                    self.assertEqual(load_hosted_api_key(), "secret-key")
+                self.assertEqual(load_hosted_api_key(), "secret-key")
             mode = stat.S_IMODE(path.stat().st_mode)
         self.assertEqual(mode, 0o600)
 
