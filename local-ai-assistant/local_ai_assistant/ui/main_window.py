@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from pathlib import Path
 
@@ -41,7 +42,7 @@ from ..telegram_bot import (
     save_telegram_token,
 )
 from ..tools import PermissionLevel, ToolManager
-from ..voice import SpeechChunker, VoiceService, remove_wake_word
+from ..voice import SpeechChunker, VoiceService
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
@@ -54,6 +55,8 @@ from ..workers import (
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
 from .settings_dialog import SettingsDialog
+
+LOGGER = logging.getLogger("lura.ui")
 
 
 class MainWindow(QMainWindow):
@@ -566,6 +569,10 @@ class MainWindow(QMainWindow):
             return
         self.last_voice_error = None
         self._wake_command_recording = automatic
+        LOGGER.info(
+            "[WakeWord] Triggering assistant recording (%s)",
+            "wake word" if automatic else "manual orb",
+        )
         self._set_orb_state("listening")
         destination = self.voice_service.new_recording_path()
         self.voice_record_thread = QThread(self)
@@ -681,20 +688,9 @@ class MainWindow(QMainWindow):
             self.voice_transcription_thread.quit()
         self._remove_recording(audio_path)
         self._set_voice_idle()
-        if self.config.wake_word_enabled and not self._wake_command_recording:
-            command = remove_wake_word(text, self.config.wake_word)
-            if command is None:
-                self._set_voice_status(
-                    f"WAKE WORD REQUIRED // SAY {self.config.wake_word}"
-                )
-                self._wake_restart_pending = True
-                return
-            text = command
-            if not text:
-                self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
-                self._wake_command_pending = True
-                self._start_pending_wake_command()
-                return
+        # The always-on listener owns wake-word recognition. A manual orb press
+        # is already an explicit user action and must never require saying the
+        # wake word a second time.
         self._wake_command_recording = False
         self.message_input.setText(text)
         self._send_message()
@@ -798,6 +794,7 @@ class MainWindow(QMainWindow):
             or self.chat_worker is not None
         ):
             return
+        LOGGER.info("[WakeWord] Callback fired; starting assistant handoff")
         self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
         self._wake_command_pending = True
         # Keep detection state and listener shutdown in the same queued

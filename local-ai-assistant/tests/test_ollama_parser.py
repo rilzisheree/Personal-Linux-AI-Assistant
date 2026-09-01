@@ -7,7 +7,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from local_ai_assistant.errors import OllamaProtocolError
+from local_ai_assistant.errors import (
+    OllamaConnectionError,
+    OllamaProtocolError,
+    OllamaTimeoutError,
+)
 from local_ai_assistant.ollama import (
     ChatMessage,
     OllamaClient,
@@ -103,6 +107,24 @@ class OllamaParserTests(unittest.TestCase):
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertEqual(payload["options"], {"num_ctx": 8192})
         self.assertEqual(payload["keep_alive"], "10m")
+
+    def test_connection_failure_is_distinguished_from_slow_generation(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch(
+            "local_ai_assistant.ollama.urlopen",
+            side_effect=ConnectionRefusedError("connection refused"),
+        ):
+            with self.assertRaises(OllamaConnectionError):
+                list(client.stream_chat([], "qwen3.5:4b"))
+
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = TimeoutError("read timed out")
+            urlopen.return_value = response
+            with self.assertRaises(OllamaTimeoutError):
+                list(client.stream_chat([], "qwen3.5:4b"))
 
 
 if __name__ == "__main__":

@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import socket
 import threading
+import time
 from dataclasses import dataclass
 from http.client import HTTPResponse
 from pathlib import Path
@@ -15,10 +17,14 @@ from urllib.request import Request, urlopen
 
 from .errors import (
     OllamaCancelledError,
+    OllamaConnectionError,
     OllamaModelNotFoundError,
     OllamaProtocolError,
+    OllamaTimeoutError,
     OllamaUnavailableError,
 )
+
+LOGGER = logging.getLogger("lura.ollama")
 
 
 @dataclass(frozen=True)
@@ -146,16 +152,20 @@ class OllamaClient:
     display_name = "Ollama"
     default_keep_alive = "10m"
     default_timeout = 120.0
+    default_connection_timeout = 10.0
+    default_stream_timeout = 600.0
 
     def __init__(
         self,
         base_url: str,
         timeout: float = default_timeout,
         keep_alive: str | int = default_keep_alive,
+        connection_timeout: float = default_connection_timeout,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.keep_alive = keep_alive
+        self.connection_timeout = connection_timeout
         self._response: HTTPResponse | None = None
         self._response_lock = threading.Lock()
 
@@ -195,30 +205,9 @@ class OllamaClient:
             headers={"Content-Type": "application/json", "Accept": "application/x-ndjson"},
             method="POST",
         )
+        request_started = time.monotonic()
         try:
-            with urlopen(request, timeout=self.timeout) as response:
-                with self._response_lock:
-                    self._response = response
-                try:
-                    while True:
-                        if cancel_event and cancel_event.is_set():
-                            raise OllamaCancelledError()
-                        try:
-                            line = response.readline()
-                        except (OSError, ValueError) as error:
-                            if cancel_event and cancel_event.is_set():
-                                raise OllamaCancelledError() from error
-                            raise OllamaUnavailableError("The Ollama connection closed unexpectedly.") from error
-                        if not line:
-                            break
-                        event = parse_stream_line(line)
-                        if event is not None:
-                            yield event
-                            if event.done:
-                                break
-                finally:
-                    with self._response_lock:
-                        self._response = None
+            response = urlopen(request, timeout=self.connection_timeout)
         except (OllamaCancelledError, OllamaProtocolError, OllamaUnavailableError):
             raise
         except HTTPError as error:
@@ -227,7 +216,65 @@ class OllamaClient:
                 raise OllamaModelNotFoundError(message) from error
             raise OllamaProtocolError(message) from error
         except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
-            raise OllamaUnavailableError(self._network_message(error)) from error
+            raise OllamaConnectionError(self._network_message(error)) from error
+
+        with response:
+            self._set_response_timeout(response, max(self.timeout, self.default_stream_timeout))
+            with self._response_lock:
+                self._response = response
+            LOGGER.info(
+                "[Ollama] Connection established in %.2fs; waiting for first token",
+                time.monotonic() - request_started,
+            )
+            first_token_at: float | None = None
+            stream_finished = False
+            try:
+                while True:
+                    if cancel_event and cancel_event.is_set():
+                        raise OllamaCancelledError()
+                    try:
+                        line = response.readline()
+                    except (socket.timeout, TimeoutError) as error:
+                        stage = (
+                            "the first token"
+                            if first_token_at is None
+                            else "the next token"
+                        )
+                        raise OllamaTimeoutError(
+                            f"Ollama connected but did not produce {stage} "
+                            f"within {max(self.timeout, self.default_stream_timeout):g} seconds"
+                        ) from error
+                    except (OSError, ValueError) as error:
+                        if cancel_event and cancel_event.is_set():
+                            raise OllamaCancelledError() from error
+                        raise OllamaUnavailableError(
+                            "The Ollama connection closed unexpectedly."
+                        ) from error
+                    if not line:
+                        break
+                    event = parse_stream_line(line)
+                    if event is not None:
+                        if event.content and first_token_at is None:
+                            first_token_at = time.monotonic()
+                            LOGGER.info(
+                                "[Ollama] First token received %.2fs after connection",
+                                first_token_at - request_started,
+                            )
+                        yield event
+                        if event.done:
+                            stream_finished = True
+                            LOGGER.info(
+                                "[Ollama] Generation completed in %.2fs",
+                                time.monotonic() - request_started,
+                            )
+                            break
+                if not stream_finished:
+                    raise OllamaUnavailableError(
+                        "Ollama closed the response before generation completed."
+                    )
+            finally:
+                with self._response_lock:
+                    self._response = None
 
     @staticmethod
     def _message_payload(message: ChatMessage) -> dict:
@@ -255,7 +302,8 @@ class OllamaClient:
         request = Request(self._url(path), headers={"Accept": "application/json"}, method=method)
         response: HTTPResponse | None = None
         try:
-            response = urlopen(request, timeout=self.timeout)
+            response = urlopen(request, timeout=self.connection_timeout)
+            self._set_response_timeout(response, self.timeout)
             with self._response_lock:
                 self._response = response
             raw = response.read()
@@ -267,7 +315,11 @@ class OllamaClient:
             message = self._read_http_error(error)
             raise OllamaProtocolError(message) from error
         except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
-            raise OllamaUnavailableError(self._network_message(error)) from error
+            if response is None:
+                raise OllamaConnectionError(self._network_message(error)) from error
+            raise OllamaTimeoutError(
+                f"Ollama connected but did not return {path} within {self.timeout:g} seconds"
+            ) from error
         except json.JSONDecodeError as error:
             raise OllamaProtocolError("Ollama returned invalid JSON.") from error
         finally:
@@ -279,6 +331,18 @@ class OllamaClient:
 
     def _url(self, path: str) -> str:
         return f"{self.base_url}/{path.lstrip('/')}"
+
+    @staticmethod
+    def _set_response_timeout(response: HTTPResponse, timeout: float) -> None:
+        """Use a short connect timeout without cutting off slow generation."""
+        file_object = getattr(response, "fp", None)
+        raw = getattr(file_object, "raw", None)
+        sock = getattr(raw, "_sock", None) or getattr(file_object, "_sock", None)
+        if sock is not None:
+            try:
+                sock.settimeout(timeout)
+            except (AttributeError, OSError):
+                LOGGER.debug("[Ollama] Could not update response read timeout", exc_info=True)
 
     @staticmethod
     def _read_http_error(error: HTTPError) -> str:

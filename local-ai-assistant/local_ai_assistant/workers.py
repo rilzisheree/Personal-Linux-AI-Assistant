@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import queue
+import logging
 import subprocess
 import threading
 import time
@@ -31,6 +32,7 @@ from .voice import (
 
 
 MAX_TOOL_ROUNDS = 8
+LOGGER = logging.getLogger("lura.workers")
 
 
 class ChatWorker(QObject):
@@ -279,9 +281,11 @@ class VoiceRecordWorker(QObject):
     def run(self) -> None:
         process = None
         try:
+            LOGGER.info("[Voice] Initializing recording: %s", self.destination)
             process = self.service.start_recorder(self.destination)
             self._process = process
             self.started.emit()
+            LOGGER.info("[Voice] Listening for recorded input")
             if self.duration_seconds is None:
                 while process.poll() is None and not self._stop_event.wait(0.1):
                     pass
@@ -295,6 +299,7 @@ class VoiceRecordWorker(QObject):
                 process.kill()
                 process.wait()
             self.service.finish_recording(process, self.destination)
+            LOGGER.info("[Voice] Audio finalized: %s", self.destination)
             self.finished.emit(str(self.destination))
         except (VoiceError, OSError, subprocess.SubprocessError) as error:
             self.failed.emit(str(error))
@@ -374,17 +379,25 @@ class WakeWordWorker(QObject):
         stream_path: Path | None = None
         process: subprocess.Popen | None = None
         try:
+            LOGGER.info("[WakeWord] Initializing: %s", self.wake_word)
             stream_path = self.service.new_recording_path()
             process = self.service.start_recorder(stream_path)
             self._process = process
+            LOGGER.info("[WakeWord] Microphone connected")
             if self.chunk_seconds <= 0:
                 # A zero-length window is useful for deterministic worker
                 # tests and keeps the worker's public seam backwards
                 # compatible; normal wake listening always uses a real window.
                 transcript = self.service.transcribe(stream_path, device="cpu").casefold()
                 if wake_word_matches(transcript, self.wake_word):
+                    LOGGER.info("[WakeWord] Wake word detected")
                     self.detected.emit()
                 return
+            LOGGER.info(
+                "[WakeWord] Listening: %.1fs windows with %.1fs overlap",
+                self.chunk_seconds,
+                min(self.chunk_seconds / 2, 2.0),
+            )
             window_bytes = max(1, int(self.chunk_seconds * 16_000 * 2))
             overlap_bytes = min(window_bytes // 2, int(2.0 * 16_000 * 2))
             pcm = b""
@@ -402,6 +415,7 @@ class WakeWordWorker(QObject):
                     usable = len(new_pcm) - (len(new_pcm) % 2)
                     pcm += new_pcm[:usable]
                     offset += usable
+                    LOGGER.info("[WakeWord] Audio frames received: %d bytes", usable)
                 if len(pcm) >= window_bytes:
                     snapshot = self.service.new_recording_path()
                     try:
@@ -417,7 +431,9 @@ class WakeWordWorker(QObject):
                         transcript = self.service.transcribe(
                             snapshot, device="cpu"
                         ).casefold()
+                        LOGGER.info("[WakeWord] Window transcribed: %r", transcript[:160])
                         if wake_word_matches(transcript, self.wake_word):
+                            LOGGER.info("[WakeWord] Wake word detected")
                             self.detected.emit()
                             return
                     except VoiceError as error:
@@ -433,6 +449,7 @@ class WakeWordWorker(QObject):
                 self._stop_event.wait(0.1)
         except Exception as error:
             if not self._stop_event.is_set():
+                LOGGER.exception("[WakeWord] Listener failed")
                 self.failed.emit(str(error))
         finally:
             if process is not None:

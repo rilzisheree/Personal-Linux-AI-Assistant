@@ -1,0 +1,289 @@
+There are now multiple bugs that need to be fixed. **Do not redesign anything.** Keep the existing UI, orb, chat, animations, and overall structure exactly as they are.
+
+I need you to debug the actual implementation and fix these issues one by one.
+
+### BUG 1 — Wake Word Completely Broken
+
+The wake word currently does not work reliably and now appears to not work at all.
+
+Please inspect the complete wake-word pipeline:
+
+```text
+Microphone
+↓
+Audio capture
+↓
+Wake-word detection
+↓
+Wake word recognized
+↓
+Listening state
+```
+
+Find out why detection isn't triggering.
+
+Check for:
+
+* Microphone stream not actually running
+* Wake-word listener not being initialized
+* Incorrect audio format/sample rate
+* Wake-word detector receiving no audio
+* Permission issues
+* Audio stream being closed unexpectedly
+* Wake-word detection callback not firing
+* Wake-word callback firing but not changing application state
+* Conflicts between wake-word detection and normal recording
+* Multiple microphone consumers fighting over the same stream
+* Incorrect threshold/sensitivity
+* Errors being swallowed instead of shown in logs
+
+Add useful debug logging temporarily so we can see:
+
+```text
+[WakeWord] Initializing...
+[WakeWord] Microphone connected
+[WakeWord] Listening...
+[WakeWord] Audio frames received
+[WakeWord] Wake word detected
+[WakeWord] Triggering assistant
+```
+
+Do not simply increase sensitivity. Find the actual failure.
+
+---
+
+### BUG 2 — HOLD ORB TO TALK
+
+When I hold the ORB, the assistant correctly enters listening mode.
+
+However, when I RELEASE the orb, **nothing happens**.
+
+Expected behavior:
+
+```text
+Mouse Down on ORB
+↓
+Start recording
+↓
+Listening while held
+↓
+Mouse Up
+↓
+STOP recording
+↓
+Process the recorded audio
+↓
+Transcribe
+↓
+Send transcription to Ollama
+↓
+Display response in chat
+↓
+Speak response with TTS
+```
+
+Currently it seems to stop/exit listening visually, but the recorded audio isn't being processed after release.
+
+Trace the complete mouse/pointer lifecycle:
+
+```text
+pointerdown / mousedown
+        ↓
+recording start
+        ↓
+pointer held
+        ↓
+pointerup / mouseup
+        ↓
+recording stop
+        ↓
+audio blob/data finalized
+        ↓
+STT
+        ↓
+Ollama
+```
+
+Make sure the `pointerup`/`mouseup` event is reliably detected even if the cursor moves outside the orb while the button is still held.
+
+Also make sure the final audio data is completely finalized before sending it to STT.
+
+Check for:
+
+* `pointerup` not firing
+* `mouseup` not firing
+* Event listeners being removed too early
+* Recording state being reset before the audio is finalized
+* `MediaRecorder.stop()` being asynchronous
+* Audio chunks not being combined correctly
+* The stop callback not triggering processing
+* Processing being blocked by another voice state
+* Race conditions between the orb and microphone state
+
+Do not change the orb design.
+
+---
+
+### BUG 3 — OLLAMA TIMEOUT
+
+When I send a message through chat, I get:
+
+**"Ollama unavailable: timed out. Check the service and the URL in Settings."**
+
+This needs to be investigated immediately.
+
+Do NOT assume Ollama itself is broken.
+
+Inspect how the application connects to Ollama.
+
+Check:
+
+* Ollama URL from Settings
+* Ollama host/port
+* Whether the application can actually reach the configured URL
+* Whether Ollama is running
+* Whether the selected model exists
+* Whether the model is currently loaded
+* Request timeout configuration
+* Whether the timeout is unrealistically short
+* Whether the application is waiting for the entire response instead of streaming
+* Whether the request is being sent to the wrong endpoint
+* Whether the frontend/backend architecture is preventing the request from reaching Ollama
+* Whether CORS/network configuration is involved
+* Whether the application is accidentally trying to connect to a remote Ollama instance instead of the local one
+
+If this is supposed to be local Ollama, verify the actual local Ollama service before changing application code.
+
+The application should provide a useful distinction between:
+
+```text
+Ollama not running
+Ollama URL unreachable
+Model doesn't exist
+Request timed out
+Model is loading
+Generation is slow
+```
+
+Do not incorrectly label all of these as "Ollama unavailable."
+
+### IMPORTANT — Don't hide slow generation with a timeout
+
+If Ollama is reachable but the model simply takes time to load or generate its first token, don't immediately classify that as a connection failure.
+
+Measure:
+
+```text
+Request sent
+↓
+Connection established
+↓
+Model loading
+↓
+First token
+↓
+Generation
+```
+
+A model taking a while to produce its first token is different from Ollama being unreachable.
+
+Use streaming responses where appropriate.
+
+---
+
+### BUG 4 — VOICE PIPELINE MUST WORK END-TO-END
+
+Once the above bugs are fixed, verify that all voice input methods actually complete the entire pipeline.
+
+#### Wake word:
+
+```text
+Wake word
+↓
+Listening
+↓
+User speaks
+↓
+End of speech detected
+↓
+STT
+↓
+Ollama
+↓
+Chat response
+↓
+TTS
+↓
+AI speaks
+```
+
+#### Hold-to-talk:
+
+```text
+Hold ORB
+↓
+Listening
+↓
+User speaks
+↓
+Release ORB
+↓
+STT
+↓
+Ollama
+↓
+Chat response
+↓
+TTS
+↓
+AI speaks
+```
+
+#### Chat text:
+
+```text
+Type message
+↓
+Send
+↓
+Ollama
+↓
+Stream response into chat
+↓
+TTS
+↓
+AI speaks
+```
+
+All three should use the same underlying AI response pipeline where possible instead of having three separate implementations that behave differently.
+
+---
+
+### IMPORTANT DEBUGGING RULES
+
+Before changing code, inspect the existing implementation and identify the root causes.
+
+Do not blindly rewrite the voice system.
+
+Do not redesign anything.
+
+Do not remove existing functionality.
+
+Do not replace working components just because another implementation might be easier.
+
+Fix the smallest necessary parts.
+
+After fixing each issue, test it independently before moving to the next one.
+
+At the end, verify:
+
+* Wake word works repeatedly.
+* Holding the orb starts listening.
+* Releasing the orb actually processes the recording.
+* Chat messages successfully reach Ollama.
+* Ollama responses stream into chat.
+* The response is sent to TTS.
+* The AI speaks the response.
+* No microphone streams are left running after an interaction ends.
+* No duplicate recording sessions are created.
+* No voice state gets stuck.

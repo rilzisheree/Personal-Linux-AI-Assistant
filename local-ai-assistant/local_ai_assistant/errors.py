@@ -11,6 +11,14 @@ class OllamaUnavailableError(OllamaError):
     """The configured Ollama endpoint could not be reached."""
 
 
+class OllamaConnectionError(OllamaUnavailableError):
+    """The configured Ollama endpoint could not be contacted."""
+
+
+class OllamaTimeoutError(OllamaUnavailableError):
+    """Ollama was contacted but did not respond within the read timeout."""
+
+
 class OllamaModelNotFoundError(OllamaError):
     """The requested model is not installed in Ollama."""
 
@@ -60,6 +68,10 @@ def format_ollama_error(error: Exception) -> str:
 
     if isinstance(error, OllamaModelNotFoundError):
         return f"Model not found: {error}. Pull it with `ollama pull <model>` or choose another model."
+    if isinstance(error, OllamaTimeoutError):
+        return f"Ollama response timed out: {error}. The service is reachable; the model may still be loading or generation may be slow."
+    if isinstance(error, OllamaConnectionError):
+        return f"Ollama is unreachable: {error}. Start Ollama or check the URL in Settings."
     if isinstance(error, OllamaUnavailableError):
         return f"Ollama unavailable: {error}. Check the service and the URL in Settings."
     if isinstance(error, OllamaCancelledError):

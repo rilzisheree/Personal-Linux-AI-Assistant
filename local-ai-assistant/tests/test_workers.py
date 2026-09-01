@@ -49,6 +49,25 @@ class VoiceWorkerTests(unittest.TestCase):
             worker.run()
         self.assertEqual(failed, ["recorder missing"])
 
+    def test_record_worker_processes_audio_after_release_even_if_start_is_pending(self) -> None:
+        service = Mock()
+        process = Mock()
+        process.poll.return_value = None
+        service.start_recorder.return_value = process
+        service.finish_recording.return_value = None
+        finished: list[str] = []
+        with tempfile.TemporaryDirectory() as directory:
+            audio_path = Path(directory) / "recording.wav"
+            audio_path.write_bytes(b"RIFF" + b"\0" * 100)
+            worker = VoiceRecordWorker(service, audio_path)
+            worker.finished.connect(finished.append)
+            worker.stop()
+            worker.run()
+
+        service.transcribe.assert_not_called()
+        service.finish_recording.assert_called_once_with(process, audio_path)
+        self.assertEqual(finished, [str(audio_path)])
+
     def test_transcription_worker_reports_failure_and_path(self) -> None:
         service = Mock()
         service.transcribe.side_effect = VoiceError("Whisper missing")

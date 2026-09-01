@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 import shutil
@@ -20,6 +21,8 @@ from typing import Any, Callable
 from urllib.request import Request, urlopen
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
+
+LOGGER = logging.getLogger("lura.voice")
 
 
 class VoiceError(RuntimeError):
@@ -416,6 +419,7 @@ class VoiceService:
             except OSError as error:
                 raise VoiceError(f"Could not start microphone recording: {error}") from error
             self._recorder_process = process
+            LOGGER.info("[Voice] Microphone connected: %s", shlex.join(command))
         return process
 
     def release_recorder(self, process: subprocess.Popen) -> None:
