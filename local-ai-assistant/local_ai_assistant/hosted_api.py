@@ -28,6 +28,11 @@ GEMINI_OVERLOAD_FALLBACKS = (
     "gemini-3.5-flash",
     "gemini-3-flash-preview",
 )
+# Gemini's OpenAI-compatible endpoint currently rejects multi-function tool
+# lists with a generic INVALID_ARGUMENT response. Keep the supported single
+# function case, while allowing ordinary chat to work with Lura's full local
+# tool registry.
+GEMINI_OPENAI_COMPAT_MAX_TOOLS = 1
 
 
 class HostedApiClient:
@@ -126,8 +131,9 @@ class HostedApiClient:
             ],
             "stream": True,
         }
-        if tools:
-            payload["tools"] = tools
+        compatible_tools = self._compatible_tools(tools)
+        if compatible_tools:
+            payload["tools"] = compatible_tools
         request = Request(
             self._url("/chat/completions"),
             data=json.dumps(payload).encode("utf-8"),
@@ -314,6 +320,22 @@ class HostedApiClient:
 
     def _is_gemini(self) -> bool:
         return "generativelanguage.googleapis.com" in self.base_url
+
+    def _compatible_tools(self, tools: list[dict] | None) -> list[dict] | None:
+        """Return tools accepted by the selected hosted API.
+
+        Lura exposes many local tools to Ollama and OpenAI-compatible APIs.
+        Gemini's OpenAI compatibility layer currently accepts a single
+        function declaration but returns only a generic 400 INVALID_ARGUMENT
+        for multiple declarations. Omitting the incompatible list is safer
+        than failing every hosted Gemini text request.
+        """
+
+        if not tools:
+            return None
+        if self._is_gemini() and len(tools) > GEMINI_OPENAI_COMPAT_MAX_TOOLS:
+            return None
+        return tools
 
     @staticmethod
     def _parse_sse_line(

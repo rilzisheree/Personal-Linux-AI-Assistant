@@ -106,6 +106,72 @@ class HostedApiTests(unittest.TestCase):
         self.assertEqual(request.get_header("Authorization"), "Bearer secret-key")
         self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
 
+    def test_gemini_omits_multi_tool_list_for_text_chat_compatibility(self) -> None:
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.readline.side_effect = [
+            b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
+            b"data: [DONE]\n",
+        ]
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": name,
+                    "description": f"Tool {name}",
+                    "parameters": {"type": "object", "properties": {}},
+                },
+            }
+            for name in ("open_app", "list_windows")
+        ]
+        client = HostedApiClient(
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "secret-key",
+        )
+        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
+            events = list(
+                client.stream_chat(
+                    [ChatMessage("user", "Hello")],
+                    "gemini-3.7-flash",
+                    tools=tools,
+                )
+            )
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertNotIn("tools", payload)
+        self.assertEqual(events, [StreamEvent("ok"), StreamEvent(done=True)])
+
+    def test_gemini_keeps_single_tool_compatibility(self) -> None:
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock(return_value=False)
+        response.readline.side_effect = [
+            b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
+            b"data: [DONE]\n",
+        ]
+        tool = {
+            "type": "function",
+            "function": {
+                "name": "open_app",
+                "description": "Open an application",
+                "parameters": {"type": "object", "properties": {}},
+            },
+        }
+        client = HostedApiClient(
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "secret-key",
+        )
+        with patch("local_ai_assistant.hosted_api.urlopen", return_value=response) as urlopen:
+            list(
+                client.stream_chat(
+                    [ChatMessage("user", "Open Firefox")],
+                    "gemini-3.7-flash",
+                    tools=[tool],
+                )
+            )
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertEqual(payload["tools"], [tool])
+
     def test_model_check_uses_short_connection_timeout(self) -> None:
         response = Mock()
         response.read.return_value = b'{"data":[{"id":"example-model"}]}'

@@ -4,3 +4,4 @@
 - [Railway local API bridge](railway-local-api.md) — A Railway HTTPS frontend needs a secure tunnel to a local API; cross-origin sessions use a bearer-token fallback.
 - [Qt worker shutdown](qt-worker-shutdown.md) — Never synchronously wait on network or polling QThreads from the GUI; cancel and let finished callbacks own cleanup.
 - [Hosted provider storage](hosted-provider-storage.md) — Keep selectable hosted backends alongside Ollama and store API keys outside settings and conversation history.
+- [Gemini compatibility tools](gemini-openai-tools.md) — Gemini's OpenAI-compatible endpoint can reject Lura's multi-function tool list with a generic 400.
