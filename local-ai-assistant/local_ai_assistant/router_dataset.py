@@ -93,6 +93,18 @@ _SIMPLE = (
     Scenario("spelling", "SIMPLE", ("How do you spell necessary?", "Spell the word restaurant.", "What's the plural of mouse?")),
     Scenario("unit_fact", "SIMPLE", ("How many minutes are in an hour?", "How many centimeters are in a meter?", "How many sides does a hexagon have?")),
     Scenario("small_conversion", "SIMPLE", ("Convert five dollars to cents.", "How many seconds are in two minutes?", "What is 3 kilometers in meters?")),
+    # Train-only boundary examples: short factual requests can resemble
+    # computer-status questions, but do not require tools or live data.
+    Scenario("hard_simple_boundary", "SIMPLE", (
+        "What is twelve times seven?",
+        "How many hours are in a day?",
+        "Spell the word separate.",
+        "Convert three meters to centimeters.",
+        "What is the plural form of child?",
+        "What does the word concise mean?",
+        "How many letters are in the English alphabet?",
+        "Give me a one-sentence definition of inertia.",
+    )),
 )
 
 _FUNCTION = (
@@ -108,6 +120,18 @@ _FUNCTION = (
     Scenario("file_search", "FUNCTION", ("Find the error log on my computer", "Search my files for config.json", "Look for the latest PDF in my home folder", "Read the notes file from my desktop"), ("file",)),
     Scenario("system_status", "FUNCTION", ("What is my computer status?", "Check my battery and system health", "Show live system information", "Is my machine okay right now?")),
     Scenario("power", "FUNCTION", ("Shut down my PC", "Restart the computer", "Put the machine to sleep", "Power off this computer"), ("computer",)),
+    # Train-only boundary examples for held-out live-status, power, and file
+    # actions. These remain distinct from the strict test phrases.
+    Scenario("hard_function_boundary", "FUNCTION", (
+        "Check whether my machine is healthy right now.",
+        "Show the current condition of my computer.",
+        "Reboot the computer for me.",
+        "Turn the computer off when you are ready.",
+        "Search my disk for a PDF file.",
+        "Find a document somewhere in my home folder.",
+        "Put the computer into sleep mode.",
+        "Tell me what applications are currently open.",
+    )),
 )
 
 _REASONING = (
@@ -123,6 +147,19 @@ _REASONING = (
     Scenario("multi_step", "REASONING", ("Solve this multi-step logic puzzle and explain each step.", "Work through this problem carefully from the beginning.", "Break this complicated task into a sequence of actions.")),
     Scenario("ambiguous", "REASONING", ("Make it better.", "I have a complicated problem; help me figure it out.", "Something is wrong with my project and I don't know where to start.")),
     Scenario("optimization", "REASONING", ("How can I make this code faster?", "Optimize this query and explain the changes.", "Suggest a more reliable approach with reasons.")),
+    # This is appended so it lands in train (the original validation/test
+    # scenarios remain untouched). It teaches the boundary between a short
+    # answer and a request requiring explanation, planning, or diagnosis.
+    Scenario("hard_reasoning_boundary", "REASONING", (
+        "What changes would speed up this Python code?",
+        "Guide me through the steps for this complicated task.",
+        "My software project has a difficult issue; help me determine a starting point.",
+        "Recommend a dependable solution and justify it.",
+        "Evaluate these two approaches and tell me which is better.",
+        "Work through this problem carefully with me.",
+        "Improve this design and explain the tradeoffs.",
+        "Diagnose why this approach fails and suggest a fix.",
+    )),
 )
 
 SCENARIOS: tuple[Scenario, ...] = _SIMPLE + _FUNCTION + _REASONING
