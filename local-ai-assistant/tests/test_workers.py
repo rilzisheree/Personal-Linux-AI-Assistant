@@ -10,6 +10,23 @@ from local_ai_assistant.workers import VoiceRecordWorker, VoiceTranscriptionWork
 
 
 class VoiceWorkerTests(unittest.TestCase):
+    def test_wake_word_worker_transcribes_on_cpu(self) -> None:
+        from local_ai_assistant.workers import WakeWordWorker
+
+        service = Mock()
+        process = Mock()
+        service.new_recording_path.return_value = Path("/tmp/lura-wake-test.wav")
+        service.start_recorder.return_value = process
+        service.transcribe.return_value = "Lura"
+        process.poll.return_value = None
+
+        worker = WakeWordWorker(service, "Lura", chunk_seconds=0)
+        worker.run()
+
+        service.transcribe.assert_called_once_with(
+            Path("/tmp/lura-wake-test.wav"), device="cpu"
+        )
+
     def test_record_worker_stop_sets_cancel_and_terminates_process(self) -> None:
         service = Mock()
         process = Mock()

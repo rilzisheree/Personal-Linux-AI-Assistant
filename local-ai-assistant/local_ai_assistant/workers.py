@@ -348,7 +348,11 @@ class WakeWordWorker(QObject):
                         process.kill()
                         process.wait()
                     self.service.finish_recording(process, audio_path)
-                    transcript = self.service.transcribe(audio_path).casefold()
+                    # Wake-word recognition runs continuously, so keep it
+                    # off the GPU used by Ollama and other desktop workloads.
+                    transcript = self.service.transcribe(
+                        audio_path, device="cpu"
+                    ).casefold()
                     if self.wake_word and self.wake_word in transcript:
                         self.detected.emit()
                         return

@@ -62,6 +62,7 @@ class VoiceService:
         self._last_recorder_command: list[str] = []
         self._whisper_model: Any | None = None
         self._whisper_model_name: str | None = None
+        self._whisper_device: str | None = None
         self._piper_voice: Any | None = None
         self._piper_model_path: Path | None = None
 
@@ -249,12 +250,12 @@ class VoiceService:
             except OSError:
                 process.terminate()
 
-    def transcribe(self, audio_path: Path) -> str:
+    def transcribe(self, audio_path: Path, *, device: str | None = None) -> str:
         if not audio_path.is_file():
             raise VoiceError(f"Recording not found: {audio_path}")
         whisper = shutil.which("whisper")
         if whisper:
-            return self._transcribe_openai_whisper(whisper, audio_path)
+            return self._transcribe_openai_whisper(whisper, audio_path, device=device)
         whisper_cpp = shutil.which("whisper-cli") or shutil.which("whisper.cpp")
         if whisper_cpp:
             return self._transcribe_whisper_cpp(whisper_cpp, audio_path)
@@ -264,7 +265,7 @@ class VoiceService:
             whisper_module = None
         if whisper_module is not None:
             return self._transcribe_openai_whisper_module(
-                whisper_module, audio_path
+                whisper_module, audio_path, device=device
             )
         raise VoiceError(
             "No local Whisper backend found. Install openai-whisper in Lura's "
@@ -272,7 +273,13 @@ class VoiceService:
             "install whisper.cpp."
         )
 
-    def _transcribe_openai_whisper(self, executable: str, audio_path: Path) -> str:
+    def _transcribe_openai_whisper(
+        self,
+        executable: str,
+        audio_path: Path,
+        *,
+        device: str | None = None,
+    ) -> str:
         with tempfile.TemporaryDirectory(prefix="lura-whisper-") as output_directory:
             command = [
                 executable,
@@ -286,6 +293,8 @@ class VoiceService:
                 "--fp16",
                 "False",
             ]
+            if device:
+                command.extend(["--device", device])
             if self.config.whisper_language.casefold() not in {"", "auto"}:
                 command.extend(["--language", self.config.whisper_language])
             result = self._run_checked(command, 600, "Whisper")
@@ -298,12 +307,25 @@ class VoiceService:
             return self._read_transcript(text_path)
 
     def _transcribe_openai_whisper_module(
-        self, whisper_module: Any, audio_path: Path
+        self,
+        whisper_module: Any,
+        audio_path: Path,
+        *,
+        device: str | None = None,
     ) -> str:
         try:
-            if self._whisper_model is None or self._whisper_model_name != self.config.whisper_model:
-                self._whisper_model = whisper_module.load_model(self.config.whisper_model)
+            if (
+                self._whisper_model is None
+                or self._whisper_model_name != self.config.whisper_model
+                or self._whisper_device != device
+            ):
+                load_options = {"device": device} if device else {}
+                self._whisper_model = whisper_module.load_model(
+                    self.config.whisper_model,
+                    **load_options,
+                )
                 self._whisper_model_name = self.config.whisper_model
+                self._whisper_device = device
             options: dict[str, Any] = {"fp16": False}
             if self.config.whisper_language.casefold() not in {"", "auto"}:
                 options["language"] = self.config.whisper_language

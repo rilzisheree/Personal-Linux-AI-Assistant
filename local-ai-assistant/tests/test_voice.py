@@ -91,6 +91,32 @@ class VoiceServiceTests(unittest.TestCase):
                 with self.assertRaisesRegex(VoiceError, "No local Whisper backend"):
                     service.transcribe(audio)
 
+    def test_openai_whisper_can_be_forced_to_cpu(self) -> None:
+        service = VoiceService(AppConfig())
+        with tempfile.TemporaryDirectory() as directory:
+            audio = Path(directory) / "recording.wav"
+            audio.write_bytes(b"RIFF" + b"\0" * 42)
+
+            def run_whisper(command: list[str], *args, **kwargs) -> Mock:
+                output_directory = Path(command[command.index("--output_dir") + 1])
+                (output_directory / "recording.txt").write_text(
+                    "Lura", encoding="utf-8"
+                )
+                return Mock(returncode=0, stdout="", stderr="")
+
+            with patch(
+                "local_ai_assistant.voice.shutil.which",
+                side_effect=lambda name: "/usr/bin/whisper"
+                if name == "whisper"
+                else None,
+            ), patch.object(
+                service, "_run_checked", side_effect=run_whisper
+            ) as run:
+                self.assertEqual(service.transcribe(audio, device="cpu"), "Lura")
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--device") + 1], "cpu")
+
     def test_stop_recorder_uses_sigint_to_finalize_audio(self) -> None:
         service = VoiceService(AppConfig())
         process = Mock()
