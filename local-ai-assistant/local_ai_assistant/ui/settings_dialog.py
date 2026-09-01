@@ -61,7 +61,14 @@ class SettingsDialog(QDialog):
         layout.addWidget(tabs, 1)
         tabs.addTab(self._assistant_page(config), "Assistant")
         tabs.addTab(self._voice_page(config), "Voice")
-        tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+        tabs.addTab(
+            self._connection_page(
+                config,
+                telegram_token_present,
+                hosted_api_key_present,
+            ),
+            "AI & System",
+        )
         tabs.addTab(self._security_page(), "Security")
 
         self.error_label = QLabel()
@@ -231,6 +238,7 @@ class SettingsDialog(QDialog):
         self,
         config: AppConfig,
         telegram_token_present: bool,
+        hosted_api_key_present: bool,
     ) -> QWidget:
         page, layout = self._page_layout(
             "AI providers",

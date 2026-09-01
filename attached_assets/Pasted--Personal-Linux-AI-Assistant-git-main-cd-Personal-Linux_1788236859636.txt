@@ -1,0 +1,232 @@
+➜  Personal-Linux-AI-Assistant git:(main) cd ~/Personal-Linux-AI-Assistant
+./local-ai-assistant/run.sh
+artifacts           pnpm-lock.yaml       scripts
+attached_assets     pnpm-workspace.yaml  tsconfig.base.json
+lib                 pyproject.toml       tsconfig.json
+local-ai-assistant  railway.json         uv.lock
+main.py             replit.md
+package.json        screenshots
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+Traceback (most recent call last):
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/main_window.py", line 1121, in _open_settings
+    dialog = SettingsDialog(
+        self.config,
+    ...<2 lines>...
+        hosted_api_key_present=bool(load_hosted_api_key()),
+    )
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 64, in __init__
+    tabs.addTab(self._connection_page(config, telegram_token_present), "AI & System")
+                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/local_ai_assistant/ui/settings_dialog.py", line 274, in _connection_page
+    if hosted_api_key_present
+       ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'hosted_api_key_present' is not defined
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
