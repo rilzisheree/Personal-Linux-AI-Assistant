@@ -323,8 +323,11 @@ counts, generation time, and tokens per second. Ollama currently reports
 thinking and output as one aggregate `eval_count`, so the separate reasoning
 and output counts are explicitly estimates based on streamed character counts.
 
-The desktop app can use `gemma3:270m` as a local routing model while keeping the
-configured Qwen model for complex turns. Install both models once with:
+The desktop app can use `gemma3:270m` as a strict, route-only local classifier
+while keeping the configured Qwen model for response generation. Gemma emits
+only `SIMPLE`, `FUNCTION`, or `REASONING`; it does not generate the answer or
+select tool arguments. `FUNCTION` requests go through the existing Qwen native
+tool-calling path. Install both models once with:
 
 ```bash
 ollama pull gemma3:270m
@@ -343,7 +346,9 @@ python3 scripts/benchmark_router.py
 ```
 
 It reports routing accuracy, false-simple classifications, false-reasoning
-classifications, function selection accuracy, and average routing latency.
+classifications, function classification accuracy, and average routing latency.
+It also evaluates 30 additional natural conversational requests after the
+fixed benchmark.
 
 When spoken responses are enabled, complete sentences are sent to the local
 TTS worker while Ollama is still generating. The chat continues rendering

@@ -71,8 +71,8 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             ChatMessage("user", "Open Discord."),
         ]
 
-    def test_simple_route_uses_router_only(self) -> None:
-        backend = FakeBackend('{"route":"simple","response":"Hello, Sir."}')
+    def test_simple_route_uses_short_route_only(self) -> None:
+        backend = FakeBackend("SIMPLE")
         service = RoutedAssistantService(backend)
 
         decision = service.route_request(
@@ -81,7 +81,7 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             threading.Event(),
         )
 
-        self.assertEqual(decision, RouteDecision("simple", response="Hello, Sir."))
+        self.assertEqual(decision, RouteDecision("simple"))
         self.assertEqual(len(backend.calls), 1)
         call = backend.calls[0]
         self.assertEqual(call["model"], DEFAULT_ROUTER_MODEL)
@@ -91,54 +91,49 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             {"num_predict": ROUTER_OUTPUT_TOKENS, "temperature": 0},
         )
         self.assertEqual(call["response_format"], ROUTER_RESPONSE_SCHEMA)
-        self.assertIn("open_app", call["messages"][0].content)
-
-    def test_function_route_validates_tool_name_and_arguments(self) -> None:
-        backend = FakeBackend(
-            '{"route":"function","function":"open_app",'
-            '"arguments":{"app":"discord"}}'
+        self.assertNotIn("open_app", call["messages"][0].content)
+        self.assertEqual(
+            [message.role for message in call["messages"]],
+            ["system", "user"],
         )
+        self.assertEqual(call["messages"][-1].content, "Open Discord.")
+
+    def test_function_route_does_not_select_a_tool(self) -> None:
+        backend = FakeBackend("FUNCTION")
         service = RoutedAssistantService(backend)
 
         decision = service.route_request(self.messages, self.tools)
 
         self.assertEqual(decision.route, "function")
-        self.assertEqual(decision.function, "open_app")
-        self.assertEqual(decision.arguments, {"app": "discord"})
-
-    def test_unknown_function_falls_back_to_reasoning(self) -> None:
-        backend = FakeBackend(
-            '{"route":"function","function":"delete_everything","arguments":{}}'
-        )
-        service = RoutedAssistantService(backend)
-
-        decision = service.route_request(self.messages, self.tools)
-
-        self.assertEqual(decision, RouteDecision("reasoning"))
+        self.assertEqual(decision, RouteDecision("function"))
 
     def test_invalid_router_output_falls_back_to_reasoning(self) -> None:
-        backend = FakeBackend("not json")
+        backend = FakeBackend("SIMPLE because this is easy")
         service = RoutedAssistantService(backend)
 
         decision = service.route_request(self.messages, self.tools)
 
         self.assertEqual(decision, RouteDecision("reasoning"))
 
-    def test_json_embedded_in_router_filler_is_recovered(self) -> None:
-        backend = FakeBackend('{"route":"reasoning"}')
+    def test_json_encoded_route_is_accepted_for_schema_compatibility(self) -> None:
+        backend = FakeBackend('"REASONING"')
         service = RoutedAssistantService(backend)
 
         decision = service.route_request(self.messages, self.tools)
 
         self.assertEqual(decision.route, "reasoning")
 
-    def test_route_shapes_reject_extra_fields(self) -> None:
+    def test_legacy_json_objects_are_rejected(self) -> None:
         tools = self.tools
         self.assertIsNone(
             RoutedAssistantService._parse_decision(
                 '{"route":"simple","response":"hi","reason":"extra"}',
                 tools,
             )
+        )
+        self.assertEqual(
+            RoutedAssistantService._parse_decision(" function \n", tools),
+            RouteDecision("function"),
         )
         self.assertIsNone(
             RoutedAssistantService._parse_decision(

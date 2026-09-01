@@ -1,0 +1,331 @@
+The first Gemma 270M routing benchmark showed:
+
+* 36.67% overall accuracy
+* 19 false SIMPLE classifications
+* 0% function selection accuracy
+* 126 ms average routing latency
+
+The latency is excellent. **Do not sacrifice the speed.**
+
+The problem is that Gemma 270M is too eager to classify things as SIMPLE.
+
+I want you to redesign the routing logic to make Gemma a **strict classifier**, not a general-purpose assistant.
+
+## 1. Use only 3 routes
+
+Gemma must classify every request into exactly ONE of:
+
+```text
+SIMPLE
+FUNCTION
+REASONING
+```
+
+Prefer extremely short output. Ideally make Gemma output only the single route name:
+
+```text
+SIMPLE
+```
+
+or
+
+```text
+FUNCTION
+```
+
+or
+
+```text
+REASONING
+```
+
+Do not make the 270M model generate explanations or unnecessary JSON.
+
+The application can parse the single word.
+
+---
+
+## 2. VERY STRICT SIMPLE RULE
+
+This is the most important change.
+
+Gemma should ONLY choose `SIMPLE` when the request is obviously trivial and can be answered immediately without tools, complex reasoning, coding, planning, analysis, or computer interaction.
+
+Examples:
+
+```text
+"Hey Luna" → SIMPLE
+"How are you?" → SIMPLE
+"Good morning" → SIMPLE
+"Goodbye" → SIMPLE
+"Thanks" → SIMPLE
+"What's 2 + 2?" → SIMPLE
+"What's the capital of France?" → SIMPLE
+"Tell me a short joke." → SIMPLE
+```
+
+If there is ANY meaningful uncertainty about whether something is simple:
+
+```text
+→ REASONING
+```
+
+Do NOT default to SIMPLE.
+
+---
+
+## 3. FUNCTION classification
+
+Use `FUNCTION` whenever the user wants Luna to interact with, inspect, control, or retrieve information from the computer or another connected tool.
+
+Examples:
+
+```text
+"Open Discord." → FUNCTION
+"Close Spotify." → FUNCTION
+"Restart Firefox." → FUNCTION
+"Take a screenshot." → FUNCTION
+"What's my CPU usage?" → FUNCTION
+"How loud is my computer?" → FUNCTION
+"Open https://example.com." → FUNCTION
+"List the windows on my desktop." → FUNCTION
+"Turn off my computer." → FUNCTION
+"Increase my volume." → FUNCTION
+"What's using my GPU?" → FUNCTION
+```
+
+Computer interaction ALWAYS takes priority over SIMPLE.
+
+For example:
+
+```text
+"What is my CPU usage?"
+```
+
+is NOT a factual question.
+
+It requires retrieving live information from the computer.
+
+Therefore:
+
+```text
+FUNCTION
+```
+
+---
+
+## 4. REASONING classification
+
+Use `REASONING` for anything that requires meaningful reasoning, generation, analysis, planning, coding, debugging, comparison, research, or multiple steps.
+
+Examples:
+
+```text
+"Write a Python program that monitors CPU temperature."
+→ REASONING
+
+"Plan me a seven-day trip through Japan."
+→ REASONING
+
+"Compare SQLite and PostgreSQL."
+→ REASONING
+
+"Debug this authentication flow."
+→ REASONING
+
+"Research the latest battery technology."
+→ REASONING
+
+"Explain why black holes evaporate."
+→ REASONING
+
+"Solve this logic puzzle."
+→ REASONING
+
+"Design a database schema."
+→ REASONING
+
+"Make this code better."
+→ REASONING
+```
+
+If a request is ambiguous or complicated:
+
+```text
+→ REASONING
+```
+
+---
+
+## 5. Important priority order
+
+Use this priority:
+
+```text
+FUNCTION
+   ↓
+REASONING
+   ↓
+SIMPLE
+```
+
+Meaning:
+
+If the request could reasonably be a computer/tool operation → FUNCTION.
+
+Otherwise, if it requires meaningful reasoning → REASONING.
+
+Only then consider SIMPLE.
+
+SIMPLE should be the hardest category to qualify for.
+
+---
+
+## 6. Do NOT ask Gemma to generate the response
+
+Gemma's primary job is classification.
+
+Do NOT make it answer the user when routing.
+
+The application should handle the route:
+
+```text
+User
+ ↓
+Gemma 270M
+ ↓
+CLASSIFICATION
+ ↓
+ ┌────────────┬──────────────┬──────────────┐
+ ↓            ↓              ↓
+SIMPLE      FUNCTION      REASONING
+ ↓            ↓              ↓
+Gemma       Tool           Qwen3.5 2B
+response    execution      response
+```
+
+For SIMPLE, Gemma can provide the response only if the existing architecture requires it, but preferably keep classification separate from response generation if that improves reliability.
+
+---
+
+## 7. Function selection
+
+Do NOT ask Gemma 270M to select the exact function yet.
+
+The benchmark showed:
+
+```text
+Function selection accuracy: 0%
+```
+
+So for now:
+
+```text
+Gemma → FUNCTION
+             ↓
+      Existing function/tool system
+             ↓
+      Use the existing reliable
+      function-selection mechanism
+```
+
+If the existing architecture uses Qwen3.5 2B to select the exact function, keep that.
+
+We can optimize direct Gemma function selection later after the basic routing is reliable.
+
+---
+
+## 8. Keep Gemma extremely fast
+
+Do NOT increase its context unnecessarily.
+
+Do NOT send the entire conversation history to Gemma unless absolutely necessary.
+
+Gemma should receive only the information needed to classify the current request.
+
+Keep the routing prompt short and deterministic.
+
+Keep the model loaded if possible.
+
+Do not enable unnecessary reasoning/thinking.
+
+The current ~126 ms average routing latency is excellent and should be preserved.
+
+---
+
+## 9. Add strong few-shot examples
+
+Include examples covering:
+
+### SIMPLE
+
+```text
+"Hey Luna" → SIMPLE
+"How are you?" → SIMPLE
+"Thanks" → SIMPLE
+"What's 15 × 7?" → SIMPLE
+"What's the capital of France?" → SIMPLE
+"Tell me a joke." → SIMPLE
+```
+
+### FUNCTION
+
+```text
+"Open Discord." → FUNCTION
+"Close Spotify." → FUNCTION
+"Restart Firefox." → FUNCTION
+"Take a screenshot." → FUNCTION
+"What's my CPU usage?" → FUNCTION
+"What's using my GPU?" → FUNCTION
+"List my open windows." → FUNCTION
+"Open this website." → FUNCTION
+"Turn off my PC." → FUNCTION
+```
+
+### REASONING
+
+```text
+"Write a Python program that monitors CPU temperature." → REASONING
+"Plan me a seven-day trip through Japan." → REASONING
+"Compare SQLite and PostgreSQL." → REASONING
+"Debug this authentication flow." → REASONING
+"Explain why black holes evaporate." → REASONING
+"Design a database schema." → REASONING
+"Solve this multi-step puzzle." → REASONING
+```
+
+Add additional examples for ambiguous cases.
+
+---
+
+## 10. Re-run the exact benchmark
+
+After implementing this, run the same 30 test cases from the previous benchmark.
+
+Report:
+
+```text
+routing_accuracy
+false_simple
+false_reasoning
+function_classification_accuracy
+average_routing_latency_ms
+```
+
+The goal is:
+
+```text
+Accuracy: ideally >90%
+False SIMPLE: as close to 0 as possible
+False REASONING: preferably very low
+Function classification: >90%
+Latency: keep it around the current ~126ms if possible
+```
+
+Do NOT optimize for accuracy by simply routing everything to REASONING.
+
+The classifier should still correctly identify genuinely simple requests.
+
+Also test at least 30 additional natural conversational requests after the benchmark so we know the classifier works outside the artificial test set.
+
+Do not redesign the UI or change Luna's existing personality/voice system. This is only a backend routing improvement.
