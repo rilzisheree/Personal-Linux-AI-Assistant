@@ -17,10 +17,10 @@ class VoiceWorkerTests(unittest.TestCase):
         process = Mock()
         service.new_recording_path.return_value = Path("/tmp/lura-wake-test.wav")
         service.start_recorder.return_value = process
-        service.transcribe.return_value = "Lura, what time is it?"
+        service.transcribe.return_value = "Luda, what time is it?"
         process.poll.return_value = None
 
-        worker = WakeWordWorker(service, "Lura", chunk_seconds=0)
+        worker = WakeWordWorker(service, ("Luna", "Luda"), chunk_seconds=0)
         commands: list[str] = []
         worker.detected.connect(commands.append)
         worker.run()

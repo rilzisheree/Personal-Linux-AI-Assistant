@@ -17,12 +17,18 @@ import time
 import wave
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 from urllib.request import Request, urlopen
 
 from .config import AppConfig, DEFAULT_TTS_VOICE
 
 LOGGER = logging.getLogger("lura.voice")
+
+# These settings favor clean, consistent speech without increasing duration.
+# They are applied to both Piper's Python API and CLI fallback.
+PIPER_LENGTH_SCALE = 1.0
+PIPER_NOISE_SCALE = 0.55
+PIPER_NOISE_W_SCALE = 0.7
 
 
 class VoiceError(RuntimeError):
@@ -108,6 +114,24 @@ def _normalise_spoken_text(text: str) -> list[str]:
     return [token for token in cleaned.split() if token]
 
 
+def _wake_word_match_score(text: str, wake_word: str) -> float:
+    from difflib import SequenceMatcher
+
+    expected = _normalise_spoken_text(wake_word)
+    actual = _normalise_spoken_text(text)
+    if not expected or not actual:
+        return 0.0
+    width = len(expected)
+    best_score = 0.0
+    for start in range(len(actual) - width + 1):
+        candidate = actual[start : start + width]
+        best_score = max(
+            best_score,
+            SequenceMatcher(None, " ".join(expected), " ".join(candidate)).ratio(),
+        )
+    return best_score
+
+
 def wake_word_matches(text: str, wake_word: str, threshold: float = 0.72) -> bool:
     """Match Whisper's small pronunciation/spelling variations safely.
 
@@ -115,19 +139,30 @@ def wake_word_matches(text: str, wake_word: str, threshold: float = 0.72) -> boo
     Comparing individual words (rather than arbitrary substrings) avoids
     treating a word that merely contains the wake word as a trigger.
     """
-    from difflib import SequenceMatcher
+    return _wake_word_match_score(text, wake_word) >= threshold
 
-    expected = _normalise_spoken_text(wake_word)
-    actual = _normalise_spoken_text(text)
-    if not expected or not actual:
-        return False
-    width = len(expected)
-    for start in range(len(actual) - width + 1):
-        candidate = actual[start : start + width]
-        score = SequenceMatcher(None, " ".join(expected), " ".join(candidate)).ratio()
-        if score >= threshold:
-            return True
-    return False
+
+def find_wake_word(
+    text: str,
+    wake_words: str | Iterable[str],
+    threshold: float = 0.72,
+) -> str | None:
+    """Return the best matching configured alias found in a transcript.
+
+    Choosing the strongest match prevents similar aliases such as "Luna" and
+    "Luda" from being treated as duplicate competing triggers.
+    """
+    candidates = (wake_words,) if isinstance(wake_words, str) else wake_words
+    best_wake_word: str | None = None
+    best_score = threshold
+    for wake_word in candidates:
+        if not isinstance(wake_word, str) or not wake_word.strip():
+            continue
+        score = _wake_word_match_score(text, wake_word)
+        if score >= best_score:
+            best_wake_word = wake_word
+            best_score = score
+    return best_wake_word
 
 
 def remove_wake_word(text: str, wake_word: str, threshold: float = 0.72) -> str | None:
@@ -726,6 +761,12 @@ class VoiceService:
                         executable,
                         "--model",
                         str(model),
+                        "--length_scale",
+                        str(PIPER_LENGTH_SCALE),
+                        "--noise_scale",
+                        str(PIPER_NOISE_SCALE),
+                        "--noise_w_scale",
+                        str(PIPER_NOISE_W_SCALE),
                         "--output_file",
                         str(audio_path),
                     ],
@@ -764,7 +805,28 @@ class VoiceService:
                 self._piper_voice = PiperVoice.load(model)
                 self._piper_model_path = model
             with wave.open(str(audio_path), "wb") as wav_file:
-                self._piper_voice.synthesize_wav(text, wav_file)
+                try:
+                    try:
+                        from piper.config import SynthesisConfig
+                    except ImportError:
+                        from piper import SynthesisConfig
+
+                    synthesis_config = SynthesisConfig(
+                        length_scale=PIPER_LENGTH_SCALE,
+                        noise_scale=PIPER_NOISE_SCALE,
+                        noise_w_scale=PIPER_NOISE_W_SCALE,
+                        normalize_audio=True,
+                        volume=1.0,
+                    )
+                    self._piper_voice.synthesize_wav(
+                        text,
+                        wav_file,
+                        syn_config=synthesis_config,
+                    )
+                except (ImportError, TypeError):
+                    # Keep compatibility with older piper-tts releases whose
+                    # Python API has no SynthesisConfig or syn_config argument.
+                    self._piper_voice.synthesize_wav(text, wav_file)
         except Exception as error:
             raise VoiceError(f"Piper could not synthesize the response: {error}") from error
 

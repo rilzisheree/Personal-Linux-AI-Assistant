@@ -787,7 +787,7 @@ class MainWindow(QMainWindow):
             self._set_voice_status("CONVERSATION ACTIVE // READY")
         elif self.config.wake_word_enabled:
             self._set_voice_status(
-                f"WAKE LISTENING // SAY {self.config.wake_word}"
+                f"WAKE LISTENING // SAY {' / '.join(self.config.wake_words)}"
             )
         else:
             self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
@@ -814,7 +814,7 @@ class MainWindow(QMainWindow):
         self.wake_word_thread = QThread(self)
         self.wake_word_worker = WakeWordWorker(
             self.voice_service,
-            self.config.wake_word,
+            self.config.wake_words,
         )
         self.wake_word_worker.moveToThread(self.wake_word_thread)
         self.wake_word_thread.started.connect(self.wake_word_worker.run)
@@ -823,7 +823,9 @@ class MainWindow(QMainWindow):
         self.wake_word_worker.failed.connect(self.wake_word_thread.quit)
         self.wake_word_thread.finished.connect(self._wake_word_thread_finished)
         self.wake_word_thread.start()
-        self._set_voice_status(f"WAKE LISTENING // SAY {self.config.wake_word}")
+        self._set_voice_status(
+            f"WAKE LISTENING // SAY {' / '.join(self.config.wake_words)}"
+        )
 
     @Slot()
     def _wake_word_detected(self, command: str = "") -> None:

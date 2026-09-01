@@ -1,0 +1,113 @@
+I want to make two improvements to the existing assistant. **Do not redesign the UI or change the existing functionality unnecessarily.**
+
+### 1. Multiple Wake Words / Wake Word Aliases
+
+I want to be able to configure **multiple wake words** instead of having only one.
+
+For example, I want to add:
+
+```text
+Luna
+Luda
+```
+
+Because when I say "Luna", speech/wake-word detection sometimes interprets it as "Luda".
+
+Both should trigger the exact same assistant behavior.
+
+For example:
+
+```text
+"Luna, what's the weather?"
+        ↓
+Wake word detected
+        ↓
+Conversation starts
+```
+
+and:
+
+```text
+"Luda, what's the weather?"
+        ↓
+Wake word detected
+        ↓
+Conversation starts
+```
+
+### Requirements
+
+* Allow multiple wake words/aliases in Settings.
+* I should be able to add, remove, and edit wake words.
+* Treat all configured wake words as equivalent.
+* Detection of ANY configured wake word should activate the assistant.
+* Do not require the user to say all wake words.
+* Avoid duplicate triggers when multiple aliases are similar.
+* Keep the existing wake-word detection system if possible.
+* Make sure adding aliases doesn't significantly increase CPU usage or microphone processing.
+* The configured wake words should persist after restarting the application.
+
+Example configuration:
+
+```text
+Wake Words:
+[x] Luna
+[x] Luda
+[+ Add wake word]
+```
+
+If the current wake-word engine only supports one phrase at a time, implement the cleanest reliable approach for supporting multiple aliases rather than creating several competing microphone streams.
+
+---
+
+### 2. Improve AI Voice Quality
+
+I also want the AI's spoken voice to sound **clearer, cleaner, and higher quality**.
+
+Do NOT just make it louder.
+
+Improve:
+
+* Vocal clarity
+* Speech intelligibility
+* Naturalness
+* Smoothness
+* Consistent volume
+* Pronunciation
+* Audio quality
+* Reduction of robotic/harsh sound
+* Reduction of clipping or distortion
+
+The voice should still feel like a sophisticated futuristic personal assistant.
+
+### Important
+
+Do NOT make the voice dramatically slower just to improve quality.
+
+Keep response latency low.
+
+If the current TTS system has quality/speed/voice settings, inspect the available options and choose a good balance between:
+
+**Quality + clarity + naturalness + low latency**
+
+Also check the audio pipeline itself for unnecessary quality loss.
+
+Make sure the application isn't unnecessarily:
+
+* Downsampling the generated audio
+* Compressing it too aggressively
+* Converting it through a low-quality format
+* Reducing the sample rate
+* Playing it through a poor-quality audio conversion step
+
+If the TTS engine supports a higher-quality sample rate or audio format without creating excessive latency, use it.
+
+### Keep the existing UI
+
+Do NOT redesign the application.
+
+Do NOT replace the orb.
+
+Do NOT change the current visual style.
+
+These are functionality/audio-quality improvements only.

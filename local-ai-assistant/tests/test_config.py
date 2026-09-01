@@ -25,6 +25,7 @@ class ConfigTests(unittest.TestCase):
         self.assertFalse(config.voice_responses_enabled)
         self.assertEqual(config.whisper_model, DEFAULT_WHISPER_MODEL)
         self.assertEqual(config.tts_engine, DEFAULT_TTS_ENGINE)
+        self.assertEqual(config.wake_words, ("Lura",))
         self.assertFalse(config.continuous_conversation_enabled)
         self.assertEqual(config.conversation_timeout, 8)
         self.assertEqual(config.conversation_transition_delay, 0.35)
@@ -111,3 +112,14 @@ class ConfigTests(unittest.TestCase):
             self.assertNotIn("ai_provider", saved)
             self.assertNotIn("hosted_api_url", saved)
             self.assertNotIn("hosted_model", saved)
+
+    def test_wake_word_aliases_are_deduplicated_and_legacy_settings_migrate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            path.write_text(
+                json.dumps({"wake_word": "Luna", "wake_words": ["Luna", "Luda", "luna"]}),
+                encoding="utf-8",
+            )
+            loaded = AppConfig.load(path)
+        self.assertEqual(loaded.wake_words, ("Luna", "Luda"))
+        self.assertEqual(loaded.wake_word, "Luna")

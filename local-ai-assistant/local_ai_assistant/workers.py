@@ -26,9 +26,9 @@ from .voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    find_wake_word,
     is_no_speech_error,
     remove_wake_word,
-    wake_word_matches,
 )
 
 
@@ -365,12 +365,21 @@ class WakeWordWorker(QObject):
     def __init__(
         self,
         service: VoiceService,
-        wake_word: str,
+        wake_word: str | tuple[str, ...],
         chunk_seconds: float = 4.0,
     ) -> None:
         super().__init__()
         self.service = service
-        self.wake_word = wake_word.casefold().strip()
+        candidates = (wake_word,) if isinstance(wake_word, str) else wake_word
+        self.wake_words = tuple(
+            value.casefold().strip()
+            for value in candidates
+            if isinstance(value, str) and value.strip()
+        )
+        if not self.wake_words:
+            raise ValueError("At least one wake word is required.")
+        # Preserve the old attribute for callers that display the primary alias.
+        self.wake_word = self.wake_words[0]
         self.chunk_seconds = chunk_seconds
         self._stop_event = threading.Event()
         self._process: subprocess.Popen | None = None
@@ -380,7 +389,7 @@ class WakeWordWorker(QObject):
         stream_path: Path | None = None
         process: subprocess.Popen | None = None
         try:
-            LOGGER.info("[WakeWord] Initializing: %s", self.wake_word)
+            LOGGER.info("[WakeWord] Initializing aliases: %s", ", ".join(self.wake_words))
             stream_path = self.service.new_recording_path()
             process = self.service.start_recorder(stream_path)
             self._process = process
@@ -390,9 +399,12 @@ class WakeWordWorker(QObject):
                 # tests and keeps the worker's public seam backwards
                 # compatible; normal wake listening always uses a real window.
                 transcript = self.service.transcribe(stream_path, device="cpu").casefold()
-                if wake_word_matches(transcript, self.wake_word):
+                matched_wake_word = find_wake_word(transcript, self.wake_words)
+                if matched_wake_word is not None:
                     LOGGER.info("[WakeWord] Wake word detected")
-                    self.detected.emit(remove_wake_word(transcript, self.wake_word) or "")
+                    self.detected.emit(
+                        remove_wake_word(transcript, matched_wake_word) or ""
+                    )
                 return
             LOGGER.info(
                 "[WakeWord] Listening: %.1fs windows with %.1fs overlap",
@@ -433,10 +445,13 @@ class WakeWordWorker(QObject):
                             snapshot, device="cpu"
                         ).casefold()
                         LOGGER.info("[WakeWord] Window transcribed: %r", transcript[:160])
-                        if wake_word_matches(transcript, self.wake_word):
+                        matched_wake_word = find_wake_word(
+                            transcript, self.wake_words
+                        )
+                        if matched_wake_word is not None:
                             LOGGER.info("[WakeWord] Wake word detected")
                             self.detected.emit(
-                                remove_wake_word(transcript, self.wake_word) or ""
+                                remove_wake_word(transcript, matched_wake_word) or ""
                             )
                             return
                     except VoiceError as error:

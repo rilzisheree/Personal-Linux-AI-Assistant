@@ -24,10 +24,11 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - Settings includes optional system-tray background mode and user-level Linux
   autostart. Autostart creates `~/.config/autostart/lura.desktop` and launches
   Lura with `--background`; both options are disabled by default.
-- Settings can enable a temporary continuous conversation session after the
-  wake word. The session reuses VAD/STT/TTS, pauses the microphone during TTS,
-  supports explicit goodbye phrases and manual Stop, and returns to wake-word
-  listening after its timeout.
+- Settings can enable multiple persistent wake-word aliases and a temporary
+  continuous conversation session after any configured alias. The session
+  reuses VAD/STT/TTS, pauses the microphone during TTS, supports explicit
+  goodbye phrases and manual Stop, and returns to wake-word listening after
+  its timeout.
 
 ## Stack
 

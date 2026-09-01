@@ -216,10 +216,18 @@ Use the settings button in the app to change:
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
 - Spoken responses, TTS engine, and voice
+- Multiple wake-word aliases, which can be added, edited, or removed
 - Optional continuous conversation mode after the wake word
 - Conversation timeout and a short voice transition delay
 
-When continuous conversation mode is enabled, saying the wake word starts a
+When wake-word listening is enabled, saying any configured alias starts a
+conversation. Aliases use the same single recorder stream and overlapping
+transcription windows, so adding aliases does not create competing microphone
+listeners. Similar aliases are scored together and only the strongest match
+activates one handoff.
+
+When continuous conversation mode is enabled, saying any configured wake word
+starts a
 temporary session. Lura listens for one turn at a time after each response,
 uses the existing VAD to detect when you finish, and keeps the microphone
 disabled while TTS is speaking. The session ends after the configured quiet
@@ -242,6 +250,10 @@ file into:
 
 Choosing either voice uses Piper directly; Lura no longer silently substitutes
 eSpeak when Piper or its model is unavailable.
+
+Piper keeps its native WAV sample rate through playback and uses a balanced
+normal-speed synthesis profile with normalized audio and reduced stochastic
+noise for clearer, more consistent speech without an extra conversion step.
 
 Settings are stored locally at:
 

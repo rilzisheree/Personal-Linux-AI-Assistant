@@ -17,6 +17,7 @@ from local_ai_assistant.voice import (
     conversation_end_requested,
     is_no_speech_error,
     remove_wake_word,
+    find_wake_word,
     wake_word_matches,
 )
 
@@ -38,6 +39,14 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertTrue(wake_word_matches("Lara", "Lura"))
         self.assertFalse(wake_word_matches("coloration", "Lura"))
         self.assertEqual(remove_wake_word("Laura, what's up?", "Lura"), "what's up")
+        self.assertEqual(find_wake_word("Luda, what's up?", ("Luna", "Luda")), "Luda")
+        self.assertEqual(
+            remove_wake_word(
+                "Luda, what's up?",
+                find_wake_word("Luda, what's up?", ("Luna", "Luda")) or "",
+            ),
+            "what's up",
+        )
 
     def test_conversation_end_phrases_are_conservative(self) -> None:
         self.assertTrue(conversation_end_requested("Okay, goodbye"))

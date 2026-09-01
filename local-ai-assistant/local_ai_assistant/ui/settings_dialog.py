@@ -147,8 +147,23 @@ class SettingsDialog(QDialog):
         self.assistant_name_input.setPlaceholderText("Lura")
         self.wake_word_enabled = QCheckBox("Enable wake-word listening")
         self.wake_word_enabled.setChecked(config.wake_word_enabled)
-        self.wake_word_input = QLineEdit(config.wake_word)
-        self.wake_word_input.setPlaceholderText("Lura")
+        self.wake_word_inputs: list[QLineEdit] = []
+        self.wake_word_rows: list[QWidget] = []
+        self.wake_words_container = QWidget()
+        self.wake_words_layout = QVBoxLayout(self.wake_words_container)
+        self.wake_words_layout.setContentsMargins(0, 0, 0, 0)
+        self.wake_words_layout.setSpacing(6)
+        for wake_word in config.wake_words:
+            self._add_wake_word_row(wake_word)
+        if not self.wake_word_inputs:
+            self._add_wake_word_row(config.wake_word)
+        # Compatibility alias for existing callers and the primary wake word.
+        self.wake_word_input = self.wake_word_inputs[0]
+        self.add_wake_word_button = QPushButton("+ Add wake word")
+        self.add_wake_word_button.setObjectName("quietButton")
+        self.add_wake_word_button.clicked.connect(
+            lambda _checked=False: self._add_wake_word_row()
+        )
         self.active_listening_duration = QSpinBox()
         self.active_listening_duration.setRange(1, 60)
         self.active_listening_duration.setValue(config.active_listening_duration)
@@ -173,7 +188,8 @@ class SettingsDialog(QDialog):
         self.conversation_transition_delay.setSuffix(" seconds")
         form.addRow("Assistant name", self.assistant_name_input)
         form.addRow("", self.wake_word_enabled)
-        form.addRow("Wake word", self.wake_word_input)
+        form.addRow("Wake words", self.wake_words_container)
+        form.addRow("", self.add_wake_word_button)
         form.addRow("Active listening", self.active_listening_duration)
         form.addRow("", self.continuous_conversation_enabled)
         form.addRow("Conversation timeout", self.conversation_timeout)
@@ -432,7 +448,10 @@ class SettingsDialog(QDialog):
             telegram_allowed_user_id=self.telegram_user_id_input.text(),
             assistant_name=self.assistant_name_input.text(),
             wake_word_enabled=self.wake_word_enabled.isChecked(),
-            wake_word=self.wake_word_input.text(),
+            wake_word=self.wake_word_inputs[0].text(),
+            wake_words=tuple(
+                wake_word_input.text() for wake_word_input in self.wake_word_inputs
+            ),
             active_listening_duration=self.active_listening_duration.value(),
             continuous_conversation_enabled=self.continuous_conversation_enabled.isChecked(),
             conversation_timeout=self.conversation_timeout.value(),
@@ -450,6 +469,42 @@ class SettingsDialog(QDialog):
 
     def _selected_voice(self) -> str:
         return str(self.tts_voice_input.currentData())
+
+    def _add_wake_word_row(self, value: str = "") -> None:
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(8)
+        wake_word_input = QLineEdit(value)
+        wake_word_input.setPlaceholderText("Lura")
+        remove_button = QPushButton("Remove")
+        remove_button.setObjectName("quietButton")
+        remove_button.setToolTip("Remove this wake-word alias")
+        remove_button.clicked.connect(
+            lambda _checked=False, row=row: self._remove_wake_word_row(row)
+        )
+        row_layout.addWidget(wake_word_input, 1)
+        row_layout.addWidget(remove_button)
+        self.wake_words_layout.addWidget(row)
+        self.wake_word_inputs.append(wake_word_input)
+        self.wake_word_rows.append(row)
+        self._sync_wake_word_remove_buttons()
+
+    def _remove_wake_word_row(self, row: QWidget) -> None:
+        if row not in self.wake_word_rows or len(self.wake_word_rows) <= 1:
+            return
+        index = self.wake_word_rows.index(row)
+        self.wake_words_layout.removeWidget(row)
+        row.deleteLater()
+        self.wake_word_rows.pop(index)
+        self.wake_word_inputs.pop(index)
+        self._sync_wake_word_remove_buttons()
+
+    def _sync_wake_word_remove_buttons(self) -> None:
+        for row in self.wake_word_rows:
+            remove_button = row.findChild(QPushButton)
+            if remove_button is not None:
+                remove_button.setEnabled(len(self.wake_word_rows) > 1)
 
     def _voice_changed(self, index: int) -> None:
         voice = self.tts_voice_input.itemData(index)

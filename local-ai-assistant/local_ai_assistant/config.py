@@ -26,6 +26,7 @@ DEFAULT_VOICE_MIN_SPEECH_DURATION = 0.2
 DEFAULT_VOICE_VAD_THRESHOLD = 350
 DEFAULT_CONVERSATION_TIMEOUT = 8
 DEFAULT_CONVERSATION_TRANSITION_DELAY = 0.35
+DEFAULT_WAKE_WORD = "Lura"
 
 
 @dataclass
@@ -48,7 +49,8 @@ class AppConfig:
     telegram_allowed_user_id: str = ""
     assistant_name: str = "Lura"
     wake_word_enabled: bool = False
-    wake_word: str = "Lura"
+    wake_word: str = DEFAULT_WAKE_WORD
+    wake_words: tuple[str, ...] = ()
     active_listening_duration: int = 15
     continuous_conversation_enabled: bool = False
     conversation_timeout: int = DEFAULT_CONVERSATION_TIMEOUT
@@ -80,7 +82,27 @@ class AppConfig:
             self.tts_voice = PIPER_VOICE_PRESETS[1][1]
         self.telegram_allowed_user_id = str(self.telegram_allowed_user_id).strip()
         self.assistant_name = self.assistant_name.strip() or "Lura"
-        self.wake_word = self.wake_word.strip() or self.assistant_name
+        configured_wake_words = self.wake_words
+        if isinstance(configured_wake_words, str):
+            configured_wake_words = (configured_wake_words,)
+        if not configured_wake_words:
+            configured_wake_words = (self.wake_word,)
+        normalized_wake_words: list[str] = []
+        seen_wake_words: set[str] = set()
+        for value in configured_wake_words:
+            if not isinstance(value, str):
+                continue
+            wake_word = value.strip()
+            folded = wake_word.casefold()
+            if wake_word and folded not in seen_wake_words:
+                normalized_wake_words.append(wake_word)
+                seen_wake_words.add(folded)
+        if not normalized_wake_words:
+            normalized_wake_words = [self.assistant_name]
+        self.wake_words = tuple(normalized_wake_words)
+        # Keep the original field as the primary alias for older callers and
+        # settings files that only know about one wake word.
+        self.wake_word = self.wake_words[0]
         if isinstance(self.voice_silence_duration, str):
             self.voice_silence_duration = float(self.voice_silence_duration.strip())
         if isinstance(self.voice_min_speech_duration, str):
@@ -123,6 +145,8 @@ class AppConfig:
             raise ValueError("Telegram setting must be true or false.")
         if not isinstance(self.wake_word_enabled, bool):
             raise ValueError("Wake-word setting must be true or false.")
+        if not self.wake_words:
+            raise ValueError("At least one wake word is required.")
         if not isinstance(self.continuous_conversation_enabled, bool):
             raise ValueError("Continuous conversation setting must be true or false.")
         if (
@@ -240,6 +264,11 @@ class AppConfig:
                     raw.get("wake_word_enabled", False), False
                 ),
                 wake_word=str(raw.get("wake_word", "Lura")),
+                wake_words=(
+                    raw.get("wake_words")
+                    if raw.get("wake_words") is not None
+                    else (raw.get("wake_word", DEFAULT_WAKE_WORD),)
+                ),
                 active_listening_duration=_int_setting(
                     raw.get("active_listening_duration", 15), 15
                 ),
