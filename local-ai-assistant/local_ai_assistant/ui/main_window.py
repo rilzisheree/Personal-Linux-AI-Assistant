@@ -172,7 +172,10 @@ class MainWindow(QMainWindow):
                 load_hosted_api_key(),
             )
         if config.ai_provider == "gemini":
-            return GeminiApiClient(load_gemini_api_key())
+            return GeminiApiClient(
+                load_gemini_api_key(),
+                thinking_level=config.gemini_thinking_level,
+            )
         return OllamaClient(config.ollama_url)
 
     def _sync_quit_behavior(self) -> None:

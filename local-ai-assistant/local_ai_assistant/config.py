@@ -17,6 +17,8 @@ DEFAULT_AI_PROVIDER = "ollama"
 DEFAULT_HOSTED_API_URL = "https://openrouter.ai/api/v1"
 DEFAULT_HOSTED_MODEL = "openai/gpt-4o-mini"
 DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+DEFAULT_GEMINI_THINKING_LEVEL = "low"
+GEMINI_THINKING_LEVELS = ("low", "medium", "high")
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
@@ -56,6 +58,7 @@ class AppConfig:
     hosted_api_url: str = DEFAULT_HOSTED_API_URL
     hosted_model: str = DEFAULT_HOSTED_MODEL
     gemini_model: str = DEFAULT_GEMINI_MODEL
+    gemini_thinking_level: str = DEFAULT_GEMINI_THINKING_LEVEL
 
     def __post_init__(self) -> None:
         self.ai_provider = self.ai_provider.strip().lower()
@@ -64,6 +67,7 @@ class AppConfig:
         self.hosted_api_url = self.hosted_api_url.strip().rstrip("/")
         self.hosted_model = self.hosted_model.strip()
         self.gemini_model = self.gemini_model.strip()
+        self.gemini_thinking_level = self.gemini_thinking_level.strip().lower()
         if isinstance(self.ollama_context_size, str):
             self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
@@ -105,6 +109,8 @@ class AppConfig:
             raise ValueError("Hosted API model cannot be empty.")
         if not self.gemini_model:
             raise ValueError("Gemini model cannot be empty.")
+        if self.gemini_thinking_level not in GEMINI_THINKING_LEVELS:
+            raise ValueError("Gemini thinking level must be low, medium, or high.")
         if (
             isinstance(self.ollama_context_size, bool)
             or not isinstance(self.ollama_context_size, int)
@@ -188,6 +194,12 @@ class AppConfig:
                 hosted_api_url=hosted_api_url,
                 hosted_model=hosted_model,
                 gemini_model=str(raw.get("gemini_model", DEFAULT_GEMINI_MODEL)),
+                gemini_thinking_level=str(
+                    raw.get(
+                        "gemini_thinking_level",
+                        DEFAULT_GEMINI_THINKING_LEVEL,
+                    )
+                ),
                 ollama_context_size=_int_setting(
                     raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
                     DEFAULT_CONTEXT_SIZE,

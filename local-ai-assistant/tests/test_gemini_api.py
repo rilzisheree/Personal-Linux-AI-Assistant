@@ -77,6 +77,10 @@ class GeminiApiTests(unittest.TestCase):
         self.assertNotIn("key=test-key", url)
         self.assertEqual(client._headers("text/event-stream")["x-goog-api-key"], "test-key")
 
+    def test_enables_low_thinking_for_gemini_three_models(self) -> None:
+        self.assertTrue(GeminiApiClient._supports_thinking_level("gemini-3.6-flash"))
+        self.assertFalse(GeminiApiClient._supports_thinking_level("gemini-2.5-flash"))
+
 
 if __name__ == "__main__":
     unittest.main()

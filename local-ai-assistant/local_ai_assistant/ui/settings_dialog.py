@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from ..config import (
     AppConfig,
     DEFAULT_GEMINI_MODEL,
+    GEMINI_THINKING_LEVELS,
     DEFAULT_HOSTED_API_URL,
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
@@ -330,6 +331,25 @@ class SettingsDialog(QDialog):
         gemini_group, gemini_form = self._group("GOOGLE GEMINI")
         self.gemini_model_input = QLineEdit(config.gemini_model)
         self.gemini_model_input.setPlaceholderText(DEFAULT_GEMINI_MODEL)
+        self.gemini_thinking_level_input = QComboBox()
+        thinking_level_labels = {
+            "low": "Low latency",
+            "medium": "Balanced",
+            "high": "Deep reasoning",
+        }
+        for level in GEMINI_THINKING_LEVELS:
+            self.gemini_thinking_level_input.addItem(
+                thinking_level_labels[level],
+                level,
+            )
+        self.gemini_thinking_level_input.setCurrentIndex(
+            max(
+                0,
+                self.gemini_thinking_level_input.findData(
+                    config.gemini_thinking_level
+                ),
+            )
+        )
         self.gemini_api_key_input = QLineEdit()
         self.gemini_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.gemini_api_key_input.setPlaceholderText(
@@ -338,11 +358,13 @@ class SettingsDialog(QDialog):
             else "Paste Google AI Studio API key"
         )
         gemini_form.addRow("Model", self.gemini_model_input)
+        gemini_form.addRow("Response speed", self.gemini_thinking_level_input)
         gemini_form.addRow("API key", self.gemini_api_key_input)
         layout.addWidget(gemini_group)
         gemini_hint = QLabel(
             "Create a key in Google AI Studio. The hosted API reads GEMINI_API_KEY "
-            "from the deployment secret; desktop keys are stored locally."
+            "from the deployment secret; desktop keys are stored locally. Low "
+            "latency is recommended for normal chat."
         )
         gemini_hint.setObjectName("settingsHint")
         gemini_hint.setWordWrap(True)
@@ -453,6 +475,9 @@ class SettingsDialog(QDialog):
             hosted_api_url=DEFAULT_HOSTED_API_URL,
             hosted_model=self.hosted_model_input.text(),
             gemini_model=self.gemini_model_input.text(),
+            gemini_thinking_level=str(
+                self.gemini_thinking_level_input.currentData()
+            ),
         )
 
     def telegram_token(self) -> str:

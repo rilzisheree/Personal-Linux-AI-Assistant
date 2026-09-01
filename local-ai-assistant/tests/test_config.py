@@ -10,6 +10,7 @@ from local_ai_assistant.config import (
     DEFAULT_MODEL,
     DEFAULT_OLLAMA_URL,
     DEFAULT_CONTEXT_SIZE,
+    DEFAULT_GEMINI_THINKING_LEVEL,
     DEFAULT_HOSTED_API_URL,
     DEFAULT_HOSTED_MODEL,
     DEFAULT_TTS_ENGINE,
@@ -25,6 +26,10 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.ollama_context_size, DEFAULT_CONTEXT_SIZE)
         self.assertEqual(config.hosted_api_url, DEFAULT_HOSTED_API_URL)
         self.assertEqual(config.hosted_model, DEFAULT_HOSTED_MODEL)
+        self.assertEqual(
+            config.gemini_thinking_level,
+            DEFAULT_GEMINI_THINKING_LEVEL,
+        )
         self.assertTrue(config.voice_input_enabled)
         self.assertFalse(config.voice_responses_enabled)
         self.assertEqual(config.whisper_model, DEFAULT_WHISPER_MODEL)
@@ -78,6 +83,8 @@ class ConfigTests(unittest.TestCase):
             AppConfig(tts_engine="unknown")
         with self.assertRaises(ValueError):
             AppConfig(whisper_model=" ")
+        with self.assertRaises(ValueError):
+            AppConfig(gemini_thinking_level="ultra")
 
     def test_damaged_config_uses_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

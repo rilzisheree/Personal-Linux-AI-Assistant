@@ -25,6 +25,7 @@ from .ollama import ChatMessage, StreamEvent, ToolCall
 GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 GEMINI_CONNECTION_TIMEOUT = 15.0
 GEMINI_GENERATION_TIMEOUT = 180.0
+GEMINI_THINKING_LEVELS = {"low", "medium", "high"}
 
 
 class GeminiApiClient:
@@ -37,10 +38,15 @@ class GeminiApiClient:
         api_key: str,
         timeout: float = GEMINI_GENERATION_TIMEOUT,
         base_url: str = GEMINI_API_BASE_URL,
+        thinking_level: str = "high",
     ) -> None:
         self.api_key = api_key.strip()
         self.timeout = timeout
         self.base_url = base_url.rstrip("/")
+        normalized_thinking_level = thinking_level.strip().lower()
+        if normalized_thinking_level not in GEMINI_THINKING_LEVELS:
+            raise ValueError("Gemini thinking level must be low, medium, or high.")
+        self.thinking_level = normalized_thinking_level
         self._response = None
         self._response_lock = threading.Lock()
 
@@ -118,6 +124,12 @@ class GeminiApiClient:
             }
         if tools:
             payload["tools"] = [{"functionDeclarations": self._function_declarations(tools)}]
+        if self._supports_thinking_level(model):
+            payload["generationConfig"] = {
+                "thinkingConfig": {
+                    "thinkingLevel": self.thinking_level,
+                }
+            }
         request = Request(
             self._url(
                 f"/models/{quote(model.strip(), safe='')}:streamGenerateContent",
@@ -245,6 +257,11 @@ class GeminiApiClient:
             }
             declarations.append(declaration)
         return declarations
+
+    @staticmethod
+    def _supports_thinking_level(model: str) -> bool:
+        """Gemini 3 uses thinkingLevel; leave older model families unchanged."""
+        return "gemini-3" in model.strip().removeprefix("models/").casefold()
 
     @staticmethod
     def _parse_sse_line(
