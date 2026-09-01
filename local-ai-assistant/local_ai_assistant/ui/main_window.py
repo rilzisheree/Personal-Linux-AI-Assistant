@@ -515,7 +515,7 @@ class MainWindow(QMainWindow):
             or self.chat_worker is not None
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
-            or (self.wake_word_worker is not None and not manual_handoff)
+            or (self.wake_word_worker is not None and automatic)
         ):
             self._set_orb_state("idle")
             return
