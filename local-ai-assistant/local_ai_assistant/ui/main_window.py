@@ -1177,13 +1177,14 @@ class MainWindow(QMainWindow):
                 return
             if (
                 next_config.ai_provider == "gemini"
+                and self.config.ai_provider != "gemini"
                 and not gemini_api_key
                 and not load_gemini_api_key()
             ):
                 QMessageBox.warning(
                     self,
                     "Gemini API key required",
-                    "Add a Google Gemini API key before selecting the Gemini provider.",
+                    "Add a Google Gemini API key before switching to the Gemini provider.",
                 )
                 return
             if token:
