@@ -18,9 +18,9 @@ the desktop app and Ollama remain local.
 ## Authenticated API service (Phase 6)
 
 The optional API service provides password-protected access to conversations
-and the allowlisted safe `open_app` action. It uses the same local Ollama
-endpoint and stores the single local user's sessions and conversations in a
-separate SQLite database.
+and the allowlisted safe `open_app` action. It can use local Ollama or hosted
+Google Gemini, and stores the single local user's sessions and conversations
+in a separate SQLite database.
 
 Start it manually from this directory with:
 
@@ -41,8 +41,13 @@ these environment variables when needed:
 
 - `SESSION_SECRET` — optional locally; at least 16 characters when supplied
 - `LURA_API_PASSWORD` — optional initial password for headless API setup
+- `GEMINI_API_KEY` — Google AI Studio key; keep this in a Replit Secret, never in
+  source code
+- `LURA_AI_PROVIDER` — `gemini` or `ollama`; defaults to `gemini` when
+  `GEMINI_API_KEY` is present
+- `LURA_GEMINI_MODEL` — Gemini model, defaulting to `gemini-2.5-flash`
 - `LURA_OLLAMA_URL` — Ollama base URL, defaulting to `http://localhost:11434`
-- `LURA_MODEL` — default model, defaulting to `qwen3.5:4b`
+- `LURA_MODEL` — Ollama model, defaulting to `qwen3.5:4b`
 - `LURA_API_DATABASE` — optional API SQLite path
 - `LURA_API_HOST` — bind address, defaulting to `0.0.0.0`
 - `LURA_ALLOWED_ORIGIN` — optional exact browser origin for credentialed CORS
@@ -205,11 +210,13 @@ is not installed.
 
 Use the settings button in the app to change:
 
-- Active AI provider: **Ollama · local** or **OpenRouter · hosted**
+- Active AI provider: **Ollama · local**, **OpenRouter · hosted**, or
+  **Google Gemini · hosted**
 - Ollama URL, defaulting to `http://localhost:11434`
 - Ollama model, defaulting to `qwen3.5:4b`
 - OpenRouter model, defaulting to `openai/gpt-4o-mini`
 - OpenRouter API key
+- Gemini model and API key
 - Ollama context size, defaulting to 8,192 tokens
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
@@ -237,8 +244,9 @@ Settings are stored locally at:
 ```
 
 The Ollama and voice preferences are stored locally. No credentials or prompts
-are written to the settings file. Hosted API keys are stored separately at
-`~/.config/local-ai-assistant/hosted-api.key` with owner-only permissions.
+are written to the settings file. OpenRouter and Gemini API keys are stored
+separately with owner-only permissions. On Replit, set `GEMINI_API_KEY` as a
+Secret so the hosted API can use it without exposing it to the browser.
 Conversation history is stored in SQLite at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.db`, or
 `~/.local/share/local-ai-assistant/conversations.db` when `XDG_DATA_HOME` is

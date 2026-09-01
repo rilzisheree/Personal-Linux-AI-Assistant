@@ -12,8 +12,14 @@ from pathlib import Path
 from typing import Any, cast
 from urllib.parse import unquote, urlsplit
 
-from .config import DEFAULT_CONTEXT_SIZE, DEFAULT_MODEL, DEFAULT_OLLAMA_URL
-from .errors import format_ollama_error
+from .config import (
+    DEFAULT_CONTEXT_SIZE,
+    DEFAULT_GEMINI_MODEL,
+    DEFAULT_MODEL,
+    DEFAULT_OLLAMA_URL,
+)
+from .errors import format_backend_error
+from .gemini_api import GeminiApiClient
 from .ollama import ChatMessage, OllamaClient, OllamaProtocolError
 from .api_store import ApiStore, SESSION_TTL_SECONDS
 from .tools import PermissionLevel, ToolCallResult, ToolManager
@@ -46,18 +52,33 @@ class ApiServer(ThreadingHTTPServer):
         ollama_url: str = DEFAULT_OLLAMA_URL,
         default_model: str = DEFAULT_MODEL,
         context_size: int = DEFAULT_CONTEXT_SIZE,
+        *,
+        provider: str = "ollama",
+        gemini_api_key: str = "",
+        gemini_model: str = DEFAULT_GEMINI_MODEL,
     ) -> None:
         super().__init__(address, ApiRequestHandler)
         self.store = store
         self.ollama_url = ollama_url.rstrip("/")
-        self.default_model = default_model
+        self.default_model = (
+            gemini_model.strip()
+            if provider.strip().lower() == "gemini"
+            else default_model
+        )
         self.context_size = context_size
+        self.provider = provider.strip().lower()
+        self.gemini_api_key = gemini_api_key.strip()
+        self.gemini_model = gemini_model.strip() or DEFAULT_GEMINI_MODEL
 
 
 def start_background_server(
     ollama_url: str = DEFAULT_OLLAMA_URL,
     default_model: str = DEFAULT_MODEL,
     context_size: int = DEFAULT_CONTEXT_SIZE,
+    *,
+    provider: str = "ollama",
+    gemini_api_key: str = "",
+    gemini_model: str = DEFAULT_GEMINI_MODEL,
 ) -> tuple[ApiServer | None, threading.Thread | None]:
     """Start a localhost API for the desktop app without blocking Qt."""
 
@@ -71,6 +92,9 @@ def start_background_server(
             ollama_url,
             default_model,
             context_size,
+            provider=provider,
+            gemini_api_key=gemini_api_key,
+            gemini_model=gemini_model,
         )
     except (OSError, ValueError, RuntimeError) as error:
         # An independently running API is valid; do not prevent the desktop
@@ -103,6 +127,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                     {
                         "ok": True,
                         "service": "lura-api",
+                        "provider": self._api_server().provider,
                         "ollama_url": self._api_server().ollama_url,
                     }
                 )
@@ -113,7 +138,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                     {"user": {"id": "local", "authenticated": True}}
                 )
             elif parts == ["api", "models"]:
-                models = OllamaClient(self._api_server().ollama_url).list_models()
+                models = self._ai_client().list_models()
                 self._send_json({"models": models})
             elif parts == ["api", "conversations"]:
                 self._send_json(
@@ -224,13 +249,15 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
 
         cancel_event = threading.Event()
         response_parts: list[str] = []
-        client = OllamaClient(self._api_server().ollama_url)
+        client = self._ai_client()
         tool_manager = ToolManager()
-        remote_tools = [
-            schema
-            for schema in tool_manager.definitions_for_ollama()
-            if schema.get("function", {}).get("name") in REMOTE_TOOL_NAMES
-        ]
+        remote_tools = []
+        if self._api_server().provider in {"ollama", "gemini"}:
+            remote_tools = [
+                schema
+                for schema in tool_manager.definitions_for_ollama()
+                if schema.get("function", {}).get("name") in REMOTE_TOOL_NAMES
+            ]
         messages = list(conversation.messages)
         tool_rounds = 0
         try:
@@ -322,7 +349,12 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
             try:
                 self._write_sse(
                     "error",
-                    {"message": format_ollama_error(error)},
+                    {
+                        "message": format_backend_error(
+                            error,
+                            getattr(client, "display_name", "AI backend"),
+                        )
+                    },
                 )
             except (BrokenPipeError, ConnectionResetError, OSError):
                 pass
@@ -454,6 +486,17 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
     def _api_server(self) -> ApiServer:
         return cast(ApiServer, self.server)
 
+    def _ai_client(self):
+        server = self._api_server()
+        if server.provider == "gemini":
+            return GeminiApiClient(server.gemini_api_key)
+        if server.provider == "ollama":
+            return OllamaClient(server.ollama_url)
+        raise ApiHttpError(
+            HTTPStatus.BAD_REQUEST,
+            f"Unsupported API provider: {server.provider}.",
+        )
+
     def log_message(self, format: str, *args: object) -> None:
         # Keep credentials, request bodies, and bearer tokens out of logs.
         super().log_message("%s", format % args)
@@ -471,7 +514,14 @@ def main() -> int:
 
     host = os.environ.get("LURA_API_HOST", "0.0.0.0")
     ollama_url = os.environ.get("LURA_OLLAMA_URL", DEFAULT_OLLAMA_URL).strip().rstrip("/")
-    model = os.environ.get("LURA_MODEL", DEFAULT_MODEL).strip()
+    configured_gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    provider = os.environ.get(
+        "LURA_AI_PROVIDER",
+        "gemini" if configured_gemini_key else "ollama",
+    ).strip().lower()
+    default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_MODEL
+    model = os.environ.get("LURA_MODEL", default_model).strip()
+    gemini_model = os.environ.get("LURA_GEMINI_MODEL", model).strip()
     database_path = Path(
         os.environ.get("LURA_API_DATABASE", str(ApiStore.default_path()))
     ).expanduser()
@@ -479,7 +529,15 @@ def main() -> int:
     configured_password = os.environ.get("LURA_API_PASSWORD")
     if not store.has_password() and configured_password:
         store.set_password(configured_password)
-    server = ApiServer((host, port), store, ollama_url, model)
+    server = ApiServer(
+        (host, port),
+        store,
+        ollama_url,
+        model,
+        provider=provider,
+        gemini_api_key=configured_gemini_key,
+        gemini_model=gemini_model,
+    )
     print(f"Lura API listening on {host}:{port}")
     try:
         server.serve_forever()

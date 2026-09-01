@@ -1,7 +1,7 @@
 # Lura
 
-Lura is a native PySide6 Linux desktop assistant that chats with a local Ollama
-server and executes a small set of permission-gated tools.
+Lura is a native PySide6 Linux desktop assistant that chats with local Ollama
+or hosted Google Gemini and executes a small set of permission-gated tools.
 
 ## Run & Operate
 
@@ -17,6 +17,9 @@ server and executes a small set of permission-gated tools.
   first launch
 - The app expects a local Ollama service at `http://localhost:11434` by default.
   The URL and model are configurable in Settings.
+- The API service uses Gemini when `GEMINI_API_KEY` is configured. Set
+  `LURA_AI_PROVIDER=gemini` and optionally `LURA_GEMINI_MODEL` to select it
+  explicitly. Keep the key in Replit Secrets.
 - Settings includes optional system-tray background mode and user-level Linux
   autostart. Autostart creates `~/.config/autostart/lura.desktop` and launches
   Lura with `--background`; both options are disabled by default.
@@ -26,6 +29,7 @@ server and executes a small set of permission-gated tools.
 - Python 3.10+
 - PySide6 6.7+
 - Ollama HTTP API with newline-delimited streaming
+- Google Gemini REST API with server-sent event streaming
 - Local SQLite persistence for conversations and JSON persistence for settings
 - Dependency-free single-user password-protected HTTP API with server-sent event
   chat streaming
@@ -55,7 +59,7 @@ server and executes a small set of permission-gated tools.
 
 ## Product
 
-- Stream local Ollama chat responses.
+- Stream local Ollama or Google Gemini chat responses.
 - Switch models discovered from the configured Ollama endpoint.
 - Save, switch, clear, and export conversations locally.
 - Run safe system-information tools and open applications.
@@ -71,7 +75,9 @@ server and executes a small set of permission-gated tools.
 
 ## Gotchas
 
-- Ollama must be installed, running, and have the selected model pulled.
+- Ollama must be installed, running, and have the selected model pulled when
+  using the local provider. Hosted Gemini requires a valid `GEMINI_API_KEY`
+  Secret and a model available to that Google API key.
 - The Phase 6 API uses one local password, keeps API data separate from the
   desktop history database, streams chat over SSE, and only exposes the
   allowlisted safe `open_app` action remotely. The desktop app asks for the password
@@ -86,6 +92,9 @@ server and executes a small set of permission-gated tools.
 - The Phase 7 web companion is `artifacts/lura-web/`; it uses the existing
   cookie-authenticated HTTP/SSE API and intentionally does not expose desktop
   control tools remotely.
+- The Gemini provider is text/SSE based. The reference Mark-LI project uses
+  Gemini Live for realtime audio, which is a different API and is not used by
+  this text chat path.
 
 ## Pointers
 

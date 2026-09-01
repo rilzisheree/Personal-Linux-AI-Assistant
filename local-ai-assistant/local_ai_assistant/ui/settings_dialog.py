@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from ..config import (
     AppConfig,
+    DEFAULT_GEMINI_MODEL,
     DEFAULT_HOSTED_API_URL,
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
@@ -42,6 +43,7 @@ class SettingsDialog(QDialog):
         *,
         telegram_token_present: bool = False,
         hosted_api_key_present: bool = False,
+        gemini_api_key_present: bool = False,
     ) -> None:
         super().__init__(parent)
         self.setObjectName("settingsDialog")
@@ -65,7 +67,13 @@ class SettingsDialog(QDialog):
         layout.addWidget(tabs, 1)
         tabs.addTab(self._scroll_page(self._assistant_page(config)), "Assistant")
         tabs.addTab(
-            self._scroll_page(self._ai_page(config, hosted_api_key_present)),
+            self._scroll_page(
+                self._ai_page(
+                    config,
+                    hosted_api_key_present,
+                    gemini_api_key_present,
+                )
+            ),
             "AI & Models",
         )
         tabs.addTab(self._scroll_page(self._voice_page(config)), "Voice")
@@ -263,16 +271,22 @@ class SettingsDialog(QDialog):
         self._voice_changed(self.tts_voice_input.currentIndex())
         return page
 
-    def _ai_page(self, config: AppConfig, hosted_api_key_present: bool) -> QWidget:
+    def _ai_page(
+        self,
+        config: AppConfig,
+        hosted_api_key_present: bool,
+        gemini_api_key_present: bool,
+    ) -> QWidget:
         page, layout = self._page_layout(
             "AI providers",
-            "Choose between private local Ollama models and OpenRouter. "
-            "Hosted keys stay in a separate local permission-restricted file.",
+            "Choose between private local Ollama, OpenRouter, and Google Gemini. "
+            "Hosted keys stay in separate local permission-restricted files.",
         )
         ai_group, ai_form = self._group("AI RUNTIME")
         self.ai_provider_input = QComboBox()
         self.ai_provider_input.addItem("Ollama · local", "ollama")
         self.ai_provider_input.addItem("OpenRouter · hosted", "hosted")
+        self.ai_provider_input.addItem("Google Gemini · hosted", "gemini")
         provider_index = self.ai_provider_input.findData(config.ai_provider)
         self.ai_provider_input.setCurrentIndex(max(0, provider_index))
         self.url_input = QLineEdit(config.ollama_url)
@@ -313,6 +327,26 @@ class SettingsDialog(QDialog):
         hint.setObjectName("settingsHint")
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        gemini_group, gemini_form = self._group("GOOGLE GEMINI")
+        self.gemini_model_input = QLineEdit(config.gemini_model)
+        self.gemini_model_input.setPlaceholderText(DEFAULT_GEMINI_MODEL)
+        self.gemini_api_key_input = QLineEdit()
+        self.gemini_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.gemini_api_key_input.setPlaceholderText(
+            "Saved securely — leave blank to keep it"
+            if gemini_api_key_present
+            else "Paste Google AI Studio API key"
+        )
+        gemini_form.addRow("Model", self.gemini_model_input)
+        gemini_form.addRow("API key", self.gemini_api_key_input)
+        layout.addWidget(gemini_group)
+        gemini_hint = QLabel(
+            "Create a key in Google AI Studio. The hosted API reads GEMINI_API_KEY "
+            "from the deployment secret; desktop keys are stored locally."
+        )
+        gemini_hint.setObjectName("settingsHint")
+        gemini_hint.setWordWrap(True)
+        layout.addWidget(gemini_hint)
         layout.addStretch(1)
         return page
 
@@ -418,6 +452,7 @@ class SettingsDialog(QDialog):
             ai_provider=str(self.ai_provider_input.currentData()),
             hosted_api_url=DEFAULT_HOSTED_API_URL,
             hosted_model=self.hosted_model_input.text(),
+            gemini_model=self.gemini_model_input.text(),
         )
 
     def telegram_token(self) -> str:
@@ -425,6 +460,9 @@ class SettingsDialog(QDialog):
 
     def hosted_api_key(self) -> str:
         return self.hosted_api_key_input.text().strip()
+
+    def gemini_api_key(self) -> str:
+        return self.gemini_api_key_input.text().strip()
 
     def _selected_voice(self) -> str:
         return str(self.tts_voice_input.currentData())

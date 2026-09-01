@@ -16,6 +16,7 @@ DEFAULT_TTS_ENGINE = "piper"
 DEFAULT_AI_PROVIDER = "ollama"
 DEFAULT_HOSTED_API_URL = "https://openrouter.ai/api/v1"
 DEFAULT_HOSTED_MODEL = "openai/gpt-4o-mini"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
@@ -54,6 +55,7 @@ class AppConfig:
     ai_provider: str = DEFAULT_AI_PROVIDER
     hosted_api_url: str = DEFAULT_HOSTED_API_URL
     hosted_model: str = DEFAULT_HOSTED_MODEL
+    gemini_model: str = DEFAULT_GEMINI_MODEL
 
     def __post_init__(self) -> None:
         self.ai_provider = self.ai_provider.strip().lower()
@@ -61,6 +63,7 @@ class AppConfig:
         self.model = self.model.strip()
         self.hosted_api_url = self.hosted_api_url.strip().rstrip("/")
         self.hosted_model = self.hosted_model.strip()
+        self.gemini_model = self.gemini_model.strip()
         if isinstance(self.ollama_context_size, str):
             self.ollama_context_size = int(self.ollama_context_size.strip())
         self.microphone_device = self.microphone_device.strip()
@@ -83,8 +86,8 @@ class AppConfig:
         self.validate()
 
     def validate(self) -> None:
-        if self.ai_provider not in {"ollama", "hosted"}:
-            raise ValueError("AI provider must be Ollama or hosted API.")
+        if self.ai_provider not in {"ollama", "hosted", "gemini"}:
+            raise ValueError("AI provider must be Ollama, OpenRouter, or Gemini.")
         parsed = urlparse(self.ollama_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("Ollama URL must be a complete http:// or https:// URL.")
@@ -100,6 +103,8 @@ class AppConfig:
             )
         if not self.hosted_model:
             raise ValueError("Hosted API model cannot be empty.")
+        if not self.gemini_model:
+            raise ValueError("Gemini model cannot be empty.")
         if (
             isinstance(self.ollama_context_size, bool)
             or not isinstance(self.ollama_context_size, int)
@@ -182,6 +187,7 @@ class AppConfig:
                 model=str(raw.get("model", DEFAULT_MODEL)),
                 hosted_api_url=hosted_api_url,
                 hosted_model=hosted_model,
+                gemini_model=str(raw.get("gemini_model", DEFAULT_GEMINI_MODEL)),
                 ollama_context_size=_int_setting(
                     raw.get("ollama_context_size", DEFAULT_CONTEXT_SIZE),
                     DEFAULT_CONTEXT_SIZE,
