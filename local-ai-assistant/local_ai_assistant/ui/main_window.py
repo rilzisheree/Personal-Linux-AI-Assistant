@@ -743,6 +743,9 @@ class MainWindow(QMainWindow):
                 thread.deleteLater()
             self.wake_word_worker = None
             self.wake_word_thread = None
+            if self._manual_recording_pending and not self._quitting:
+                self._manual_recording_pending = False
+                QTimer.singleShot(0, self._start_recording)
 
     def _wake_word_thread_finished(self) -> None:
         if self.wake_word_worker:
