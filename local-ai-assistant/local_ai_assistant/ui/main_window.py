@@ -643,7 +643,8 @@ class MainWindow(QMainWindow):
     @Slot(str, str)
     def _transcription_failed(self, message: str, audio_path: str) -> None:
         self._remove_recording(audio_path)
-        self._set_voice_idle()
+        self._set_orb_state("error")
+        self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self._wake_command_recording = False
         self._set_status("error")
         self.status_label.setText("Voice transcription failed")

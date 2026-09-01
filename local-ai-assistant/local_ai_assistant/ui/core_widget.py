@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QPointF, QRectF, QTimer, Qt, Signal
+from PySide6.QtCore import QEvent, QPointF, QRectF, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPen, QRadialGradient
-from PySide6.QtWidgets import QSizePolicy, QWidget
+from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
 
 
 class CoreWidget(QWidget):
@@ -30,6 +30,9 @@ class CoreWidget(QWidget):
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         self._timer.start(32)
+        app = QApplication.instance()
+        if app is not None:
+            app.installEventFilter(self)
 
     @property
     def state(self) -> str:
@@ -80,6 +83,19 @@ class CoreWidget(QWidget):
         # recording stuck in the listening state.
         self._finish_press()
         super().focusOutEvent(event)
+
+    def eventFilter(self, watched, event) -> bool:
+        if self._pressed and event.type() in {
+            QEvent.Type.MouseButtonRelease,
+            QEvent.Type.ApplicationDeactivate,
+        }:
+            button = getattr(event, "button", lambda: Qt.MouseButton.NoButton)()
+            if event.type() == QEvent.Type.ApplicationDeactivate or button in {
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.NoButton,
+            }:
+                self._finish_press()
+        return super().eventFilter(watched, event)
 
     def _finish_press(self) -> None:
         if not self._pressed:
