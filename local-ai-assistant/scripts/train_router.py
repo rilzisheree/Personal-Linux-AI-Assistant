@@ -71,11 +71,22 @@ def _tokenize_row(row, tokenizer, max_length: int) -> dict:
     prompt, full = _format_pair(tokenizer, row["text"], row["label"])
     prompt_ids = tokenizer(prompt, add_special_tokens=True)["input_ids"]
     full_ids = tokenizer(full, add_special_tokens=True)["input_ids"]
+    if len(prompt_ids) >= max_length:
+        raise ValueError(
+            "Router prompt is too long for --max-length: "
+            f"{len(prompt_ids)} prompt tokens >= {max_length}. "
+            "Increase --max-length so the assistant label remains in the loss."
+        )
     if len(full_ids) > max_length:
         full_ids = full_ids[:max_length]
     prompt_length = min(len(prompt_ids), len(full_ids))
     labels = [-100] * prompt_length + full_ids[prompt_length:]
     labels = labels[: len(full_ids)]
+    if not any(label != -100 for label in labels):
+        raise ValueError(
+            "Router example has no trainable label tokens after truncation. "
+            "Increase --max-length."
+        )
     return {"input_ids": full_ids, "attention_mask": [1] * len(full_ids), "labels": labels}
 
 
@@ -84,7 +95,12 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path, default=Path("training/router_data"))
     parser.add_argument("--model-id", default="google/gemma-3-270m-it")
     parser.add_argument("--output-dir", type=Path, default=Path("training/router_lora"))
-    parser.add_argument("--max-length", type=int, default=256)
+    parser.add_argument(
+        "--max-length",
+        type=int,
+        default=512,
+        help="Maximum sequence length; must leave room for the assistant label.",
+    )
     parser.add_argument("--epochs", type=float, default=3.0)
     parser.add_argument("--learning-rate", type=float, default=2e-4)
     parser.add_argument("--batch-size", type=int, default=4)
