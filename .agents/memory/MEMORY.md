@@ -5,4 +5,5 @@
 - [Qt worker shutdown](qt-worker-shutdown.md) — Never synchronously wait on network or polling QThreads from the GUI; cancel and let finished callbacks own cleanup.
 - [Hosted provider storage](hosted-provider-storage.md) — Keep selectable hosted backends alongside Ollama and store API keys outside settings and conversation history.
 - [Desktop Ollama-only runtime](ollama-only-desktop.md) — The native desktop App must use Ollama only; hosted-provider support is isolated to the separate web/API companion.
+- [Ollama Gemma adapter import](ollama-gemma-adapter.md) — Gemma 3 may run in Ollama while direct LoRA adapter import remains unsupported; merge and export to GGUF.
 - [Workspace pnpm bootstrap](pnpm-bootstrap.md) — This workspace’s pnpm shim may fail with EAGAIN while bootstrapping the package-manager version, independent of app code.

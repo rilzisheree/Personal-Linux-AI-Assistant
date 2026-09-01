@@ -429,6 +429,56 @@ Only after `ollama create` succeeds should `LURA_ROUTER_MODEL=lura-gemma-router`
 be used. The runtime also supports this environment variable without changing
 the saved desktop settings; Qwen remains the response model.
 
+### Gemma 3 adapter import fallback
+
+If `ollama create` reports `unsupported architecture` while the `ADAPTER`
+directory contains the PEFT files `adapter_config.json` and
+`adapter_model.safetensors` (or `model.safetensors`), the Ollama build does not
+support importing a Gemma 3 adapter directly. The `gemma3:270m` base model can
+still run; merge the adapter into the Hugging Face base model and import the
+merged GGUF instead:
+
+```bash
+cd local-ai-assistant
+python3 scripts/merge_router_adapter.py \
+  --adapter /path/to/router_lora \
+  --base-model google/gemma-3-270m-it \
+  --output-dir training/router_merged
+
+# Run this from a llama.cpp checkout. The converter must be current enough
+# to recognize Gemma 3.
+python3 /path/to/llama.cpp/convert_hf_to_gguf.py \
+  training/router_merged \
+  --outfile training/router_merged-f16.gguf \
+  --outtype f16
+```
+
+Create `training/Modelfile.router.gguf`:
+
+```dockerfile
+FROM /absolute/path/to/local-ai-assistant/training/router_merged-f16.gguf
+
+SYSTEM """You are a classifier, not an assistant. Classify REQUEST into exactly one label and output only that uppercase label: SIMPLE, FUNCTION, or REASONING. Never answer, explain, use JSON, or add punctuation.
+
+Choose FUNCTION first for any computer action or live computer information: open, close, restart, screenshot, windows, CPU, memory, volume, website. Otherwise choose REASONING for coding, planning, analysis, research, explanations, debugging, generation, multiple steps, or uncertainty. Choose SIMPLE only for an obvious greeting, thanks, goodbye, easy fact, arithmetic, or short joke that needs no tools or meaningful reasoning.
+
+REQUEST: output one label now."""
+
+PARAMETER temperature 0
+PARAMETER num_predict 8
+```
+
+Then build and test it:
+
+```bash
+ollama create lura-gemma-router -f training/Modelfile.router.gguf
+ollama run lura-gemma-router "Open Discord"
+```
+
+The merged export is larger than the adapter alone and should be treated as a
+generated artifact. Keep the original adapter so it can be re-evaluated or
+merged again after retraining.
+
 ## Project structure
 
 ```text

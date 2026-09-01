@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Create a cautious Ollama Modelfile for a converted Gemma router adapter.
+"""Create a cautious Ollama Modelfile for a Gemma router adapter.
 
-The LoRA trainer saves a Hugging Face/PEFT adapter. Ollama may require a
-GGUF-converted adapter depending on its installed version. This helper does
-not pretend to convert weights; it writes the exact Modelfile and leaves
-ollama create to validate compatibility on the target Ollama build.
+The LoRA trainer saves a Hugging Face/PEFT adapter. For architectures supported
+by the target Ollama build, the adapter directory can be referenced directly.
+This helper does not convert weights; for Gemma 3 builds that report
+"unsupported architecture", use merge_router_adapter.py and import the merged
+GGUF model instead.
 """
 
 from __future__ import annotations
@@ -27,6 +28,8 @@ def main() -> int:
     args = parser.parse_args()
     if not args.adapter.exists():
         parser.error(f"adapter path does not exist: {args.adapter}")
+    if not args.adapter.is_dir():
+        parser.error("--adapter must point to an adapter directory")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     prompt = ROUTER_SYSTEM_PROMPT.replace('"""', '\\"\\"\\"')
     content = (
@@ -39,6 +42,11 @@ def main() -> int:
     args.output.write_text(content, encoding="utf-8")
     print(f"Wrote {args.output}")
     print(f"Validate with: ollama create {args.name} -f {args.output}")
+    print(
+        "If Ollama reports 'unsupported architecture' for Gemma 3, merge the "
+        "adapter first with scripts/merge_router_adapter.py and import the "
+        "resulting GGUF model."
+    )
     return 0
 
 
