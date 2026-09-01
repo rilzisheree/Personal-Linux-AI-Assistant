@@ -145,11 +145,12 @@ class OllamaClient:
 
     display_name = "Ollama"
     default_keep_alive = "10m"
+    default_timeout = 120.0
 
     def __init__(
         self,
         base_url: str,
-        timeout: float = 8.0,
+        timeout: float = default_timeout,
         keep_alive: str | int = default_keep_alive,
     ) -> None:
         self.base_url = base_url.rstrip("/")

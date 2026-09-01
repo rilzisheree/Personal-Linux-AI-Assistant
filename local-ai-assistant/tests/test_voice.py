@@ -14,12 +14,18 @@ from local_ai_assistant.voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    is_no_speech_error,
     remove_wake_word,
     wake_word_matches,
 )
 
 
 class VoiceServiceTests(unittest.TestCase):
+    def test_silent_whisper_window_is_not_a_fatal_wake_error(self) -> None:
+        self.assertTrue(is_no_speech_error("Whisper failed: no speech was detected"))
+        self.assertTrue(is_no_speech_error("silence detected"))
+        self.assertFalse(is_no_speech_error("model file is missing"))
+
     def test_speech_chunker_emits_complete_sentences_and_flushes_remainder(self) -> None:
         chunker = SpeechChunker()
         self.assertEqual(chunker.feed("Certainly, Sir. The weather today is"), ["Certainly, Sir."])

@@ -26,6 +26,20 @@ class VoiceError(RuntimeError):
     """A user-facing error from an unavailable or failed local voice backend."""
 
 
+def is_no_speech_error(message: str) -> bool:
+    """Treat normal silent Whisper windows as empty input, not backend failure."""
+    normalized = message.casefold()
+    return any(
+        phrase in normalized
+        for phrase in (
+            "no speech",
+            "no voice",
+            "silence",
+            "speech not detected",
+        )
+    )
+
+
 class SpeechChunker:
     """Split streamed model output at natural boundaries for local TTS."""
 
@@ -446,15 +460,30 @@ class VoiceService:
             except OSError:
                 process.terminate()
 
-    def transcribe(self, audio_path: Path, *, device: str | None = None) -> str:
+    def transcribe(
+        self,
+        audio_path: Path,
+        *,
+        device: str | None = None,
+        cancel_event: threading.Event | None = None,
+    ) -> str:
         if not audio_path.is_file():
             raise VoiceError(f"Recording not found: {audio_path}")
         whisper = shutil.which("whisper")
         if whisper:
-            return self._transcribe_openai_whisper(whisper, audio_path, device=device)
+            return self._transcribe_openai_whisper(
+                whisper,
+                audio_path,
+                device=device,
+                cancel_event=cancel_event,
+            )
         whisper_cpp = shutil.which("whisper-cli") or shutil.which("whisper.cpp")
         if whisper_cpp:
-            return self._transcribe_whisper_cpp(whisper_cpp, audio_path)
+            return self._transcribe_whisper_cpp(
+                whisper_cpp,
+                audio_path,
+                cancel_event=cancel_event,
+            )
         try:
             import whisper as whisper_module
         except ImportError:
@@ -475,6 +504,7 @@ class VoiceService:
         audio_path: Path,
         *,
         device: str | None = None,
+        cancel_event: threading.Event | None = None,
     ) -> str:
         with tempfile.TemporaryDirectory(prefix="lura-whisper-") as output_directory:
             command = [
@@ -493,7 +523,12 @@ class VoiceService:
                 command.extend(["--device", device])
             if self.config.whisper_language.casefold() not in {"", "auto"}:
                 command.extend(["--language", self.config.whisper_language])
-            result = self._run_checked(command, 600, "Whisper")
+            result = self._run_checked(
+                command,
+                600,
+                "Whisper",
+                cancel_event=cancel_event,
+            )
             text_path = Path(output_directory) / f"{audio_path.stem}.txt"
             if not text_path.is_file():
                 raise VoiceError(
@@ -535,14 +570,20 @@ class VoiceService:
             raise VoiceError("Whisper returned an invalid transcription result.")
         return self._read_transcript_from_text(str(result.get("text", "")))
 
-    def _transcribe_whisper_cpp(self, executable: str, audio_path: Path) -> str:
+    def _transcribe_whisper_cpp(
+        self,
+        executable: str,
+        audio_path: Path,
+        *,
+        cancel_event: threading.Event | None = None,
+    ) -> str:
         model = Path(self.config.whisper_model).expanduser()
         if not model.is_file():
             raise VoiceError(
                 "whisper.cpp needs a local model file. Set its path in Voice settings."
             )
         command = [executable, "-m", str(model), "-f", str(audio_path), "-otxt", "-nt"]
-        self._run_checked(command, 600, "whisper.cpp")
+        self._run_checked(command, 600, "whisper.cpp", cancel_event=cancel_event)
         candidates = (
             audio_path.with_suffix(audio_path.suffix + ".txt"),
             audio_path.with_suffix(".txt"),

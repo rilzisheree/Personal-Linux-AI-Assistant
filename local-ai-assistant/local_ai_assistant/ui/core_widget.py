@@ -115,6 +115,14 @@ class CoreWidget(QWidget):
         self.released.emit()
 
     def event(self, event) -> bool:
+        if event.type() == QEvent.Type.MouseButtonRelease:
+            if self._pressed and event.button() in {
+                Qt.MouseButton.LeftButton,
+                Qt.MouseButton.NoButton,
+            }:
+                self._finish_press()
+                event.accept()
+                return True
         if event.type() == QEvent.Type.TouchBegin:
             if not self._pressed:
                 self._begin_press(mouse=False)
@@ -159,8 +167,7 @@ class CoreWidget(QWidget):
     def keyReleaseEvent(self, event) -> None:
         if event.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space}:
             if self._pressed:
-                self._pressed = False
-                self.released.emit()
+                self._finish_press()
             event.accept()
             return
         super().keyReleaseEvent(event)

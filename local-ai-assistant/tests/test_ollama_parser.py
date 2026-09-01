@@ -90,6 +90,7 @@ class OllamaParserTests(unittest.TestCase):
 
     def test_context_size_is_sent_as_ollama_option(self) -> None:
         client = OllamaClient("http://localhost:11434")
+        self.assertEqual(client.timeout, 120.0)
         with patch("local_ai_assistant.ollama.urlopen") as urlopen:
             response = Mock()
             response.__enter__ = Mock(return_value=response)

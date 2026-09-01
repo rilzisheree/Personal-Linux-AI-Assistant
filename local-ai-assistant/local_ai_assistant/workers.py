@@ -25,6 +25,7 @@ from .voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    is_no_speech_error,
     wake_word_matches,
 )
 
@@ -420,7 +421,7 @@ class WakeWordWorker(QObject):
                             self.detected.emit()
                             return
                     except VoiceError as error:
-                        if "No speech was detected" not in str(error):
+                        if not is_no_speech_error(str(error)):
                             self.failed.emit(str(error))
                             return
                     finally:
