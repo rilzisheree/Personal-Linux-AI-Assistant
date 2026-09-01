@@ -159,8 +159,8 @@ class SettingsDialog(QDialog):
         self.voice_responses_enabled = QCheckBox("Speak assistant responses aloud")
         self.voice_responses_enabled.setChecked(config.voice_responses_enabled)
         self.microphone_input = QComboBox()
-        self.microphone_input.setEditable(True)
-        self.microphone_input.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.microphone_input.setEditable(False)
+        self.microphone_input.setMinimumWidth(320)
         self.microphone_input.setToolTip(
             "Choose the exact PipeWire/PulseAudio input source used for recording."
         )
