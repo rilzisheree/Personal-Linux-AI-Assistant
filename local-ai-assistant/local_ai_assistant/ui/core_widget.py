@@ -26,6 +26,7 @@ class CoreWidget(QWidget):
         self._state = "idle"
         self._phase = 0.0
         self._pressed = False
+        self._mouse_pressed = False
         self._hovered = False
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
@@ -48,6 +49,11 @@ class CoreWidget(QWidget):
         self.update()
 
     def _tick(self) -> None:
+        if (
+            self._mouse_pressed
+            and not (QApplication.mouseButtons() & Qt.MouseButton.LeftButton)
+        ):
+            self._finish_press()
         speeds = {
             "idle": 0.018,
             "listening": 0.042,
@@ -61,6 +67,7 @@ class CoreWidget(QWidget):
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self._pressed = True
+            self._mouse_pressed = True
             self.grabMouse()
             self.set_state("listening")
             self.pressed.emit()
@@ -101,6 +108,7 @@ class CoreWidget(QWidget):
         if not self._pressed:
             return
         self._pressed = False
+        self._mouse_pressed = False
         if self.mouseGrabber() is self:
             self.releaseMouse()
         self.released.emit()

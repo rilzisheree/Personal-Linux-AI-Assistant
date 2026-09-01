@@ -532,8 +532,6 @@ class MainWindow(QMainWindow):
         self.voice_record_worker.started.connect(self._recording_started)
         self.voice_record_worker.finished.connect(self._recording_finished)
         self.voice_record_worker.failed.connect(self._recording_failed)
-        self.voice_record_worker.finished.connect(self.voice_record_thread.quit)
-        self.voice_record_worker.failed.connect(self.voice_record_thread.quit)
         self.voice_record_thread.finished.connect(self._recording_thread_finished)
         self.voice_record_thread.start()
         self._set_voice_status("STARTING MICROPHONE…")
@@ -582,16 +580,12 @@ class MainWindow(QMainWindow):
         )
         self.voice_transcription_worker.finished.connect(self._transcription_finished)
         self.voice_transcription_worker.failed.connect(self._transcription_failed)
-        self.voice_transcription_worker.finished.connect(
-            self.voice_transcription_thread.quit
-        )
-        self.voice_transcription_worker.failed.connect(
-            self.voice_transcription_thread.quit
-        )
         self.voice_transcription_thread.finished.connect(
             self._transcription_thread_finished
         )
         self.voice_transcription_thread.start()
+        if self.voice_record_thread is not None:
+            self.voice_record_thread.quit()
 
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
@@ -602,6 +596,8 @@ class MainWindow(QMainWindow):
         self._set_status("error")
         self.status_label.setText("Voice input unavailable")
         self.status_label.setToolTip(message)
+        if self.voice_record_thread is not None:
+            self.voice_record_thread.quit()
 
     def _recording_thread_finished(self) -> None:
         if self.voice_record_worker:
@@ -618,6 +614,8 @@ class MainWindow(QMainWindow):
 
     @Slot(str, str)
     def _transcription_finished(self, text: str, audio_path: str) -> None:
+        if self.voice_transcription_thread is not None:
+            self.voice_transcription_thread.quit()
         self._remove_recording(audio_path)
         self._set_voice_idle()
         if self.config.wake_word_enabled and not self._wake_command_recording:
@@ -651,6 +649,8 @@ class MainWindow(QMainWindow):
         self.status_label.setToolTip(message)
         if self.config.wake_word_enabled:
             self._start_wake_word_listener()
+        if self.voice_transcription_thread is not None:
+            self.voice_transcription_thread.quit()
 
     def _transcription_thread_finished(self) -> None:
         if self.voice_transcription_worker:
