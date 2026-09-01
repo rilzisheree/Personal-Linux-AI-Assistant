@@ -153,10 +153,31 @@ class SettingsDialog(QDialog):
         self.active_listening_duration.setRange(1, 60)
         self.active_listening_duration.setValue(config.active_listening_duration)
         self.active_listening_duration.setSuffix(" seconds")
+        self.continuous_conversation_enabled = QCheckBox(
+            "Continue listening after the wake word"
+        )
+        self.continuous_conversation_enabled.setChecked(
+            config.continuous_conversation_enabled
+        )
+        self.conversation_timeout = QSpinBox()
+        self.conversation_timeout.setRange(3, 120)
+        self.conversation_timeout.setValue(config.conversation_timeout)
+        self.conversation_timeout.setSuffix(" seconds")
+        self.conversation_transition_delay = QDoubleSpinBox()
+        self.conversation_transition_delay.setRange(0.1, 2.0)
+        self.conversation_transition_delay.setDecimals(1)
+        self.conversation_transition_delay.setSingleStep(0.1)
+        self.conversation_transition_delay.setValue(
+            config.conversation_transition_delay
+        )
+        self.conversation_transition_delay.setSuffix(" seconds")
         form.addRow("Assistant name", self.assistant_name_input)
         form.addRow("", self.wake_word_enabled)
         form.addRow("Wake word", self.wake_word_input)
         form.addRow("Active listening", self.active_listening_duration)
+        form.addRow("", self.continuous_conversation_enabled)
+        form.addRow("Conversation timeout", self.conversation_timeout)
+        form.addRow("Voice transition delay", self.conversation_transition_delay)
         layout.addWidget(group)
 
         appearance, appearance_form = self._group("APPEARANCE")
@@ -413,6 +434,9 @@ class SettingsDialog(QDialog):
             wake_word_enabled=self.wake_word_enabled.isChecked(),
             wake_word=self.wake_word_input.text(),
             active_listening_duration=self.active_listening_duration.value(),
+            continuous_conversation_enabled=self.continuous_conversation_enabled.isChecked(),
+            conversation_timeout=self.conversation_timeout.value(),
+            conversation_transition_delay=self.conversation_transition_delay.value(),
             voice_silence_duration=self.voice_silence_duration_input.value(),
             voice_min_speech_duration=self.voice_min_speech_duration_input.value(),
             voice_vad_threshold=self.voice_vad_threshold_input.value(),

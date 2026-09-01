@@ -24,6 +24,8 @@ TTS_VOICE_PRESETS = PIPER_VOICE_PRESETS
 DEFAULT_VOICE_SILENCE_DURATION = 0.9
 DEFAULT_VOICE_MIN_SPEECH_DURATION = 0.2
 DEFAULT_VOICE_VAD_THRESHOLD = 350
+DEFAULT_CONVERSATION_TIMEOUT = 8
+DEFAULT_CONVERSATION_TRANSITION_DELAY = 0.35
 
 
 @dataclass
@@ -48,6 +50,9 @@ class AppConfig:
     wake_word_enabled: bool = False
     wake_word: str = "Lura"
     active_listening_duration: int = 15
+    continuous_conversation_enabled: bool = False
+    conversation_timeout: int = DEFAULT_CONVERSATION_TIMEOUT
+    conversation_transition_delay: float = DEFAULT_CONVERSATION_TRANSITION_DELAY
     voice_silence_duration: float = DEFAULT_VOICE_SILENCE_DURATION
     voice_min_speech_duration: float = DEFAULT_VOICE_MIN_SPEECH_DURATION
     voice_vad_threshold: int = DEFAULT_VOICE_VAD_THRESHOLD
@@ -84,6 +89,12 @@ class AppConfig:
             )
         if isinstance(self.voice_vad_threshold, str):
             self.voice_vad_threshold = int(self.voice_vad_threshold.strip())
+        if isinstance(self.conversation_timeout, str):
+            self.conversation_timeout = int(self.conversation_timeout.strip())
+        if isinstance(self.conversation_transition_delay, str):
+            self.conversation_transition_delay = float(
+                self.conversation_transition_delay.strip()
+            )
         self.theme = self.theme.strip().lower()
         self.validate()
 
@@ -112,12 +123,28 @@ class AppConfig:
             raise ValueError("Telegram setting must be true or false.")
         if not isinstance(self.wake_word_enabled, bool):
             raise ValueError("Wake-word setting must be true or false.")
+        if not isinstance(self.continuous_conversation_enabled, bool):
+            raise ValueError("Continuous conversation setting must be true or false.")
         if (
             isinstance(self.active_listening_duration, bool)
             or not isinstance(self.active_listening_duration, int)
             or not 1 <= self.active_listening_duration <= 60
         ):
             raise ValueError("Active listening duration must be between 1 and 60 seconds.")
+        if (
+            isinstance(self.conversation_timeout, bool)
+            or not isinstance(self.conversation_timeout, int)
+            or not 3 <= self.conversation_timeout <= 120
+        ):
+            raise ValueError("Conversation timeout must be between 3 and 120 seconds.")
+        if (
+            isinstance(self.conversation_transition_delay, bool)
+            or not isinstance(self.conversation_transition_delay, (int, float))
+            or not 0.1 <= self.conversation_transition_delay <= 2.0
+        ):
+            raise ValueError(
+                "Conversation transition delay must be between 0.1 and 2 seconds."
+            )
         if (
             isinstance(self.voice_silence_duration, bool)
             or not isinstance(self.voice_silence_duration, (int, float))
@@ -215,6 +242,20 @@ class AppConfig:
                 wake_word=str(raw.get("wake_word", "Lura")),
                 active_listening_duration=_int_setting(
                     raw.get("active_listening_duration", 15), 15
+                ),
+                continuous_conversation_enabled=_bool_setting(
+                    raw.get("continuous_conversation_enabled", False), False
+                ),
+                conversation_timeout=_int_setting(
+                    raw.get("conversation_timeout", DEFAULT_CONVERSATION_TIMEOUT),
+                    DEFAULT_CONVERSATION_TIMEOUT,
+                ),
+                conversation_transition_delay=_float_setting(
+                    raw.get(
+                        "conversation_transition_delay",
+                        DEFAULT_CONVERSATION_TRANSITION_DELAY,
+                    ),
+                    DEFAULT_CONVERSATION_TRANSITION_DELAY,
                 ),
                 voice_silence_duration=_float_setting(
                     raw.get("voice_silence_duration", DEFAULT_VOICE_SILENCE_DURATION),

@@ -148,6 +148,38 @@ def remove_wake_word(text: str, wake_word: str, threshold: float = 0.72) -> str 
     return None
 
 
+CONVERSATION_END_PHRASES = (
+    ("goodbye",),
+    ("good", "bye"),
+    ("stop", "listening"),
+    ("go", "to", "sleep"),
+    ("end", "conversation"),
+    ("stop", "conversation"),
+    ("cancel", "conversation"),
+    ("exit", "conversation"),
+)
+
+
+def conversation_end_requested(text: str) -> bool:
+    """Recognize explicit, conservative requests to leave voice conversation mode."""
+    tokens = _normalise_spoken_text(text)
+    if not tokens:
+        return False
+    for phrase in CONVERSATION_END_PHRASES:
+        for index in range(len(tokens) - len(phrase) + 1):
+            if tuple(tokens[index : index + len(phrase)]) != phrase:
+                continue
+            preceding = tokens[max(0, index - 3) : index]
+            if phrase[:2] == ("stop", "listening") and (
+                ("don" in preceding and "t" in preceding)
+                or ("do" in preceding and "not" in preceding)
+                or "never" in preceding
+            ):
+                continue
+            return True
+    return False
+
+
 class VoiceActivityDetector:
     """Adaptive activity detector for 16-bit, 16 kHz mono WAV recordings."""
 

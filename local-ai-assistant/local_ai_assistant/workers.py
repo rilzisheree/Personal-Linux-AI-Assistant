@@ -27,6 +27,7 @@ from .voice import (
     VoiceError,
     VoiceService,
     is_no_speech_error,
+    remove_wake_word,
     wake_word_matches,
 )
 
@@ -358,7 +359,7 @@ class VoiceRecordWorker(QObject):
 class WakeWordWorker(QObject):
     """Continuously capture one stream while scanning overlapping audio windows."""
 
-    detected = Signal()
+    detected = Signal(str)
     failed = Signal(str)
 
     def __init__(
@@ -391,7 +392,7 @@ class WakeWordWorker(QObject):
                 transcript = self.service.transcribe(stream_path, device="cpu").casefold()
                 if wake_word_matches(transcript, self.wake_word):
                     LOGGER.info("[WakeWord] Wake word detected")
-                    self.detected.emit()
+                    self.detected.emit(remove_wake_word(transcript, self.wake_word) or "")
                 return
             LOGGER.info(
                 "[WakeWord] Listening: %.1fs windows with %.1fs overlap",
@@ -434,7 +435,9 @@ class WakeWordWorker(QObject):
                         LOGGER.info("[WakeWord] Window transcribed: %r", transcript[:160])
                         if wake_word_matches(transcript, self.wake_word):
                             LOGGER.info("[WakeWord] Wake word detected")
-                            self.detected.emit()
+                            self.detected.emit(
+                                remove_wake_word(transcript, self.wake_word) or ""
+                            )
                             return
                     except VoiceError as error:
                         if not is_no_speech_error(str(error)):

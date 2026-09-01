@@ -42,7 +42,12 @@ from ..telegram_bot import (
     save_telegram_token,
 )
 from ..tools import PermissionLevel, ToolManager
-from ..voice import SpeechChunker, VoiceService
+from ..voice import (
+    SpeechChunker,
+    VoiceService,
+    conversation_end_requested,
+    is_no_speech_error,
+)
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
@@ -102,12 +107,24 @@ class MainWindow(QMainWindow):
         self.tray_icon: QSystemTrayIcon | None = None
         self._wake_command_recording = False
         self._wake_command_pending = False
+        self._wake_command_text = ""
         self._manual_recording_pending = False
         self._manual_handoff_started_at: float | None = None
         self._wake_restart_pending = False
         self._wake_listener_restart_allowed = True
         self._speech_chunker: SpeechChunker | None = None
         self._latency_trace: LatencyTrace | None = None
+        self._conversation_active = False
+        self._conversation_transition_timer = QTimer(self)
+        self._conversation_transition_timer.setSingleShot(True)
+        self._conversation_transition_timer.timeout.connect(
+            self._start_next_conversation_turn
+        )
+        self._conversation_timeout_timer = QTimer(self)
+        self._conversation_timeout_timer.setSingleShot(True)
+        self._conversation_timeout_timer.timeout.connect(
+            self._conversation_timed_out
+        )
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -648,14 +665,17 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
         self.last_voice_error = message
+        was_in_conversation = self._conversation_active
         self._wake_command_recording = False
+        if was_in_conversation:
+            self._end_conversation("CONVERSATION ENDED // MICROPHONE ERROR")
         self._set_orb_state("error")
         self._set_voice_idle()
         self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_status("error")
         self.status_label.setText("Voice input unavailable")
         self.status_label.setToolTip(message)
-        if self.config.wake_word_enabled:
+        if self.config.wake_word_enabled and not was_in_conversation:
             self._wake_restart_pending = True
         if self.voice_record_thread is not None:
             self.voice_record_thread.quit()
@@ -688,6 +708,16 @@ class MainWindow(QMainWindow):
             self.voice_transcription_thread.quit()
         self._remove_recording(audio_path)
         self._set_voice_idle()
+        if self._conversation_active and conversation_end_requested(text):
+            self._end_conversation("CONVERSATION ENDED // GOODBYE")
+            self._wake_restart_pending = self.config.wake_word_enabled
+            return
+        if not text.strip():
+            if self._conversation_active:
+                self._end_conversation("CONVERSATION ENDED // NO RESPONSE")
+            else:
+                self._wake_restart_pending = self.config.wake_word_enabled
+            return
         # The always-on listener owns wake-word recognition. A manual orb press
         # is already an explicit user action and must never require saying the
         # wake word a second time.
@@ -698,14 +728,22 @@ class MainWindow(QMainWindow):
     @Slot(str, str)
     def _transcription_failed(self, message: str, audio_path: str) -> None:
         self._remove_recording(audio_path)
+        was_in_conversation = self._conversation_active
+        if was_in_conversation:
+            if is_no_speech_error(message):
+                self._end_conversation("CONVERSATION ENDED // NO RESPONSE")
+            else:
+                self._end_conversation("CONVERSATION ENDED // MICROPHONE ERROR")
         self._set_orb_state("error")
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self._wake_command_recording = False
         self._set_status("error")
         self.status_label.setText("Voice transcription failed")
         self.status_label.setToolTip(message)
-        if self.config.wake_word_enabled:
+        if self.config.wake_word_enabled and not was_in_conversation:
             self._wake_restart_pending = True
+        elif was_in_conversation:
+            self._wake_restart_pending = self.config.wake_word_enabled
         if self.voice_transcription_thread is not None:
             self.voice_transcription_thread.quit()
 
@@ -745,7 +783,9 @@ class MainWindow(QMainWindow):
         )
         self.message_input.setEnabled(self.chat_worker is None)
         self.send_button.setEnabled(self.chat_worker is None)
-        if self.config.wake_word_enabled:
+        if self._conversation_active:
+            self._set_voice_status("CONVERSATION ACTIVE // READY")
+        elif self.config.wake_word_enabled:
             self._set_voice_status(
                 f"WAKE LISTENING // SAY {self.config.wake_word}"
             )
@@ -766,6 +806,7 @@ class MainWindow(QMainWindow):
             or self.voice_transcription_worker is not None
             or self.chat_worker is not None
             or self.speech_worker is not None
+            or self._conversation_active
         ):
             return
         self._wake_listener_restart_allowed = True
@@ -785,7 +826,7 @@ class MainWindow(QMainWindow):
         self._set_voice_status(f"WAKE LISTENING // SAY {self.config.wake_word}")
 
     @Slot()
-    def _wake_word_detected(self) -> None:
+    def _wake_word_detected(self, command: str = "") -> None:
         if (
             self._wake_command_pending
             or self._manual_recording_pending
@@ -796,6 +837,10 @@ class MainWindow(QMainWindow):
             return
         LOGGER.info("[WakeWord] Callback fired; starting assistant handoff")
         self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
+        self._conversation_active = bool(
+            getattr(self.config, "continuous_conversation_enabled", False)
+        )
+        self._wake_command_text = command.strip()
         self._wake_command_pending = True
         # Keep detection state and listener shutdown in the same queued
         # callback. Separate signal connections can let the thread finish
@@ -874,7 +919,74 @@ class MainWindow(QMainWindow):
     def _start_pending_wake_command(self) -> None:
         if self._wake_command_pending and self.wake_word_worker is None:
             self._wake_command_pending = False
+            command = self._wake_command_text
+            self._wake_command_text = ""
+            if self._conversation_active and command:
+                QTimer.singleShot(0, lambda: self._send_voice_command(command))
+                return
             QTimer.singleShot(0, lambda: self._start_recording(automatic=True))
+
+    def _send_voice_command(self, command: str) -> None:
+        if not command.strip() or self.chat_worker is not None:
+            return
+        self.message_input.setText(command)
+        self._send_message()
+
+    def _schedule_next_conversation_turn(self) -> None:
+        if (
+            not self._conversation_active
+            or self._quitting
+            or self._conversation_transition_timer.isActive()
+        ):
+            return
+        self._conversation_timeout_timer.stop()
+        self._conversation_timeout_timer.start(self.config.conversation_timeout * 1000)
+        delay_ms = round(self.config.conversation_transition_delay * 1000)
+        self._set_orb_state("idle")
+        self._set_voice_status("CONVERSATION ACTIVE // LISTENING SOON")
+        self._conversation_transition_timer.start(delay_ms)
+
+    @Slot()
+    def _start_next_conversation_turn(self) -> None:
+        if (
+            not self._conversation_active
+            or self._quitting
+            or self.chat_worker is not None
+            or self.speech_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+        ):
+            return
+        self._conversation_timeout_timer.stop()
+        self._start_recording(automatic=True)
+
+    @Slot()
+    def _conversation_timed_out(self) -> None:
+        if self._conversation_active and self.voice_record_worker is None:
+            self._end_conversation("CONVERSATION ENDED // TIMEOUT")
+
+    def _end_conversation(self, reason: str = "CONVERSATION ENDED") -> None:
+        if not self._conversation_active:
+            return
+        LOGGER.info("[Voice] %s", reason)
+        self._conversation_active = False
+        self._conversation_transition_timer.stop()
+        self._conversation_timeout_timer.stop()
+        self._wake_command_pending = False
+        self._wake_command_text = ""
+        self._wake_restart_pending = self.config.wake_word_enabled
+        self._set_voice_status(reason)
+        self._sync_stop_button()
+        if (
+            self._wake_restart_pending
+            and self.wake_word_worker is None
+            and self.voice_record_worker is None
+            and self.voice_transcription_worker is None
+            and self.chat_worker is None
+            and self.speech_worker is None
+        ):
+            self._wake_restart_pending = False
+            QTimer.singleShot(250, self._start_wake_word_listener)
 
     def _start_speech_stream(self) -> SpeechStreamWorker | None:
         if (
@@ -951,7 +1063,8 @@ class MainWindow(QMainWindow):
             self._latency_trace.finish()
             self._latency_trace = None
         self._set_orb_state("idle")
-        self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
+        if not self._conversation_active:
+            self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         self._sync_stop_button()
 
     @Slot(str)
@@ -964,6 +1077,8 @@ class MainWindow(QMainWindow):
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self.status_label.setText("Voice output unavailable")
         self.status_label.setToolTip(message)
+        if self._conversation_active:
+            self._end_conversation("CONVERSATION ENDED // AUDIO ERROR")
 
     def _speech_thread_finished(self) -> None:
         if self.speech_worker:
@@ -973,7 +1088,10 @@ class MainWindow(QMainWindow):
         self.speech_worker = None
         self.speech_thread = None
         self._sync_stop_button()
-        self._start_wake_word_listener()
+        if self._conversation_active:
+            self._schedule_next_conversation_turn()
+        else:
+            self._start_wake_word_listener()
 
     @Slot(str)
     def _chat_finished(self, response: str) -> None:
@@ -999,6 +1117,8 @@ class MainWindow(QMainWindow):
             elif self.active_assistant_bubble:
                 self.active_assistant_bubble.set_content("*Generation stopped.*")
         else:
+            if self._conversation_active:
+                self._end_conversation("CONVERSATION ENDED // AI ERROR")
             if self.active_assistant_bubble:
                 self.active_assistant_bubble.set_content(message)
             self._set_status("error")
@@ -1016,7 +1136,14 @@ class MainWindow(QMainWindow):
         self.active_assistant_bubble = None
         self.active_response = ""
         self._set_voice_idle()
-        self._start_wake_word_listener()
+        if self._conversation_active:
+            if self.speech_worker is None:
+                self._schedule_next_conversation_turn()
+        elif self._wake_restart_pending:
+            self._wake_restart_pending = False
+            self._start_wake_word_listener()
+        else:
+            self._start_wake_word_listener()
 
     def _set_generating(self, generating: bool) -> None:
         if generating:
@@ -1036,6 +1163,8 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _stop_generation(self) -> None:
+        if self._conversation_active:
+            self._end_conversation("CONVERSATION ENDED // MANUAL STOP")
         if self.chat_worker:
             self.chat_worker.cancel()
             if self.speech_worker:
@@ -1047,6 +1176,8 @@ class MainWindow(QMainWindow):
         elif self.wake_word_worker:
             self._wake_command_pending = False
             self._stop_wake_word_listener()
+        elif self._conversation_transition_timer.isActive():
+            self._sync_stop_button()
 
     def _sync_stop_button(self) -> None:
         active = any(
@@ -1058,6 +1189,7 @@ class MainWindow(QMainWindow):
                 self.wake_word_worker,
             )
         )
+        active = active or self._conversation_active
         self.stop_button.setEnabled(active)
         self.stop_button.setVisible(active)
         if self.chat_worker is not None:
@@ -1453,6 +1585,9 @@ class MainWindow(QMainWindow):
         self.centralWidget().update()
 
     def closeEvent(self, event) -> None:
+        self._conversation_active = False
+        self._conversation_transition_timer.stop()
+        self._conversation_timeout_timer.stop()
         if (
             not self._quitting
             and self.config.background_mode_enabled

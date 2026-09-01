@@ -216,6 +216,17 @@ Use the settings button in the app to change:
 - Push-to-talk microphone input and optional microphone device
 - Whisper model and language
 - Spoken responses, TTS engine, and voice
+- Optional continuous conversation mode after the wake word
+- Conversation timeout and a short voice transition delay
+
+When continuous conversation mode is enabled, saying the wake word starts a
+temporary session. Lura listens for one turn at a time after each response,
+uses the existing VAD to detect when you finish, and keeps the microphone
+disabled while TTS is speaking. The session ends after the configured quiet
+timeout, when you say “goodbye”, “stop listening”, or “go to sleep”, or when
+you press Stop. Wake-word-only listening then resumes. If the initial
+wake-word recording contains a command, the text after the wake word is used
+as the first turn.
 
 Voice responses provide exactly two local Piper choices:
 

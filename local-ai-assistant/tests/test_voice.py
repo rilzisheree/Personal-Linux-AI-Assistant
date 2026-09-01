@@ -14,6 +14,7 @@ from local_ai_assistant.voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    conversation_end_requested,
     is_no_speech_error,
     remove_wake_word,
     wake_word_matches,
@@ -37,6 +38,13 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertTrue(wake_word_matches("Lara", "Lura"))
         self.assertFalse(wake_word_matches("coloration", "Lura"))
         self.assertEqual(remove_wake_word("Laura, what's up?", "Lura"), "what's up")
+
+    def test_conversation_end_phrases_are_conservative(self) -> None:
+        self.assertTrue(conversation_end_requested("Okay, goodbye"))
+        self.assertTrue(conversation_end_requested("go to sleep now"))
+        self.assertTrue(conversation_end_requested("please stop listening"))
+        self.assertFalse(conversation_end_requested("don't stop listening, keep going"))
+        self.assertFalse(conversation_end_requested("stop the timer"))
 
     def test_vad_waits_for_sustained_silence_after_speech(self) -> None:
         detector = VoiceActivityDetector(

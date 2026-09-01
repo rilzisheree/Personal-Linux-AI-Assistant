@@ -1,0 +1,146 @@
+I also want to add a **continuous conversation mode** to the existing wake-word system.
+
+The idea is:
+
+**I should only need to say the wake word once to start a conversation.**
+
+For example:
+
+```text
+Me:
+"Hey Jarvis, what's the weather?"
+
+↓ Wake word detected
+
+AI:
+"It's currently 31 degrees, Sir."
+
+↓ AI finishes speaking
+
+Me:
+"What about tomorrow?"
+
+↓ NO wake word needed
+
+AI:
+"Tomorrow should be..."
+
+↓ AI finishes speaking
+
+Me:
+"And what about Friday?"
+
+↓ NO wake word needed
+
+AI:
+"Friday looks..."
+```
+
+### Conversation Mode Behavior
+
+Once the wake word is detected, enter a **conversation session**.
+
+While the conversation session is active:
+
+* Do NOT require the wake word for every message.
+* Automatically listen for my next response after the AI finishes speaking.
+* Detect when I finish speaking using the existing VAD/end-of-speech system.
+* Send my speech to STT → Ollama → TTS as normal.
+* After the AI finishes speaking, automatically listen for another response.
+* Continue this loop until the conversation session ends.
+
+The flow should be:
+
+```text
+IDLE / WAKE WORD LISTENING
+        ↓
+Wake word detected
+        ↓
+CONVERSATION ACTIVE
+        ↓
+Listen
+        ↓
+User speaks
+        ↓
+End of speech detected
+        ↓
+STT
+        ↓
+Ollama
+        ↓
+TTS
+        ↓
+AI finishes speaking
+        ↓
+Listen again
+        ↓
+User speaks again
+        ↓
+...
+```
+
+### Ending the Conversation
+
+The conversation should NOT stay active forever.
+
+End the conversation when:
+
+* I've been silent for a configurable amount of time after the AI finishes speaking.
+* I explicitly say something like "goodbye", "stop listening", "go to sleep", etc.
+* I manually exit/cancel the conversation.
+* A critical microphone/audio error occurs.
+
+When the session ends:
+
+```text
+CONVERSATION ACTIVE
+        ↓
+Timeout / goodbye / manual stop
+        ↓
+IDLE
+        ↓
+Wake-word detection resumes
+```
+
+### IMPORTANT — Don't confuse this with continuous listening
+
+I do **not** want the AI constantly sending everything from my microphone to STT/Ollama.
+
+The wake word should be what initially activates the conversation.
+
+After activation, the assistant temporarily enters a conversational listening state where it expects my next response.
+
+When the conversation ends, it goes back to **wake-word-only mode**.
+
+### Prevent the AI from hearing itself
+
+This is extremely important.
+
+When TTS is playing:
+
+**Do NOT treat the AI's own voice as user speech.**
+
+The microphone/listening state should be disabled or appropriately filtered while the AI is speaking.
+
+Only begin listening for my next response after the AI has finished speaking.
+
+Make sure there is also a small configurable transition delay if necessary to prevent the microphone from immediately detecting the tail end of the AI's TTS audio.
+
+### Existing functionality
+
+Use the existing:
+
+* Wake-word detection
+* VAD/end-of-speech detection
+* STT
+* Ollama
+* TTS
+* Orb states
+
+Do not redesign the UI.
+
+Add this as a proper conversation/session state to the existing voice system.
+
+The important concept is:
+
+**Wake word starts the conversation. It should NOT be required again for every turn.**

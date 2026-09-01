@@ -25,6 +25,9 @@ class ConfigTests(unittest.TestCase):
         self.assertFalse(config.voice_responses_enabled)
         self.assertEqual(config.whisper_model, DEFAULT_WHISPER_MODEL)
         self.assertEqual(config.tts_engine, DEFAULT_TTS_ENGINE)
+        self.assertFalse(config.continuous_conversation_enabled)
+        self.assertEqual(config.conversation_timeout, 8)
+        self.assertEqual(config.conversation_transition_delay, 0.35)
 
     def test_save_and_load_round_trip(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -42,6 +45,9 @@ class ConfigTests(unittest.TestCase):
                 tts_voice="/models/en_US.onnx",
                 background_mode_enabled=True,
                 autostart_enabled=True,
+                continuous_conversation_enabled=True,
+                conversation_timeout=20,
+                conversation_transition_delay=0.6,
             )
             original.save(path)
             loaded = AppConfig.load(path)
@@ -60,6 +66,9 @@ class ConfigTests(unittest.TestCase):
                 tts_voice="/models/en_US.onnx",
                 background_mode_enabled=True,
                 autostart_enabled=True,
+                continuous_conversation_enabled=True,
+                conversation_timeout=20,
+                conversation_transition_delay=0.6,
             ),
         )
 
