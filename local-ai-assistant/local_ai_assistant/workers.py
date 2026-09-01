@@ -254,6 +254,10 @@ class VoiceRecordWorker(QObject):
             self.finished.emit(str(self.destination))
         except (VoiceError, OSError, subprocess.SubprocessError) as error:
             self.failed.emit(str(error))
+        except Exception as error:
+            # Keep an unexpected recorder/backend error from leaving the Orb
+            # stuck in its thinking state without feedback.
+            self.failed.emit(f"Microphone recording failed: {error}")
         finally:
             self._process = None
 

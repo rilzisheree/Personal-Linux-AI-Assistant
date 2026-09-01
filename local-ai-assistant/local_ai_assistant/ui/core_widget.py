@@ -58,6 +58,7 @@ class CoreWidget(QWidget):
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self._pressed = True
+            self.grabMouse()
             self.set_state("listening")
             self.pressed.emit()
             event.accept()
@@ -65,12 +66,28 @@ class CoreWidget(QWidget):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event) -> None:
-        if event.button() == Qt.MouseButton.LeftButton and self._pressed:
-            self._pressed = False
-            self.released.emit()
+        if self._pressed and event.button() in {
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButton.NoButton,
+        }:
+            self._finish_press()
             event.accept()
             return
         super().mouseReleaseEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        # If the window loses focus while the Orb is held, do not leave voice
+        # recording stuck in the listening state.
+        self._finish_press()
+        super().focusOutEvent(event)
+
+    def _finish_press(self) -> None:
+        if not self._pressed:
+            return
+        self._pressed = False
+        if self.mouseGrabber() is self:
+            self.releaseMouse()
+        self.released.emit()
 
     def enterEvent(self, event) -> None:
         self._hovered = True
