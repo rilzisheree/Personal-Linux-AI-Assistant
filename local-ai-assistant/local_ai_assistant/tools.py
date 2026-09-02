@@ -921,6 +921,27 @@ class ToolManager:
         if url and re.match(r"^(?:please\s+)?(?:open|launch|visit|go to)\b", folded):
             return "open_website", {"url": url.group(0).rstrip(".,!?")}
 
+        search_match = re.match(
+            r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
+            r"(?:search|look\s+up|lookup|google|browse)\s+"
+            r"(?:(?:the|on)\s+web\s+)?(?:for\s+)?(?P<query>.+)$",
+            text,
+            re.IGNORECASE,
+        )
+        if search_match:
+            query = search_match.group("query").strip(" .!?")
+            if query:
+                search_tool = (
+                    "search_news"
+                    if re.search(
+                        r"\b(?:news|headlines?|breaking)\b",
+                        query,
+                        re.IGNORECASE,
+                    )
+                    else "web_search"
+                )
+                return search_tool, {"query": query}
+
         app_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
             r"(open|launch|start|run|close|quit|exit|stop)\s+"
@@ -1086,10 +1107,9 @@ class ToolManager:
             kind = application.kind
         launch_environment = None
         if kind == "custom":
-            # Browser command-line clients use the existing desktop session to
-            # forward a URL to an already-running instance. Do not detach
-            # custom launchers from that session, and do not inherit the
-            # Firefox flag that explicitly disables remote forwarding.
+            # Browser command-line clients still use the existing desktop
+            # session through DISPLAY and D-Bus. Starting a new process session
+            # prevents Lura's terminal/process group from owning the app.
             launch_environment = os.environ.copy()
             launch_environment.pop("MOZ_NO_REMOTE", None)
         subprocess.Popen(
@@ -1097,7 +1117,7 @@ class ToolManager:
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            start_new_session=kind != "custom",
+            start_new_session=True,
             env=launch_environment,
         )
         return ToolCallResult(
