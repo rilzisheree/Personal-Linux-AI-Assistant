@@ -10,7 +10,15 @@ from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
 
 
 class CoreWidget(QWidget):
-    """A quiet, interactive AI orb with distinct listening/thinking states."""
+    """A quiet, interactive AI orb with distinct voice states."""
+
+    STATE_ACCENTS = {
+        "idle": (83, 183, 235),
+        "listening": (91, 221, 190),
+        "processing": (177, 137, 255),
+        "speaking": (78, 173, 249),
+        "error": (235, 111, 132),
+    }
 
     pressed = Signal()
     released = Signal()
@@ -41,7 +49,9 @@ class CoreWidget(QWidget):
         return self._state
 
     def set_state(self, state: str) -> None:
-        if state not in {"idle", "listening", "thinking", "speaking", "error"}:
+        if state == "thinking":
+            state = "processing"
+        if state not in {"idle", "listening", "processing", "speaking", "error"}:
             state = "idle"
         if state == self._state:
             self.update()
@@ -58,7 +68,7 @@ class CoreWidget(QWidget):
         speeds = {
             "idle": 0.018,
             "listening": 0.042,
-            "thinking": 0.06,
+            "processing": 0.06,
             "speaking": 0.085,
             "error": 0.025,
         }
@@ -184,7 +194,7 @@ class CoreWidget(QWidget):
         state_strength = {
             "idle": 0.0,
             "listening": 0.18,
-            "thinking": 0.12,
+            "processing": 0.12,
             "speaking": 0.24,
             "error": 0.08,
         }[self._state]
@@ -193,30 +203,39 @@ class CoreWidget(QWidget):
         glow_alpha = {
             "idle": 78,
             "listening": 132,
-            "thinking": 116,
+            "processing": 116,
             "speaking": 158,
             "error": 96,
         }[self._state]
         if self._hovered:
             glow_alpha += 18
 
-        self._paint_glow(painter, center, radius, glow_alpha)
+        accent = self.STATE_ACCENTS[self._state]
+        self._paint_glow(painter, center, radius, glow_alpha, accent)
         self._paint_orbit(painter, center, radius, state_strength)
         self._paint_orb(painter, center, radius, state_strength)
         self._paint_state_ripples(painter, center, radius, state_strength)
         painter.end()
 
-    @staticmethod
     def _paint_glow(
+        self,
         painter: QPainter,
         center: QPointF,
         radius: float,
         alpha: int,
+        accent: tuple[int, int, int],
     ) -> None:
+        red, green, blue = accent
         gradient = QRadialGradient(center, radius * 2.15)
-        gradient.setColorAt(0.0, QColor(44, 154, 221, alpha))
-        gradient.setColorAt(0.34, QColor(20, 91, 145, int(alpha * 0.72)))
-        gradient.setColorAt(0.62, QColor(8, 43, 79, int(alpha * 0.38)))
+        gradient.setColorAt(0.0, QColor(red, green, blue, alpha))
+        gradient.setColorAt(
+            0.34,
+            QColor(red // 2, green // 2, blue // 2, int(alpha * 0.72)),
+        )
+        gradient.setColorAt(
+            0.62,
+            QColor(red // 5, green // 5, blue // 5, int(alpha * 0.38)),
+        )
         gradient.setColorAt(1.0, QColor(0, 8, 18, 0))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(gradient)
@@ -230,7 +249,8 @@ class CoreWidget(QWidget):
         strength: float,
     ) -> None:
         orbit_radius = radius * (1.42 + strength * 0.35)
-        color = QColor(83, 183, 235, 180 if self._state != "idle" else 128)
+        red, green, blue = self.STATE_ACCENTS[self._state]
+        color = QColor(red, green, blue, 180 if self._state != "idle" else 128)
         painter.setPen(QPen(color, 1.25))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.save()
@@ -242,7 +262,9 @@ class CoreWidget(QWidget):
             116 * 16,
         )
         painter.rotate(156)
-        painter.setPen(QPen(QColor(46, 125, 186, 120), 1.0))
+        painter.setPen(
+            QPen(QColor(red // 2, green // 2, blue // 2, 120), 1.0)
+        )
         painter.drawArc(
             QRectF(-orbit_radius * 0.92, -orbit_radius * 0.3, orbit_radius * 1.84, orbit_radius * 0.6),
             194 * 16,
@@ -257,23 +279,49 @@ class CoreWidget(QWidget):
         radius: float,
         strength: float,
     ) -> None:
+        red, green, blue = self.STATE_ACCENTS[self._state]
         orb_gradient = QRadialGradient(
             center - QPointF(radius * 0.25, radius * 0.35),
             radius * 1.25,
         )
-        orb_gradient.setColorAt(0.0, QColor(63, 145, 202, 255))
-        orb_gradient.setColorAt(0.32, QColor(19, 61, 94, 255))
+        orb_gradient.setColorAt(
+            0.0,
+            QColor(
+                min(255, red + 8),
+                min(255, green + 8),
+                min(255, blue + 8),
+                255,
+            ),
+        )
+        orb_gradient.setColorAt(
+            0.32,
+            QColor(red // 4, green // 4, blue // 4, 255),
+        )
         orb_gradient.setColorAt(0.58, QColor(6, 23, 42, 255))
         orb_gradient.setColorAt(0.82, QColor(2, 10, 21, 255))
         orb_gradient.setColorAt(1.0, QColor(0, 3, 10, 255))
-        painter.setPen(QPen(QColor(91, 190, 237, 220), 1.25))
+        painter.setPen(QPen(QColor(red, green, blue, 220), 1.25))
         painter.setBrush(orb_gradient)
         painter.drawEllipse(center, radius, radius)
 
         inner_radius = radius * (0.66 + strength * 0.08)
-        inner = QRadialGradient(center + QPointF(radius * 0.12, radius * 0.1), inner_radius)
-        inner.setColorAt(0.0, QColor(61, 167, 224, 180 + int(strength * 65)))
-        inner.setColorAt(0.52, QColor(12, 61, 101, 145))
+        inner = QRadialGradient(
+            center + QPointF(radius * 0.12, radius * 0.1),
+            inner_radius,
+        )
+        inner.setColorAt(
+            0.0,
+            QColor(
+                min(255, red + 8),
+                min(255, green + 8),
+                min(255, blue + 8),
+                180 + int(strength * 65),
+            ),
+        )
+        inner.setColorAt(
+            0.52,
+            QColor(red // 5, green // 5, blue // 5, 145),
+        )
         inner.setColorAt(0.78, QColor(5, 28, 52, 80))
         inner.setColorAt(1.0, QColor(3, 12, 24, 0))
         painter.setPen(Qt.PenStyle.NoPen)
@@ -290,7 +338,14 @@ class CoreWidget(QWidget):
                 math.sin(angle) * radius * (0.3 + strength * 0.14),
             )
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(119, 215, 250, 105 + int(strength * 90)))
+            painter.setBrush(
+                QColor(
+                    min(255, red + 36),
+                    min(255, green + 36),
+                    min(255, blue + 36),
+                    105 + int(strength * 90),
+                )
+            )
             painter.drawEllipse(point, radius * 0.065, radius * 0.065)
         painter.restore()
 
@@ -298,8 +353,8 @@ class CoreWidget(QWidget):
             center - QPointF(radius, radius),
             center + QPointF(radius, radius),
         )
-        rim.setColorAt(0.1, QColor(150, 226, 255, 180))
-        rim.setColorAt(0.5, QColor(54, 140, 201, 110))
+        rim.setColorAt(0.1, QColor(red, green, blue, 180))
+        rim.setColorAt(0.5, QColor(red // 2, green // 2, blue // 2, 110))
         rim.setColorAt(0.9, QColor(5, 30, 56, 180))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.setPen(QPen(rim, 1.5))
@@ -314,11 +369,12 @@ class CoreWidget(QWidget):
     ) -> None:
         if self._state == "idle":
             return
+        red, green, blue = self.STATE_ACCENTS[self._state]
         painter.setBrush(Qt.BrushStyle.NoBrush)
         for index in range(2 if self._state == "listening" else 3):
             cycle = (self._phase * (0.6 + index * 0.14) + index * 1.9) % (math.pi * 2)
             pulse = (math.sin(cycle) + 1) / 2
             ripple_radius = radius * (1.12 + pulse * (0.28 + strength * 0.28))
             alpha = max(0, int((1 - pulse) * (58 + strength * 115)))
-            painter.setPen(QPen(QColor(81, 180, 232, alpha), 1.25))
+            painter.setPen(QPen(QColor(red, green, blue, alpha), 1.25))
             painter.drawEllipse(center, ripple_radius, ripple_radius)

@@ -125,6 +125,25 @@ class MainWindowVoiceTests(unittest.TestCase):
             "Goodbye, Sir.", force_voice=True
         )
 
+    def test_orb_state_updates_embedded_and_global_orbs(self) -> None:
+        window = MainWindow.__new__(MainWindow)
+        window._global_orb_state = "idle"
+        window.config = SimpleNamespace(voice_input_enabled=True)
+        window.core_widget = Mock()
+        window.global_orb = Mock()
+        window.core_status = Mock()
+        window._sync_global_orb = Mock()
+
+        MainWindow._set_orb_state(window, "thinking")
+
+        self.assertEqual(window._global_orb_state, "processing")
+        window.core_widget.set_state.assert_called_once_with("processing")
+        window.global_orb.set_state.assert_called_once_with("processing")
+        window.core_status.setText.assert_called_once_with(
+            "PROCESSING // LOCAL MODEL"
+        )
+        window._sync_global_orb.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()

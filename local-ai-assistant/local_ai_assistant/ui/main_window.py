@@ -64,6 +64,7 @@ from ..workers import (
 )
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
+from .global_orb import GlobalOrb
 from .settings_dialog import SettingsDialog
 
 LOGGER = logging.getLogger("lura.ui")
@@ -147,6 +148,9 @@ class MainWindow(QMainWindow):
         self._interruption_recording = False
         self._barge_in_active = False
         self._discard_interruption_recording = False
+        self._global_orb_state = "idle"
+        self.global_orb: GlobalOrb | None = None
+        self._main_window_has_been_shown = False
         self._conversation_transition_timer = QTimer(self)
         self._conversation_transition_timer.setSingleShot(True)
         self._conversation_transition_timer.timeout.connect(
@@ -162,6 +166,7 @@ class MainWindow(QMainWindow):
         self.resize(1280, 760)
         self.setMinimumSize(900, 580)
         self._build_ui()
+        self._setup_global_orb()
         self._setup_tray()
         self._sync_quit_behavior()
         self.api_server, self.api_thread = start_background_server(
@@ -218,6 +223,65 @@ class MainWindow(QMainWindow):
                 not (self.config.background_mode_enabled and self.tray_icon is not None)
             )
 
+    def _setup_global_orb(self) -> None:
+        self.global_orb = GlobalOrb(self)
+        self.global_orb.pressed.connect(self._global_orb_pressed)
+        self.global_orb.released.connect(self._global_orb_released)
+        app = QApplication.instance()
+        if app is not None:
+            app.applicationStateChanged.connect(self._application_state_changed)
+        self._sync_global_orb()
+
+    def _global_orb_pressed(self) -> None:
+        if (
+            self._quitting
+            or self.chat_worker is not None
+            or self.speech_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+        ):
+            if self.global_orb is not None:
+                self.global_orb.set_state(self._global_orb_state)
+            return
+        self._start_recording()
+
+    def _global_orb_released(self) -> None:
+        if self.voice_record_worker is not None or self._manual_recording_pending:
+            self._stop_recording()
+        elif self.global_orb is not None:
+            self.global_orb.set_state(self._global_orb_state)
+
+    def _application_state_changed(self, _state) -> None:
+        self._sync_global_orb()
+
+    def _sync_global_orb(self) -> None:
+        orb = self.global_orb
+        if orb is None:
+            return
+        app = QApplication.instance()
+        application_inactive = (
+            app is not None
+            and app.applicationState() != Qt.ApplicationState.ApplicationActive
+        )
+        outside_main_window = (
+            self._main_window_has_been_shown
+            and (not self.isVisible() or self.isMinimized() or application_inactive)
+        )
+        should_show = (
+            not self._quitting
+            and self.config.voice_input_enabled
+            and outside_main_window
+        )
+        if should_show:
+            orb.show_for_desktop()
+        else:
+            orb.hide()
+
+    def showEvent(self, event) -> None:
+        self._main_window_has_been_shown = True
+        super().showEvent(event)
+        self._sync_global_orb()
+
     @staticmethod
     def _tray_icon() -> QIcon:
         pixmap = QPixmap(32, 32)
@@ -238,6 +302,7 @@ class MainWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
+        self._sync_global_orb()
 
     @Slot()
     def hide_to_tray(self, silent: bool = False) -> None:
@@ -247,6 +312,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText("System tray unavailable")
             return
         self.hide()
+        self._sync_global_orb()
         if not silent:
             self.tray_icon.showMessage(
                 "Lura is still running",
@@ -1127,6 +1193,7 @@ class MainWindow(QMainWindow):
             self.chat_worker is None
             and self.speech_worker is None
             and self.confirmation_speech_worker is None
+            and self._global_orb_state != "error"
         ):
             self._set_orb_state("idle")
 
@@ -1162,6 +1229,7 @@ class MainWindow(QMainWindow):
         self._set_voice_status(
             f"WAKE LISTENING // SAY {' / '.join(self.config.wake_words)}"
         )
+        self._sync_global_orb()
 
     @Slot()
     def _wake_word_detected(self, command: str = "") -> None:
@@ -1953,17 +2021,28 @@ class MainWindow(QMainWindow):
     def _set_orb_state(self, state: str) -> None:
         # All voice entry points converge here, so the visible state cannot
         # drift from the operation that currently owns the microphone.
-        self.core_widget.set_state(state)
+        state = "processing" if state == "thinking" else state
+        self._global_orb_state = state if state in {
+            "idle",
+            "listening",
+            "processing",
+            "speaking",
+            "error",
+        } else "idle"
+        self.core_widget.set_state(self._global_orb_state)
+        if self.global_orb is not None:
+            self.global_orb.set_state(self._global_orb_state)
         labels = {
             "idle": "READY // HOLD TO SPEAK"
             if self.config.voice_input_enabled
             else "READY // TYPE TO SPEAK",
             "listening": "LISTENING // RELEASE TO SEND",
-            "thinking": "THINKING // LOCAL MODEL",
+            "processing": "PROCESSING // LOCAL MODEL",
             "speaking": "SPEAKING // LOCAL VOICE",
             "error": "CHANNEL ERROR // CHECK STATUS",
         }
-        self.core_status.setText(labels.get(state, labels["idle"]))
+        self.core_status.setText(labels[self._global_orb_state])
+        self._sync_global_orb()
 
     @Slot()
     def _toggle_focus_mode(self) -> None:
@@ -2003,6 +2082,8 @@ class MainWindow(QMainWindow):
             self.hide_to_tray()
             return
 
+        if self.global_orb is not None:
+            self.global_orb.close()
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),

@@ -15,6 +15,10 @@ QMainWindow {
     background: #03070d;
 }
 
+QWidget#globalOrb {
+    background: transparent;
+}
+
 QFrame#topBar {
     background: #050b13;
     border-bottom: 1px solid #101d2b;
