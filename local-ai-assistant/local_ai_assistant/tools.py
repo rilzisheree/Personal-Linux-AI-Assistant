@@ -35,6 +35,7 @@ from .information_tools import (
 )
 from .memory import MemoryStore
 from .profile import UserProfileStore, collect_system_profile
+from .reminders import default_reminder_service, format_due_time
 
 class PermissionLevel(str, Enum):
     SAFE = "safe"
@@ -216,6 +217,7 @@ class ToolManager:
             for key, value in (custom_app_commands or {}).items()
             if isinstance(key, str) and isinstance(value, str) and key.strip() and value.strip()
         }
+        self.reminder_service = default_reminder_service()
         custom_launcher_names = ", ".join(
             f'"{alias}"' for alias in self.custom_app_commands
         )
@@ -636,6 +638,31 @@ class ToolManager:
                 },
                 self._game_search,
             ),
+            "create_reminder": ToolDefinition(
+                "create_reminder",
+                "Create a local desktop reminder that will notify the user at the requested "
+                "time. Use this for requests such as 'remind me in 5 seconds to drink water'. "
+                "The user's request itself is sufficient authorization; do not claim reminders "
+                "are unavailable.",
+                PermissionLevel.NORMAL,
+                {
+                    "type": "object",
+                    "properties": {
+                        "message": {
+                            "type": "string",
+                            "description": "What the user should be reminded about",
+                        },
+                        "delay_seconds": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 31536000,
+                            "description": "Seconds from now until the reminder",
+                        },
+                    },
+                    "required": ["message", "delay_seconds"],
+                },
+                self._create_reminder,
+            ),
             "remember": ToolDefinition(
                 "remember",
                 "Save one user-approved fact or preference for future conversations.",
@@ -847,6 +874,40 @@ class ToolManager:
         )
         if identity_question:
             return "get_identity", {}
+
+        reminder_match = re.search(
+            r"\bremind\s+me\s+in\s+"
+            r"(?P<amount>\d+(?:\.\d+)?)\s*"
+            r"(?P<unit>seconds?|secs?|minutes?|mins?|hours?|hrs?|days?)\b"
+            r"(?:\s+(?:to|that)\s+)?(?P<message>.+)$",
+            text,
+            re.IGNORECASE,
+        )
+        if reminder_match:
+            unit_seconds = {
+                "second": 1,
+                "seconds": 1,
+                "sec": 1,
+                "secs": 1,
+                "minute": 60,
+                "minutes": 60,
+                "min": 60,
+                "mins": 60,
+                "hour": 3600,
+                "hours": 3600,
+                "hr": 3600,
+                "hrs": 3600,
+                "day": 86400,
+                "days": 86400,
+            }
+            amount = float(reminder_match.group("amount"))
+            delay_seconds = amount * unit_seconds[reminder_match.group("unit").casefold()]
+            message = reminder_match.group("message").strip(" .!?")
+            if message:
+                return "create_reminder", {
+                    "message": message,
+                    "delay_seconds": delay_seconds,
+                }
 
         if self.custom_app_commands and re.search(
             r"\b(?:open|launch|start|run|use|show|bring\s+up)\b",
@@ -1185,6 +1246,15 @@ class ToolManager:
         )
         return _information_result(
             information_game_search(_string_argument(arguments, "query"), max_results)
+        )
+
+    def _create_reminder(self, arguments: dict) -> ToolCallResult:
+        message = _string_argument(arguments, "message")
+        delay_seconds = arguments.get("delay_seconds")
+        reminder = self.reminder_service.schedule(message, delay_seconds)
+        return ToolCallResult(
+            True,
+            f"Reminder scheduled for {format_due_time(reminder.due_at)}: {reminder.message}",
         )
 
     def _remember(self, arguments: dict) -> ToolCallResult:

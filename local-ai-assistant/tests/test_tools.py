@@ -12,6 +12,7 @@ from local_ai_assistant.tools import (
     ToolConfirmationRequired,
     ToolManager,
 )
+from local_ai_assistant.reminders import ReminderService, ReminderStore
 
 
 class ToolManagerTests(unittest.TestCase):
@@ -64,6 +65,7 @@ class ToolManagerTests(unittest.TestCase):
             "get_directions",
             "travel_search",
             "game_search",
+            "create_reminder",
         ):
             self.assertIn(name, names)
 
@@ -89,6 +91,48 @@ class ToolManagerTests(unittest.TestCase):
             self.manager.direct_tool_call_for_request("How much RAM do I have?"),
             ("get_ram_info", {}),
         )
+
+    def test_direct_dispatch_maps_relative_reminder(self) -> None:
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Remind me in 5 seconds to drink water."
+            ),
+            (
+                "create_reminder",
+                {"message": "drink water", "delay_seconds": 5.0},
+            ),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Please remind me in 2 minutes to stretch"
+            ),
+            (
+                "create_reminder",
+                {"message": "stretch", "delay_seconds": 120.0},
+            ),
+        )
+
+    def test_create_reminder_persists_and_returns_due_time(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            self.manager.reminder_service = service
+
+            result = self.manager.execute(
+                "create_reminder",
+                {"message": "drink water", "delay_seconds": 5},
+            )
+
+            self.assertTrue(result.success)
+            self.assertIn("Reminder scheduled for", result.content)
+            self.assertIn("drink water", result.content)
+            reminders = service.store.list()
+            self.assertEqual(len(reminders), 1)
+            self.assertEqual(reminders[0].message, "drink water")
+            self.assertAlmostEqual(reminders[0].due_at, service._clock() + 5, delta=1)
 
     def test_direct_dispatch_maps_application_actions_without_guessing_commands(self) -> None:
         self.assertEqual(

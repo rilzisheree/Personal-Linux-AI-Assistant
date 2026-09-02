@@ -58,6 +58,7 @@ Choose FUNCTION first for any computer action or live computer information, or
 current external information that requires a tool:
 open, close, restart, screenshot, windows, CPU, memory, volume, website,
 weather, news, web search, currency, maps, travel, or game information.
+reminders, timers, or scheduled notifications.
 Otherwise choose REASONING for coding, planning, analysis, research, explanations,
 debugging, generation, multiple steps, or uncertainty.
 Choose SIMPLE only for an obvious greeting, thanks, goodbye, easy fact, arithmetic,
@@ -77,6 +78,8 @@ What is the weather in Jeddah? -> FUNCTION
 Convert 500 SAR to USD -> FUNCTION
 What is the latest news about Minecraft? -> FUNCTION
 Find directions from Jeddah to Taif -> FUNCTION
+Remind me in 5 seconds to drink water -> FUNCTION
+Remind me in 30 minutes -> FUNCTION
 Write a Python program -> REASONING
 Plan a trip -> REASONING
 Explain black holes -> REASONING

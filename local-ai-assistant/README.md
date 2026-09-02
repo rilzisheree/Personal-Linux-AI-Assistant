@@ -226,6 +226,21 @@ results, and unavailable endpoints are returned as failed tool results so Lura
 does not invent live information. The language model summarizes results rather
 than reading a list of links verbatim.
 
+## Reminders
+
+Lura can create one-time local desktop reminders from natural language, for
+example:
+
+```text
+Remind me in 5 seconds to drink water
+```
+
+Reminders are stored under `~/.config/local-ai-assistant/reminders.json` and
+delivered through Linux `notify-send` while Lura is running, including when the
+window is hidden in the system tray. Relative delays support seconds, minutes,
+hours, and days. If the notification daemon is unavailable, Lura logs the
+delivery failure instead of claiming that the reminder was shown.
+
 ## Prepare Ollama
 
 Start Ollama using the normal CachyOS/Linux service or application method, then

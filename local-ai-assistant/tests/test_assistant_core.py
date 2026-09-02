@@ -136,6 +136,7 @@ class RoutedAssistantServiceTests(unittest.TestCase):
         self.assertIn("computer action or live computer information", service_prompt := RoutedAssistantService._router_prompt)
         self.assertIn("CPU", service_prompt)
         self.assertIn("memory", service_prompt)
+        self.assertIn("reminders", service_prompt)
 
     def test_legacy_json_objects_are_rejected(self) -> None:
         tools = self.tools

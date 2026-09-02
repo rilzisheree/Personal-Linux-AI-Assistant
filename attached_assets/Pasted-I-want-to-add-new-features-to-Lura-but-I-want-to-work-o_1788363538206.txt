@@ -1,0 +1,66 @@
+I want to add new features to Lura, but I want to work on them **category by category**.
+
+For now, focus **ONLY on the Productivity features below. Do not work on Voice, the Orb, Information Tools, Gaming Mode, or anything else yet.**
+
+## Productivity
+
+### 📅 Calendar
+
+* Create, edit, and delete events
+  Make lura be able to know the Day and Time. (I live in Makkah)
+* View upcoming events
+* Support schedules and planned activities
+* Allow me to interact with the calendar naturally through Lura
+* Example: “Lura, add a dentist appointment tomorrow at 5 PM.”
+
+### ✅ To-Do Tasks
+
+* Create tasks
+* Complete tasks
+* Delete tasks
+* Set priorities
+* Organize tasks
+* Allow Lura to manage tasks through natural language
+
+### ⏰ Reminders
+
+* One-time reminders
+* Recurring reminders
+* Natural-language reminder creation
+* Example: “Remind me in 30 minutes.”
+* Example: “Remind me every Sunday at 7 PM.”
+
+### 📝 Notes
+
+* Create notes
+* Edit notes
+* Delete notes
+* Search notes
+* Allow Lura to summarize notes
+* Allow natural-language interaction with notes
+
+### 🔔 Notifications
+
+* Notify me about upcoming calendar events
+* Notify me about reminders
+* Notify me about important tasks
+* Support notifications even when the Lura app isn't currently open
+
+## IMPORTANT
+
+**Work ONLY on the Productivity category right now.**
+
+Before making changes:
+
+1. Inspect the existing Lura codebase and understand its current architecture.
+2. Determine how these features should integrate with the existing system.
+3. Reuse existing components and architecture where possible.
+4. Don't unnecessawhrily rewrite unrelated parts of the application.
+5. Don't break any existing Lura functionality.
+6. Keep everything consistent with Lura's existing UI/design.
+7. Make the implementation robust and actually usable, not just a visual mockup.
+8. Test everything you implement.
+
+For this category, implement the Productivity system as a cohesive feature rather than creating disconnected features
+
+Once the Productivity system is properly implemented and tested, stop and wait for my next instruction.
