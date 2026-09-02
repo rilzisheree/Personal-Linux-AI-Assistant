@@ -484,8 +484,8 @@ class ToolManager:
             ),
             "web_search": ToolDefinition(
                 "web_search",
-                "Search the public web for current information. Use the returned sources "
-                "to answer or summarize; do not dump links without an explanation.",
+                "Perform a live search of the public web for current information. Use the "
+                "returned sources to answer or summarize; do not dump links without an explanation.",
                 PermissionLevel.SAFE,
                 {
                     "type": "object",
@@ -921,10 +921,34 @@ class ToolManager:
         if url and re.match(r"^(?:please\s+)?(?:open|launch|visit|go to)\b", folded):
             return "open_website", {"url": url.group(0).rstrip(".,!?")}
 
+        live_search_match = re.match(
+            r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
+            r"(?:perform|do|run|make|conduct|carry out)?\s*"
+            r"(?:a\s+)?"
+            r"(?:live|web|online|internet)(?:\s+(?:web|internet))?\s+search\s+"
+            r"(?:(?:the|on)\s+(?:web|internet)\s+)?"
+            r"(?:for|about|on)?\s*(?P<query>.+)$",
+            text,
+            re.IGNORECASE,
+        )
+        if live_search_match:
+            query = live_search_match.group("query").strip(" .!?")
+            if query:
+                search_tool = (
+                    "search_news"
+                    if re.search(
+                        r"\b(?:news|headlines?|breaking)\b",
+                        query,
+                        re.IGNORECASE,
+                    )
+                    else "web_search"
+                )
+                return search_tool, {"query": query}
+
         search_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
             r"(?:search|look\s+up|lookup|google|browse)\s+"
-            r"(?:(?:the|on)\s+web\s+)?(?:for\s+)?(?P<query>.+)$",
+            r"(?:(?:the|on)\s+(?:web|internet)\s+)?(?:for\s+)?(?P<query>.+)$",
             text,
             re.IGNORECASE,
         )

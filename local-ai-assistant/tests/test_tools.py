@@ -235,6 +235,12 @@ class ToolManagerTests(unittest.TestCase):
             ),
             ("web_search", {"query": "Spotify release updates"}),
         )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Can you perform a live search for today's AI news?"
+            ),
+            ("search_news", {"query": "today's AI news"}),
+        )
 
     def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
         manager = ToolManager(custom_app_commands={"Youtube tab": "firefox"})
