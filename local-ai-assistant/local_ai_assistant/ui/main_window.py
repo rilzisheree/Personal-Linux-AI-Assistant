@@ -91,6 +91,8 @@ class MainWindow(QMainWindow):
             memory_store=self.memory_store,
             profile_store=self.profile_store,
             assistant_name=config.assistant_name,
+            tool_permissions=config.tool_permissions,
+            custom_app_commands=config.custom_app_commands,
         )
         self.api_server: ApiServer | None = None
         self.api_thread = None
@@ -1625,6 +1627,11 @@ class MainWindow(QMainWindow):
             self._wake_restart_pending = True
             self._stop_wake_word_listener()
         self.config = next_config
+        if self.api_server is not None:
+            self.api_server.tool_permissions = dict(next_config.tool_permissions)
+            self.api_server.custom_app_commands = dict(
+                next_config.custom_app_commands
+            )
         self._sync_quit_behavior()
         self.client = self._create_ai_client(self.config)
         self.service = RoutedAssistantService(self.client)
