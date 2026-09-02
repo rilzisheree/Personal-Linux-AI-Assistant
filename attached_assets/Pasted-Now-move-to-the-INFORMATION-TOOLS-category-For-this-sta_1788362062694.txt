@@ -1,0 +1,141 @@
+Now move to the INFORMATION TOOLS category.
+
+For this stage, focus ONLY on the information tools listed below. Do not work on Gaming Mode, Productivity, Voice, the Global Orb, or any other category.
+
+🌐 Information Tools
+🌤️ Weather
+
+Lura should be able to provide current weather and forecasts.
+
+Examples:
+
+“Lura, what's the weather?”
+“What's the weather tomorrow?”
+“Will it rain today?”
+“What's the temperature in Jeddah?”
+
+Lura should understand locations naturally and use the appropriate local time/date.
+
+📰 News
+
+Lura should be able to search for and summarize current news.
+
+Examples:
+
+“What's happening in the news?”
+“Give me today's biggest news.”
+“What's happening in Saudi Arabia?”
+“What's the latest gaming news?”
+
+Responses should prioritize recent and relevant information.
+
+🔎 Web Search
+
+Give Lura the ability to search the web for information it doesn't already know or needs to verify.
+
+Examples:
+
+“Search the web for the best Minecraft mods.”
+“What's the latest information about Windows?”
+“Find me a tutorial for this.”
+
+Lura should be able to summarize search results instead of simply dumping links.
+
+📚 Wikipedia / General Knowledge Search
+
+Give Lura the ability to search Wikipedia and other reliable knowledge sources when appropriate.
+
+Examples:
+
+“Who was Napoleon?”
+“Tell me about the Roman Empire.”
+“Search Wikipedia for Elden Ring.”
+💱 Currency Conversion
+
+Give Lura live/current currency conversion capabilities.
+
+Examples:
+
+“How much is 500 SAR in USD?”
+“Convert 100 dollars to Saudi riyals.”
+“What's the current SAR to USD rate?”
+
+Use reliable current exchange-rate data rather than hardcoded rates.
+
+🗺️ Maps & Directions
+
+Give Lura the ability to find places and provide directions.
+
+Examples:
+
+“Find restaurants near me.”
+“How do I get to Jeddah?”
+“How far is Taif from me?”
+“Find the nearest pharmacy.”
+
+Lura should understand natural-language locations and destinations.
+
+✈️ Travel Information
+
+Give Lura the ability to research travel information.
+
+Examples:
+
+“What should I know before visiting Japan?”
+“What's the weather in London next week?”
+“What are the best places to visit in Turkey?”
+“How long is the flight from Jeddah to London?”
+
+When information can change, such as travel requirements, schedules, or prices, use current sources.
+
+🎮 Game Information
+
+Give Lura the ability to search for current and useful gaming information.
+
+Examples:
+
+“How do I beat this Elden Ring boss?”
+“What's the best build for this character?”
+“When does the next Fortnite season start?”
+“What's the latest Minecraft update?”
+
+Lura should be able to search the web when the information may be outdated.
+
+🧠 IMPORTANT BEHAVIOR
+
+These should be tools that Lura can intelligently decide to use, not separate commands that I have to manually activate.
+
+For example:
+
+“Lura, will it rain tomorrow?”
+
+→ Lura recognizes this as a weather request and uses the Weather tool.
+
+“Lura, what's 200 dollars in Saudi riyals?”
+
+→ Lura recognizes this as a currency request and uses the Currency tool.
+
+“Lura, find me directions to Taif.”
+
+→ Lura recognizes this as a maps/directions request.
+
+“Lura, what's the latest news about Elden Ring?”
+
+→ Lura recognizes that it needs web/news search.
+
+The tools should be integrated into Lura's existing AI/tool-calling architecture so Lura can choose the correct tool automatically based on my request.
+
+IMPORTANT DEVELOPMENT RULES
+
+Before making changes:
+
+Inspect Lura's existing architecture and determine how external tools/API calls are currently handled.
+Reuse the existing tool-calling system where possible.
+Do not unnecessarily rewrite unrelated parts of the application.
+Do not break existing Lura functionality.
+Use reliable/current sources for information that changes over time.
+Handle API failures, timeouts, unavailable services, and invalid requests gracefully.
+Never fabricate live information if a tool fails to retrieve it.
+Keep the responses natural and concise when Lura speaks the results aloud.
+Make the tools actually functional — do not create placeholder buttons or fake responses.
+Test each tool after implementation.
