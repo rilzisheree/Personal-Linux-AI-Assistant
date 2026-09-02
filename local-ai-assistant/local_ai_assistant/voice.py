@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 from urllib.request import Request, urlopen
 
-from .config import AppConfig, DEFAULT_TTS_VOICE
+from .config import AppConfig, DEFAULT_ARABIC_TTS_VOICE, DEFAULT_TTS_VOICE
 
 LOGGER = logging.getLogger("lura.voice")
 
@@ -29,6 +29,13 @@ LOGGER = logging.getLogger("lura.voice")
 PIPER_LENGTH_SCALE = 1.0
 PIPER_NOISE_SCALE = 0.55
 PIPER_NOISE_W_SCALE = 0.7
+ARABIC_UNICODE_RANGES = (
+    (0x0600, 0x06FF),
+    (0x0750, 0x077F),
+    (0x08A0, 0x08FF),
+    (0xFB50, 0xFDFF),
+    (0xFE70, 0xFEFF),
+)
 
 
 class VoiceError(RuntimeError):
@@ -83,6 +90,20 @@ def speech_text(text: str) -> str:
     )
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+
+def contains_arabic_text(text: str) -> bool:
+    """Return whether text contains Arabic-script characters.
+
+    Piper voices are language-specific. Detecting the script here lets the
+    normal response stream use the Arabic voice without changing the user's
+    preferred voice for English responses.
+    """
+    return any(
+        start <= ord(character) <= end
+        for character in text
+        for start, end in ARABIC_UNICODE_RANGES
+    )
 
 
 def _speech_values(value: object) -> str:
@@ -864,6 +885,8 @@ class VoiceService:
     def _synthesize(self, text: str, audio_path: Path) -> None:
         if self.config.tts_engine == "piper":
             model = Path(self.config.tts_voice).expanduser()
+            if contains_arabic_text(text) and not model.stem.casefold().startswith("ar_"):
+                model = Path(DEFAULT_ARABIC_TTS_VOICE).expanduser()
             if not model.is_file():
                 model = self._ensure_piper_model(model)
             if not model.is_file():
@@ -913,6 +936,7 @@ class VoiceService:
         return {
             "en_GB-alan-medium": "Jarvis",
             "en_US-amy-medium": "Laura",
+            "ar_JO-kareem-medium": "Arabic (Kareem)",
         }.get(model.stem, "selected")
 
     def _synthesize_piper(self, text: str, model: Path, audio_path: Path) -> None:

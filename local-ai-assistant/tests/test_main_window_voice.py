@@ -95,6 +95,15 @@ class MainWindowVoiceTests(unittest.TestCase):
         idle_window._send_message.assert_called_once_with()
         idle_window.message_input.setText.assert_called_once_with("Goodbye")
 
+    def test_confirmation_prompt_identifies_command_to_execute(self) -> None:
+        prompt = MainWindow._confirmation_prompt(
+            "exec", {"command": "sudo apt update"}
+        )
+        self.assertEqual(
+            prompt,
+            "Sir, should I execute: sudo apt update?",
+        )
+
     def test_conversation_goodbye_requests_audible_response(self) -> None:
         window = MainWindow.__new__(MainWindow)
         window.messages = []

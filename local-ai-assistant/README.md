@@ -420,7 +420,10 @@ OpenAI Whisper) or model file path (for whisper.cpp) in Settings.
 
 Enable spoken responses in Settings. Piper requires both the `piper`
 executable and a local `.onnx` voice model path. Playback prefers `pw-play`,
-then `aplay`/`paplay`. Text responses are still displayed if speech fails.
+then `aplay`/`paplay`. Arabic responses automatically use Piper's
+`ar_JO-kareem-medium` voice and download it on first use when needed; the
+Arabic voice is also available in Settings. Text responses are still
+displayed if speech fails.
 
 ## Tests
 

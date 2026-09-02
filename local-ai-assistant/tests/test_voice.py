@@ -14,6 +14,7 @@ from local_ai_assistant.voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    contains_arabic_text,
     conversation_end_requested,
     is_no_speech_error,
     remove_wake_word,
@@ -34,6 +35,34 @@ class VoiceServiceTests(unittest.TestCase):
             speech_text("**GPU** is at 42% 🔥\n`nvidia-smi`"),
             "GPU is at 42% nvidia-smi",
         )
+
+    def test_detects_arabic_script_for_language_specific_tts(self) -> None:
+        self.assertTrue(contains_arabic_text("الطقس جميل اليوم"))
+        self.assertFalse(contains_arabic_text("The weather is nice today"))
+
+    def test_arabic_speech_uses_arabic_piper_voice(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            english_model = Path(directory) / "en_GB-alan-medium.onnx"
+            arabic_model = Path(directory) / "ar_JO-kareem-medium.onnx"
+            english_model.write_bytes(b"model")
+            arabic_model.write_bytes(b"model")
+            arabic_model.with_suffix(".onnx.json").write_text("{}", encoding="utf-8")
+            service = VoiceService(
+                AppConfig(tts_engine="piper", tts_voice=str(english_model))
+            )
+            output = Path(directory) / "out.wav"
+
+            def synthesize(_text: str, _model: Path, audio_path: Path) -> None:
+                audio_path.write_bytes(b"RIFF")
+
+            with patch.object(
+                service, "_ensure_piper_model", return_value=arabic_model
+            ), patch.object(service, "_synthesize_piper", side_effect=synthesize) as synth:
+                service._synthesize("هذا رد باللغة العربية", output)
+
+            synth.assert_called_once_with(
+                "هذا رد باللغة العربية", arabic_model, output
+            )
 
     def test_speech_chunker_emits_complete_sentences_and_flushes_remainder(self) -> None:
         chunker = SpeechChunker()

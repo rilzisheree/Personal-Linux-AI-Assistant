@@ -17,8 +17,10 @@ PIPER_VOICE_DIRECTORY = "~/.local/share/lura/piper"
 PIPER_VOICE_PRESETS = (
     ("Jarvis", f"{PIPER_VOICE_DIRECTORY}/en_GB-alan-medium.onnx"),
     ("Laura", f"{PIPER_VOICE_DIRECTORY}/en_US-amy-medium.onnx"),
+    ("Arabic (Kareem)", f"{PIPER_VOICE_DIRECTORY}/ar_JO-kareem-medium.onnx"),
 )
 DEFAULT_TTS_VOICE = PIPER_VOICE_PRESETS[0][1]
+DEFAULT_ARABIC_TTS_VOICE = PIPER_VOICE_PRESETS[2][1]
 TTS_ENGINES = ("disabled", "piper")
 TTS_VOICE_PRESETS = PIPER_VOICE_PRESETS
 DEFAULT_VOICE_SILENCE_DURATION = 0.9

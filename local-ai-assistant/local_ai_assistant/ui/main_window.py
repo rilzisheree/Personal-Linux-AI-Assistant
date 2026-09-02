@@ -629,12 +629,50 @@ class MainWindow(QMainWindow):
     def _confirmation_prompt(name: str, arguments: dict) -> str:
         app = str(arguments.get("app", "")).strip()
         path = str(arguments.get("path", "")).strip()
+        command = str(arguments.get("command", "")).strip()
+        window = str(arguments.get("window", "")).strip()
+        source = str(arguments.get("source", "")).strip()
+        destination = str(arguments.get("destination", "")).strip()
+        text = str(arguments.get("text", "")).strip()
         prompts = {
             "shutdown": "Sir, may I shut down the computer?",
             "reboot": "Sir, may I restart the computer?",
             "delete_file": f"Sir, may I delete {path or 'that file'}?",
-            "exec": "Sir, may I run the requested system command?",
+            "exec": f"Sir, should I execute: {command or 'the requested system command'}?",
             "restart_app": f"Sir, may I restart {app or 'that application'}?",
+            "move_window": (
+                f"Sir, should I move {window or 'that window'} to workspace "
+                f"{arguments.get('workspace', 'requested')}?"
+            ),
+            "resize_window": (
+                f"Sir, should I resize {window or 'that window'} to "
+                f"{arguments.get('width', '?')} by {arguments.get('height', '?')}?"
+            ),
+            "write_file": f"Sir, should I overwrite {path or 'that file'}?",
+            "create_file": f"Sir, should I create {path or 'that file'}?",
+            "move_file": (
+                f"Sir, should I move {source or 'that file'} to "
+                f"{destination or 'the requested destination'}?"
+            ),
+            "copy_file": (
+                f"Sir, should I copy {source or 'that file'} to "
+                f"{destination or 'the requested destination'}?"
+            ),
+            "mouse_move": (
+                f"Sir, should I move the pointer to "
+                f"{arguments.get('x', '?')}, {arguments.get('y', '?')}?"
+            ),
+            "mouse_click": (
+                f"Sir, should I click {arguments.get('button', 'the requested button')} "
+                f"at {arguments.get('x', '?')}, {arguments.get('y', '?')}?"
+            ),
+            "keyboard_type": (
+                f"Sir, should I type {text or 'the requested text'} into the "
+                "focused application?"
+            ),
+            "keyboard_press": (
+                f"Sir, should I press {arguments.get('key', 'the requested key')}?"
+            ),
             "update_user_profile": "Sir, may I update your personal profile?",
         }
         return prompts.get(name, f"Sir, may I perform {name.replace('_', ' ')}?")
