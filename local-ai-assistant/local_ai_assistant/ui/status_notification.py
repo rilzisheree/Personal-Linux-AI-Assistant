@@ -30,7 +30,7 @@ class StatusNotification(QWidget):
         self.setObjectName("statusNotification")
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
-            | Qt.WindowType.ToolTip
+            | Qt.WindowType.SplashScreen
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.WindowDoesNotAcceptFocus
         )
