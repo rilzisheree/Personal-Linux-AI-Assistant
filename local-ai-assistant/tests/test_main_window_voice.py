@@ -95,6 +95,19 @@ class MainWindowVoiceTests(unittest.TestCase):
         idle_window._send_message.assert_called_once_with()
         idle_window.message_input.setText.assert_called_once_with("Goodbye")
 
+    def test_conversation_goodbye_requests_audible_response(self) -> None:
+        window = MainWindow.__new__(MainWindow)
+        window.messages = []
+        window.chat_view = Mock()
+        window._persist_current_conversation = Mock()
+        window._speak_response = Mock()
+
+        MainWindow._show_conversation_goodbye(window, "See you")
+
+        window._speak_response.assert_called_once_with(
+            "Goodbye, Sir.", force_voice=True
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

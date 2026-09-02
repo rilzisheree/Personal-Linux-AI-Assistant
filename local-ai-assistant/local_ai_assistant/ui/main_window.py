@@ -1150,7 +1150,7 @@ class MainWindow(QMainWindow):
         # not wait for or depend on another model request. The conversation has
         # already ended, so the normal wake-word listener may resume only after
         # this one-shot response and never starts another conversation turn.
-        self._speak_response(CONVERSATION_GOODBYE_RESPONSE)
+        self._speak_response(CONVERSATION_GOODBYE_RESPONSE, force_voice=True)
 
     def _schedule_next_conversation_turn(self) -> None:
         if (
@@ -1208,9 +1208,9 @@ class MainWindow(QMainWindow):
             self._wake_restart_pending = False
             QTimer.singleShot(250, self._start_wake_word_listener)
 
-    def _start_speech_stream(self) -> SpeechStreamWorker | None:
+    def _start_speech_stream(self, *, force_voice: bool = False) -> SpeechStreamWorker | None:
         if (
-            not self.config.voice_responses_enabled
+            (not force_voice and not self.config.voice_responses_enabled)
             or self.config.tts_engine == "disabled"
             or self.speech_worker is not None
         ):
@@ -1233,19 +1233,21 @@ class MainWindow(QMainWindow):
         self._sync_stop_button()
         return self.speech_worker
 
-    def _queue_speech_chunk(self, text: str) -> None:
+    def _queue_speech_chunk(self, text: str, *, force_voice: bool = False) -> None:
         if self._latency_trace is not None:
             self._latency_trace.mark("first_sentence_available")
-        worker = self.speech_worker or self._start_speech_stream()
+        worker = self.speech_worker or self._start_speech_stream(force_voice=force_voice)
         if worker is not None:
             worker.append(text)
 
-    def _finish_speech_stream(self, response: str) -> None:
+    def _finish_speech_stream(
+        self, response: str, *, force_voice: bool = False
+    ) -> None:
         if self._speech_chunker is not None:
             for sentence in self._speech_chunker.flush():
-                self._queue_speech_chunk(sentence)
+                self._queue_speech_chunk(sentence, force_voice=force_voice)
         elif response.strip():
-            self._queue_speech_chunk(response)
+            self._queue_speech_chunk(response, force_voice=force_voice)
         if self.speech_worker is not None:
             self.speech_worker.finish()
         else:
@@ -1255,10 +1257,10 @@ class MainWindow(QMainWindow):
                 self._latency_trace.finish()
                 self._latency_trace = None
 
-    def _speak_response(self, response: str) -> None:
+    def _speak_response(self, response: str, *, force_voice: bool = False) -> None:
         """Keep the single-response entry point backed by the streaming worker."""
         self._speech_chunker = SpeechChunker()
-        self._finish_speech_stream(response)
+        self._finish_speech_stream(response, force_voice=force_voice)
 
     @Slot()
     def _speech_started(self) -> None:
