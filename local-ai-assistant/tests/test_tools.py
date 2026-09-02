@@ -186,7 +186,7 @@ class ToolManagerTests(unittest.TestCase):
             popen_mock.call_args.args[0],
             ("firefox", "--new-window"),
         )
-        self.assertFalse(popen_mock.call_args.kwargs["start_new_session"])
+        self.assertTrue(popen_mock.call_args.kwargs["start_new_session"])
         self.assertEqual(json.loads(result.content)["kind"], "custom")
 
     @patch("local_ai_assistant.tools.shutil.which", return_value="/usr/bin/firefox")
@@ -220,6 +220,20 @@ class ToolManagerTests(unittest.TestCase):
                 "I need you to please open my YouTube tab now."
             ),
             ("open_app", {"app": "Youtube tab"}),
+        )
+
+    def test_direct_dispatch_maps_live_search_requests(self) -> None:
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Search the web for the latest AI news."
+            ),
+            ("search_news", {"query": "the latest AI news"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Please look up Spotify release updates."
+            ),
+            ("web_search", {"query": "Spotify release updates"}),
         )
 
     def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
