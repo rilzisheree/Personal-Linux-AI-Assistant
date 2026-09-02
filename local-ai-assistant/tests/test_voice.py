@@ -129,6 +129,21 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertFalse(detector.consume(voice, 0.4))
         self.assertTrue(detector.speech_started)
 
+    def test_vad_rejects_impulse_inside_a_large_recorder_chunk(self) -> None:
+        detector = VoiceActivityDetector(
+            threshold=350,
+            silence_duration=0.9,
+            min_speech_duration=0.3,
+        )
+        silence = b"\0\0" * 3200  # 200 ms calibration
+        impulse = (900).to_bytes(2, "little", signed=True) * 800  # 50 ms
+        trailing_silence = b"\0\0" * 4800  # 300 ms
+
+        self.assertFalse(
+            detector.consume(silence + impulse + trailing_silence, 0.55)
+        )
+        self.assertFalse(detector.speech_started)
+
     def test_list_microphones_filters_monitors_and_keeps_source_names(self) -> None:
         pactl_output = json.dumps(
             [

@@ -398,7 +398,7 @@ class VoiceActivityDetector:
         if (
             not self.speech_started
             and self._observed_duration >= self._calibration_duration
-            and self._voiced_duration >= self.min_speech_duration
+            and self._voiced_duration + 1e-9 >= self.min_speech_duration
         ):
             self.speech_started = True
 
