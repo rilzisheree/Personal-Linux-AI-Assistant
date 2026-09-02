@@ -78,6 +78,9 @@ class PendingConfirmation:
     expires_at: float
 
 
+CHAT_CONTENT_MAX_WIDTH = 960
+
+
 class MainWindow(QMainWindow):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
@@ -377,20 +380,12 @@ class MainWindow(QMainWindow):
         transcript_label.setObjectName("sectionLabel")
         transcript_header.addWidget(transcript_label)
         transcript_header.addStretch(1)
-        clear_button = QPushButton("Clear")
-        clear_button.setObjectName("quietButton")
-        clear_button.clicked.connect(self._clear_current_conversation)
-        transcript_header.addWidget(clear_button)
-        export_button = QPushButton("Export")
-        export_button.setObjectName("quietButton")
-        export_button.clicked.connect(self._export_current_conversation)
-        transcript_header.addWidget(export_button)
         stage_layout.addWidget(self.transcript_header)
 
         self.chat_view = ChatView()
         self.chat_view.setObjectName("transcript")
         self.chat_view.setMinimumHeight(150)
-        self.chat_view.setMaximumWidth(820)
+        self.chat_view.setMaximumWidth(CHAT_CONTENT_MAX_WIDTH)
         stage_layout.addWidget(self.chat_view, 1, Qt.AlignmentFlag.AlignHCenter)
 
         self.composer = QFrame()
@@ -399,7 +394,7 @@ class MainWindow(QMainWindow):
         composer_layout.setContentsMargins(0, 10, 0, 0)
         composer_layout.setSpacing(7)
         self.composer.setMinimumWidth(620)
-        self.composer.setMaximumWidth(820)
+        self.composer.setMaximumWidth(CHAT_CONTENT_MAX_WIDTH)
         self.composer.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
@@ -1593,6 +1588,12 @@ class MainWindow(QMainWindow):
             self,
             user_profile=self.profile_store.profile(),
             telegram_token_present=bool(load_telegram_token()),
+        )
+        dialog.clear_conversation_requested.connect(
+            self._clear_current_conversation
+        )
+        dialog.export_conversation_requested.connect(
+            self._export_current_conversation
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
             return

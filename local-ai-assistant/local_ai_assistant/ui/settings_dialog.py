@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -62,6 +62,9 @@ PERMISSION_CONTROLS = (
 
 class SettingsDialog(QDialog):
     """A grouped dark settings surface while preserving the existing config API."""
+
+    clear_conversation_requested = Signal()
+    export_conversation_requested = Signal()
 
     def __init__(
         self,
@@ -293,6 +296,29 @@ class SettingsDialog(QDialog):
         note.setObjectName("settingsHint")
         note.setWordWrap(True)
         layout.addWidget(note)
+
+        conversation_group, conversation_form = self._group("CONVERSATION TOOLS")
+        conversation_note = QLabel(
+            "Manage the conversation currently open in the main window. "
+            "Export saves it as a Markdown file."
+        )
+        conversation_note.setObjectName("settingsHint")
+        conversation_note.setWordWrap(True)
+        self.clear_conversation_button = QPushButton("Clear current conversation")
+        self.clear_conversation_button.setObjectName("quietButton")
+        self.clear_conversation_button.clicked.connect(
+            self.clear_conversation_requested
+        )
+        self.export_conversation_button = QPushButton("Export current conversation")
+        self.export_conversation_button.setObjectName("quietButton")
+        self.export_conversation_button.clicked.connect(
+            self.export_conversation_requested
+        )
+        conversation_form.addRow("", conversation_note)
+        conversation_form.addRow("", self.clear_conversation_button)
+        conversation_form.addRow("", self.export_conversation_button)
+        layout.addWidget(conversation_group)
+
         layout.addStretch(1)
         return page
 

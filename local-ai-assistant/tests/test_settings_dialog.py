@@ -85,6 +85,22 @@ class SettingsDialogTests(unittest.TestCase):
         )
         dialog.close()
 
+    def test_conversation_actions_are_available_in_settings(self) -> None:
+        dialog = SettingsDialog(AppConfig())
+        requested: list[str] = []
+        dialog.clear_conversation_requested.connect(
+            lambda: requested.append("clear")
+        )
+        dialog.export_conversation_requested.connect(
+            lambda: requested.append("export")
+        )
+
+        dialog.clear_conversation_button.click()
+        dialog.export_conversation_button.click()
+
+        self.assertEqual(requested, ["clear", "export"])
+        dialog.close()
+
 
 if __name__ == "__main__":
     unittest.main()
