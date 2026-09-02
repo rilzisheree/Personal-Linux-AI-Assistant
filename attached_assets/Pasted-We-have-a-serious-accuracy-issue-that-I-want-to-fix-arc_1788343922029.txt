@@ -1,0 +1,365 @@
+We have a serious accuracy issue that I want to fix architecturally rather than by adding more information to the LLM prompt.
+
+Luna is frequently giving incorrect information about my PC hardware, especially my GPU and CPU.
+
+For example, if I ask:
+
+"What GPU do I have?"
+
+or:
+
+"What CPU do I have?"
+
+Luna sometimes gives me incorrect hardware information.
+
+This must NOT be generated from the LLM's memory.
+
+## 1. Hardware information must come from the actual system
+
+Create authoritative system-information tools.
+
+For example:
+
+```text
+get_gpu_info()
+get_cpu_info()
+get_ram_info()
+get_disk_info()
+get_system_info()
+```
+
+These functions must query the actual Linux system and return the real current information.
+
+For my NVIDIA GPU, use the actual NVIDIA system information available on the machine rather than letting the LLM guess.
+
+For CPU, query the actual CPU information from Linux.
+
+For RAM/storage/etc., query the actual system.
+
+The LLM should NEVER invent hardware specifications.
+
+Architecture:
+
+```text
+User:
+"What GPU do I have?"
+        ↓
+Router
+        ↓
+FUNCTION
+        ↓
+get_gpu_info()
+        ↓
+Actual Linux/NVIDIA data
+        ↓
+LLM formats the result
+        ↓
+"You're using an NVIDIA GeForce RTX 4060."
+```
+
+The LLM is only responsible for communicating the result naturally.
+
+It is NOT responsible for knowing the hardware.
+
+---
+
+## 2. Separate identity from Luna's identity
+
+There is another serious issue.
+
+When I ask:
+
+"What is my name?"
+
+Luna sometimes responds:
+
+"My name is Luna."
+
+That's incorrect.
+
+There are TWO separate identities:
+
+```text
+USER
+- My name
+- My preferences
+- My information
+
+ASSISTANT / AI
+- Name: Luna
+```
+
+The phrase:
+
+"What is my name?"
+
+means the USER'S name.
+
+The phrase:
+
+"What is your name?"
+
+means Luna's name.
+
+Make this distinction explicit in the application/system context.
+
+The user's name should come from a persistent user profile rather than being guessed by the model.
+
+---
+
+## 3. Create an authoritative user profile
+
+Create something like:
+
+```json
+{
+  "assistant_name": "Luna",
+  "user": {
+    "name": "MY_NAME"
+  }
+}
+```
+
+Use the actual name already configured for my Luna account/profile rather than inventing one.
+
+Make this editable from the application's settings later.
+
+When the user asks:
+
+"What is my name?"
+
+provide the value from:
+
+```text
+user.name
+```
+
+When the user asks:
+
+"What's your name?"
+
+provide:
+
+```text
+assistant_name
+```
+
+Do NOT allow the LLM to confuse the two.
+
+---
+
+## 4. Treat authoritative data differently from conversational knowledge
+
+I want a clear distinction between:
+
+### AUTHORITATIVE DATA
+
+Things Luna should retrieve rather than remember:
+
+* My GPU
+* My CPU
+* RAM
+* Storage
+* GPU temperature
+* GPU utilization
+* VRAM
+* CPU utilization
+* Running processes
+* Open applications
+* Open windows
+* Linux version
+* Monitor information
+* Installed applications
+* Flatpak applications
+* User name
+* Assistant name
+
+### LLM KNOWLEDGE
+
+General knowledge such as:
+
+* What is Linux?
+* How does a GPU work?
+* Explain quantum physics.
+* Tell me a joke.
+
+If authoritative data exists, the LLM must use it instead of guessing.
+
+---
+
+## 5. Prevent hallucination of tool results
+
+If a tool fails or doesn't return information, Luna must say that she couldn't retrieve it.
+
+For example:
+
+BAD:
+
+> "You have an RTX 4090."
+
+when the tool failed.
+
+GOOD:
+
+> "I couldn't retrieve your GPU information right now."
+
+Never allow the LLM to fill missing tool results with an educated guess.
+
+---
+
+## 6. Make hardware tools structured
+
+Don't return a giant block of terminal output directly to the LLM.
+
+Return structured information.
+
+Example:
+
+```json
+{
+  "vendor": "NVIDIA",
+  "model": "GeForce RTX 4060",
+  "vram_total_mb": 8192,
+  "vram_used_mb": 3200,
+  "utilization_percent": 42,
+  "temperature_c": 58
+}
+```
+
+CPU:
+
+```json
+{
+  "vendor": "Intel",
+  "model": "Intel Core i5-12400F",
+  "cores": 6,
+  "threads": 12,
+  "utilization_percent": 23
+}
+```
+
+The exact values must come from the machine at runtime.
+
+Do NOT hard-code these values.
+
+---
+
+## 7. Fix pronoun/identity interpretation
+
+Make sure the assistant understands:
+
+```text
+"my" / "I" / "me" = USER
+"your" / "you" = LUNA
+```
+
+Examples:
+
+```text
+"What's my name?"
+→ USER'S name
+
+"What's your name?"
+→ Luna
+
+"What GPU do I have?"
+→ USER'S GPU
+
+"What GPU do you have?"
+→ Luna's runtime/system GPU, if relevant
+```
+
+This should be part of the system architecture, not just a weak instruction in the prompt.
+
+---
+
+## 8. Test this aggressively
+
+Create tests for:
+
+### Identity
+
+```text
+What's my name?
+Who am I?
+Do you know my name?
+Remind me what my name is.
+What's your name?
+Who are you?
+What's your name, Luna?
+```
+
+### Hardware
+
+```text
+What's my GPU?
+What graphics card do I have?
+How much VRAM do I have?
+What's my CPU?
+What processor am I using?
+How many CPU cores do I have?
+How much RAM do I have?
+How much VRAM am I using?
+What's my GPU temperature?
+What's my CPU usage?
+```
+
+For every hardware question, verify that the response is based on the actual tool result.
+
+Do not evaluate whether the answer "sounds right."
+
+Compare it against the actual system output.
+
+---
+
+## 9. Important architecture rule
+
+The LLM should be the reasoning/conversation layer.
+
+The application should be the source of truth for:
+
+```text
+identity
+hardware
+system state
+installed applications
+permissions
+tool execution
+```
+
+Think of it like:
+
+```text
+                  LUNA
+                    │
+          ┌─────────┴─────────┐
+          │                   │
+       LLMs               SYSTEM TOOLS
+          │                   │
+ Qwen / Gemma          Actual Linux system
+          │                   │
+          └─────────┬─────────┘
+                    ↓
+              Final response
+```
+
+The LLM should NEVER override authoritative tool data.
+
+---
+
+## 10. Do not redesign anything
+
+Keep:
+
+* Current Gemma router
+* Current ~89% router accuracy
+* Qwen3.5 2B
+* Existing voice system
+* Existing TTS
+* Existing UI
+* Existing wake-word system
+* Existing application architecture
+
+Only fix the data/identity/tool architecture necessary for accurate responses.
+
+After implementing this, show me the exact system-information tools you created and the commands they use to retrieve the data.

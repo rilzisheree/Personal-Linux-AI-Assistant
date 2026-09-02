@@ -61,6 +61,18 @@ class UserProfileStore:
                 lines.append(f"- {key}: not configured")
         return "\n".join(lines)
 
+    def identity(self, assistant_name: str = "Lura") -> dict[str, Any]:
+        """Return the two identities without asking a model to infer either."""
+        profile = self.profile()
+        return {
+            "assistant_name": assistant_name.strip() or "Lura",
+            "user": {
+                "name": profile["name"],
+                "owner": profile["owner"],
+                "preferred_address": profile["preferred_address"],
+            },
+        }
+
     def _save(self, profile: dict[str, str]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         fd, temporary_name = tempfile.mkstemp(

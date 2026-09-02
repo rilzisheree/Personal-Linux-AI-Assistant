@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
         self.tool_manager = ToolManager(
             memory_store=self.memory_store,
             profile_store=self.profile_store,
+            assistant_name=config.assistant_name,
         )
         self.api_server: ApiServer | None = None
         self.api_thread = None
@@ -503,6 +504,7 @@ class MainWindow(QMainWindow):
             build_system_prompt(
                 self.memory_store.context(),
                 self.profile_store.context(),
+                self.config.assistant_name,
             ),
         )
         self.chat_worker.moveToThread(self.chat_thread)
@@ -1627,6 +1629,7 @@ class MainWindow(QMainWindow):
         self.tool_manager = ToolManager(
             memory_store=self.memory_store,
             profile_store=self.profile_store,
+            assistant_name=self.config.assistant_name,
         )
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()

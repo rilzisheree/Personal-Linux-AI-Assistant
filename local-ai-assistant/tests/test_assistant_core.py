@@ -132,6 +132,11 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             RouteDecision("function"),
         )
 
+    def test_router_prompt_keeps_function_boundary_explicit(self) -> None:
+        self.assertIn("computer action or live computer information", service_prompt := RoutedAssistantService._router_prompt)
+        self.assertIn("CPU", service_prompt)
+        self.assertIn("memory", service_prompt)
+
     def test_legacy_json_objects_are_rejected(self) -> None:
         tools = self.tools
         self.assertIsNone(

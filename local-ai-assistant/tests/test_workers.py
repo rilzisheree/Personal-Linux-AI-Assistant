@@ -5,8 +5,16 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock
 
+from local_ai_assistant.assistant_core import RouteDecision
+from local_ai_assistant.ollama import ChatMessage, StreamEvent
+from local_ai_assistant.applications import ApplicationRecord
+from local_ai_assistant.tools import ToolManager
 from local_ai_assistant.voice import VoiceError
-from local_ai_assistant.workers import VoiceRecordWorker, VoiceTranscriptionWorker
+from local_ai_assistant.workers import (
+    ChatWorker,
+    VoiceRecordWorker,
+    VoiceTranscriptionWorker,
+)
 
 
 class VoiceWorkerTests(unittest.TestCase):
@@ -81,6 +89,59 @@ class VoiceWorkerTests(unittest.TestCase):
             worker.failed.connect(lambda message, path: failed.append((message, path)))
             worker.run()
         self.assertEqual(failed, [("Whisper missing", str(audio_path))])
+
+
+class DirectToolDispatchTests(unittest.TestCase):
+    def test_chat_worker_executes_explicit_app_request_before_model_reply(self) -> None:
+        class FakeService:
+            display_name = "Fake Ollama"
+
+            def __init__(self) -> None:
+                self.seen_messages: list[ChatMessage] = []
+
+            def route_request(self, messages, tools=None, cancel_event=None):
+                return RouteDecision("reasoning")
+
+            def stream_reply(
+                self,
+                messages,
+                model,
+                cancel_event=None,
+                tools=None,
+                context_size=None,
+            ):
+                self.seen_messages = list(messages)
+                yield StreamEvent("Firefox is open, Sir.", True)
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        manager = ToolManager()
+        manager.application_registry.resolve = Mock(
+            return_value=ApplicationRecord(
+                app_id="org.mozilla.firefox",
+                name="Firefox",
+                kind="flatpak",
+                launch_command=("flatpak", "run", "org.mozilla.firefox"),
+            )
+        )
+        service = FakeService()
+        worker = ChatWorker(
+            service,
+            [ChatMessage("user", "Open Firefox")],
+            "qwen3.5:2b",
+            manager,
+        )
+        finished: list[str] = []
+        worker.finished.connect(finished.append)
+
+        with unittest.mock.patch("local_ai_assistant.tools.subprocess.Popen"):
+            worker.run()
+
+        self.assertEqual(finished, ["Firefox is open, Sir."])
+        tool_messages = [message for message in service.seen_messages if message.role == "tool"]
+        self.assertEqual(len(tool_messages), 1)
+        self.assertIn("org.mozilla.firefox", tool_messages[0].content)
 
 
 if __name__ == "__main__":

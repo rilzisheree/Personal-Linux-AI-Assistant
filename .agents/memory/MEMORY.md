@@ -8,3 +8,4 @@
 - [Ollama Gemma adapter import](ollama-gemma-adapter.md) — Gemma 3 may run in Ollama while direct LoRA adapter import remains unsupported; merge and export to GGUF.
 - [Workspace pnpm bootstrap](pnpm-bootstrap.md) — This workspace’s pnpm shim may fail with EAGAIN while bootstrapping the package-manager version, independent of app code.
 - [Python lock repair](uv-lock-pyside.md) — An imported uv.lock can omit the root PySide6 package record while retaining its addon records, blocking dependency installs.
+- [Authoritative local dispatch](authoritative-local-dispatch.md) — Explicit desktop actions and live machine facts must be selected/executed by the app before the LLM formats results.

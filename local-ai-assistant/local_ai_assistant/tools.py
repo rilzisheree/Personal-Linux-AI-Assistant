@@ -5,6 +5,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -162,9 +163,11 @@ class ToolManager:
         self,
         memory_store: MemoryStore | None = None,
         profile_store: UserProfileStore | None = None,
+        assistant_name: str = "Lura",
     ) -> None:
         self.memory_store = memory_store or MemoryStore()
         self.profile_store = profile_store or UserProfileStore()
+        self.assistant_name = assistant_name.strip() or "Lura"
         self.application_registry = ApplicationRegistry()
         self._definitions = {
             "open_app": ToolDefinition(
@@ -460,6 +463,11 @@ class ToolManager:
             "get_user_profile": self._system_definition(
                 "get_user_profile", "Read the editable local user profile.", self._get_user_profile
             ),
+            "get_identity": self._system_definition(
+                "get_identity",
+                "Read the authoritative assistant name and editable user identity.",
+                self._get_identity,
+            ),
             "update_user_profile": ToolDefinition(
                 "update_user_profile",
                 "Update editable local user profile fields. Only save fields explicitly supplied by the user.",
@@ -485,6 +493,26 @@ class ToolManager:
                 "get_system_info",
                 "Collect a complete current system profile and live status snapshot.",
                 self._get_system_info,
+            ),
+            "get_gpu_info": self._system_definition(
+                "get_gpu_info",
+                "Read authoritative current GPU identity, utilization, temperature, and VRAM.",
+                self._get_gpu_status,
+            ),
+            "get_cpu_info": self._system_definition(
+                "get_cpu_info",
+                "Read authoritative current CPU identity, core counts, and utilization.",
+                self._get_cpu_status,
+            ),
+            "get_ram_info": self._system_definition(
+                "get_ram_info",
+                "Read authoritative current RAM totals, availability, and utilization.",
+                self._get_memory_status,
+            ),
+            "get_disk_info": self._system_definition(
+                "get_disk_info",
+                "Read authoritative current root filesystem storage totals and utilization.",
+                self._get_storage_status,
             ),
             "get_system_status": self._system_definition(
                 "get_system_status",
@@ -591,6 +619,93 @@ class ToolManager:
 
     def definitions_for_ollama(self) -> list[dict]:
         return [definition.ollama_schema() for definition in self._definitions.values()]
+
+    def direct_tool_call_for_request(self, request: str) -> tuple[str, dict] | None:
+        """Map unambiguous local actions/facts to tools before the LLM responds.
+
+        The router still runs for every request, but a model must not be the
+        authority for local state or whether an explicit computer action is
+        executed. Ambiguous requests continue through normal tool calling.
+        """
+        text = re.sub(r"\s+", " ", request.strip()).strip(" .!?")
+        folded = text.casefold()
+        if not text:
+            return None
+
+        identity_question = (
+            "who am i" in folded
+            or "who are you" in folded
+            or bool(
+                re.search(
+                    r"\b(?:what(?:'s| is)|who is|do you know|remind me|tell me)\b"
+                    r".*\b(?:my name|your name|who i am)\b",
+                    folded,
+                )
+            )
+            or bool(re.search(r"\b(?:what(?:'s| is))\s+(?:my|your)\s+name\b", folded))
+        )
+        if identity_question:
+            return "get_identity", {}
+
+        url = re.search(r"https?://[^\s]+", text, re.IGNORECASE)
+        if url and re.match(r"^(?:please\s+)?(?:open|launch|visit|go to)\b", folded):
+            return "open_website", {"url": url.group(0).rstrip(".,!?")}
+
+        app_match = re.match(
+            r"^(?:please\s+)?(open|launch|start|run|close|quit|exit|stop)\s+"
+            r"(?:the\s+)?(.+)$",
+            text,
+            re.IGNORECASE,
+        )
+        if app_match:
+            action = app_match.group(1).casefold()
+            app = re.sub(r"\s+(?:for me|please)$", "", app_match.group(2).strip(), flags=re.IGNORECASE)
+            is_generic_instruction = bool(
+                re.match(
+                    r"^(?:a|an|the)\s+(?:python\s+)?"
+                    r"(?:program|command|script|application|app|file)\b",
+                    app,
+                    re.IGNORECASE,
+                )
+            )
+            if (
+                not is_generic_instruction
+                and app.casefold() not in {"listening", "the app", "an app"}
+                and app
+            ):
+                return ("close_app" if action in {"close", "quit", "exit", "stop"} else "open_app"), {
+                    "app": app
+                }
+
+        local_state_marker = re.search(
+            r"\b(?:my|your|i have|do i have|am i using|current|usage|"
+            r"do you have|what do you have|utilization|temperature|temp|"
+            r"vram|cores?|threads?|how much|how many)\b",
+            folded,
+        )
+        if local_state_marker and re.search(
+            r"\b(?:gpu|graphics card|video card|vram|graphics memory)\b", folded
+        ):
+            return "get_gpu_info", {}
+        if local_state_marker and re.search(
+            r"\b(?:cpu|processor|processing unit|cpu cores?|threads?)\b", folded
+        ):
+            return "get_cpu_info", {}
+        if local_state_marker and re.search(r"\b(?:ram|memory)\b", folded):
+            if re.search(r"(?:using|uses|top|most|process)", folded):
+                return "get_processes", {}
+            return "get_ram_info", {}
+        if local_state_marker and re.search(
+            r"\b(?:disk|storage|drive space|free space)\b", folded
+        ):
+            return "get_disk_info", {}
+        if re.search(r"\b(?:system info|system information|computer status|machine status|linux version)\b", folded):
+            return "get_system_info", {}
+        if re.search(r"\b(?:screenshot|screen capture|capture my screen)\b", folded):
+            return "take_screenshot", {}
+        if re.search(r"\b(?:open windows?|windows? do i have)\b", folded):
+            return "list_windows", {}
+        return None
 
     def permission_for(self, name: str, arguments: dict) -> PermissionLevel:
         definition = self._definitions.get(name)
@@ -705,6 +820,16 @@ class ToolManager:
         del arguments
         return ToolCallResult(True, json.dumps(self.profile_store.profile(), ensure_ascii=False))
 
+    def _get_identity(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        return ToolCallResult(
+            True,
+            json.dumps(
+                self.profile_store.identity(self.assistant_name),
+                ensure_ascii=False,
+            ),
+        )
+
     def _update_user_profile(self, arguments: dict) -> ToolCallResult:
         profile = self.profile_store.update(arguments)
         return ToolCallResult(True, json.dumps(profile, ensure_ascii=False))
@@ -792,7 +917,22 @@ class ToolManager:
                 False,
                 json.dumps({"available": False, "error": "NVIDIA GPU data is unavailable."}),
             )
-        return ToolCallResult(True, json.dumps({"available": True, "gpus": gpus}))
+        first_gpu = gpus[0]
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "available": True,
+                    "vendor": "NVIDIA",
+                    "model": first_gpu["name"],
+                    "vram_total_mb": first_gpu["vram_total_mb"],
+                    "vram_used_mb": first_gpu["vram_used_mb"],
+                    "utilization_percent": first_gpu["utilization_percent"],
+                    "temperature_c": first_gpu["temperature_c"],
+                    "gpus": gpus,
+                }
+            ),
+        )
 
     @staticmethod
     def _get_cpu_status(arguments: dict) -> ToolCallResult:
@@ -810,12 +950,16 @@ class ToolManager:
             )
         except (OSError, ValueError, IndexError):
             usage = None
-        model = collect_system_profile().get("cpu", "unknown")
+        identity = _read_cpu_identity()
+        model = identity["model"]
         return ToolCallResult(
             usage is not None,
             json.dumps(
                 {
+                    "vendor": identity["vendor"],
                     "model": model,
+                    "cores": identity["cores"],
+                    "threads": identity["threads"],
                     "utilization_percent": round(usage, 1) if usage is not None else None,
                     "available": usage is not None,
                 }
@@ -1648,6 +1792,53 @@ def _read_cpu_times() -> tuple[int, ...]:
     if len(values) < 4:
         raise ValueError("CPU statistics are unavailable.")
     return tuple(int(value) for value in values)
+
+
+def _read_cpu_identity() -> dict[str, str | int]:
+    """Read CPU identity and topology from Linux, not from model context."""
+    fields: dict[str, str] = {}
+    try:
+        result = subprocess.run(
+            ["lscpu"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                key, separator, value = line.partition(":")
+                if separator:
+                    fields[key.strip().casefold()] = value.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+    def integer(*names: str) -> int | None:
+        for name in names:
+            value = fields.get(name.casefold(), "")
+            try:
+                return int(value.split()[0])
+            except (IndexError, ValueError):
+                continue
+        return None
+
+    model = fields.get("model name") or fields.get("model") or platform.processor() or "unknown"
+    vendor = fields.get("vendor id") or fields.get("vendor") or "unknown"
+    cores = integer("core(s) per socket", "cores per socket")
+    sockets = integer("socket(s)", "sockets")
+    threads = integer("cpu(s)", "cpus", "logical cpu(s)")
+    if cores is not None and sockets is not None:
+        cores *= sockets
+    if cores is None:
+        cores = integer("cpu(s)") or 0
+    if threads is None:
+        threads = cores
+    return {
+        "vendor": vendor,
+        "model": model,
+        "cores": cores,
+        "threads": threads,
+    }
 
 
 def _read_uptime() -> dict[str, float | bool]:

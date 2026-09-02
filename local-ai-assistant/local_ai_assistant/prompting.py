@@ -21,17 +21,34 @@ short natural sentences, especially for spoken responses. Do not repeat the
 request, narrate internal tool names, expose JSON or shell commands, or add
 filler such as "Certainly, I would be happy to help."""
 
+AUTHORITATIVE_CONTEXT = """Identity and local-state rules:
+- "my", "I", and "me" refer to the user; "your" and "you" refer to Lura.
+- For identity questions, use get_identity. Never answer the user's name with
+  Lura's name, and never infer a missing user name.
+- For hardware, live system state, applications, windows, or processes, use the
+  matching tool result. The tool result is the only source of truth.
+- If a tool reports unavailable, failed, or missing data, say that it could not
+  be retrieved. Never fill a failed tool result with a guess.
+- When a tool can perform an action such as opening an application, use it
+  instead of giving the user a command to run manually."""
 
-def build_system_prompt(memory_context: str = "", profile_context: str = "") -> str:
+
+def build_system_prompt(
+    memory_context: str = "",
+    profile_context: str = "",
+    assistant_name: str = "Lura",
+) -> str:
+    configured_name = assistant_name.strip() or "Lura"
+    base_prompt = JARVIS_SYSTEM_PROMPT.replace("You are Lura,", f"You are {configured_name},")
     contexts = [
         context.strip()
         for context in (profile_context, memory_context)
         if context and context.strip()
     ]
     if not contexts:
-        return JARVIS_SYSTEM_PROMPT
+        return f"{base_prompt}\n\n{AUTHORITATIVE_CONTEXT}"
     return (
-        f"{JARVIS_SYSTEM_PROMPT}\n\n"
+        f"{base_prompt}\n\n{AUTHORITATIVE_CONTEXT}\n\n"
         "The following local context is available. Use it only when relevant, "
         "never invent missing values, and do not claim to know anything beyond it:\n"
         f"{chr(10).join(contexts)}"

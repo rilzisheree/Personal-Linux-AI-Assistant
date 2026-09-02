@@ -1,0 +1,229 @@
+The latest update broke application launching.
+
+Before the update, Luna could launch applications. Now when I say:
+
+"Open Firefox"
+
+she responds:
+
+> "Sir, I cannot directly launch external applications..."
+
+and gives me commands instead of actually opening Firefox.
+
+This is NOT acceptable. Luna must execute the action herself through the application's tool system.
+
+## FIX THIS FIRST
+
+Do NOT redesign anything.
+
+Inspect the latest changes and determine exactly what broke application/tool execution.
+
+Check:
+
+* tool registration
+* tool discovery
+* function routing
+* tool execution
+* application launcher
+* Flatpak detection
+* permission handling
+* whether FUNCTION requests are actually reaching the tool executor
+* whether the LLM is being told that it cannot execute applications
+* whether the previous application-launching implementation was accidentally removed or disconnected
+
+Do not just modify the system prompt to say "you can open apps." Find the actual architectural problem.
+
+---
+
+# Firefox specifically
+
+I use Flatpak for most of my applications.
+
+The application should discover Firefox from the system rather than guessing a command.
+
+Run the appropriate discovery commands on my system and determine the actual installed Firefox application ID.
+
+For Flatpak applications, launching should generally use:
+
+```text
+flatpak run <actual_application_id>
+```
+
+Do NOT use:
+
+```text
+flathub --exec ...
+```
+
+and do NOT invent `.desktop` paths.
+
+Do NOT assume the binary is simply:
+
+```text
+firefox
+```
+
+when the application is installed as a Flatpak.
+
+---
+
+# Application launcher architecture
+
+Create/reconnect a proper application tool such as:
+
+```text
+open_app(app_name)
+```
+
+The flow should be:
+
+```text
+User:
+"Open Firefox"
+        ↓
+Gemma router
+        ↓
+FUNCTION
+        ↓
+Application/tool system
+        ↓
+resolve_app("Firefox")
+        ↓
+find installed application
+        ↓
+detect Flatpak/native
+        ↓
+execute correct launcher
+        ↓
+Firefox opens
+        ↓
+Luna:
+"Firefox is open, Sir."
+```
+
+The LLM should NOT generate a shell command and tell me to run it manually.
+
+The application itself should execute the appropriate command.
+
+---
+
+# Application discovery
+
+Build an application registry from the actual system.
+
+For Flatpak applications, discover:
+
+* Application ID
+* Name
+* Desktop file/name if available
+* Installed status
+
+Use the actual installed Flatpak list.
+
+For example, use appropriate system queries such as:
+
+```text
+flatpak list --app
+```
+
+and other reliable methods if necessary.
+
+Also support native applications.
+
+If both a Flatpak and native version exist, prefer the installed application that is actually associated with the requested name, with a deterministic preference order.
+
+Cache the registry if useful, but refresh it when necessary.
+
+---
+
+# Important
+
+The LLM should not have to know:
+
+```text
+Firefox = some random command
+Discord = some random command
+Spotify = some random command
+```
+
+Instead:
+
+```text
+"Open Firefox"
+        ↓
+Application resolver
+        ↓
+actual installed Firefox
+        ↓
+actual launch method
+```
+
+This needs to work for arbitrary installed applications, not just Firefox.
+
+---
+
+# Also fix the new "I can't do that" behavior
+
+If Luna has a registered tool capable of doing something, the LLM must be instructed to USE THE TOOL rather than explaining how I could do it manually.
+
+For example:
+
+BAD:
+
+> "I cannot directly launch Firefox. You can run..."
+
+GOOD:
+
+> *calls open_app("Firefox")*
+
+Then:
+
+> "Firefox is open, Sir."
+
+The LLM should only say it cannot perform an action if the application genuinely does not have a tool capable of performing it.
+
+---
+
+# Test before finishing
+
+Actually test the tool execution locally.
+
+Test:
+
+```text
+Open Firefox
+Open Discord
+Open Spotify
+Close Firefox
+```
+
+For each one, verify that the application actually changes state.
+
+Also test:
+
+```text
+What's my GPU?
+What's my CPU?
+What's my RAM usage?
+```
+
+and verify that FUNCTION routing still reaches the correct system-information tools.
+
+Make sure the previous update did not break the entire FUNCTION tool pipeline.
+
+---
+
+# DO NOT
+
+* Do not tell me to manually run commands.
+* Do not tell me Luna needs a file manager.
+* Do not tell me I need additional permissions for ordinary app launching.
+* Do not use `flathub --exec`.
+* Do not hard-code Firefox only.
+* Do not remove Flatpak support.
+* Do not change Gemma's trained router.
+* Do not change Qwen3.5 2B.
+* Do not redesign the UI.
+* Do not change the voice system.
+
+Find the regression, fix it, test it, and push the fix to GitHub.

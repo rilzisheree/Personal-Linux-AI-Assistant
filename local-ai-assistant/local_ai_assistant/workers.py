@@ -90,6 +90,41 @@ class ChatWorker(QObject):
                 self.failed.emit("Generation stopped.", "cancelled")
                 return
             route_tools = ollama_tools if route.route != "simple" else None
+            current_request = next(
+                (
+                    message.content
+                    for message in reversed(visible_messages)
+                    if message.role == "user" and message.content.strip()
+                ),
+                "",
+            )
+            direct_call = self.tool_manager.direct_tool_call_for_request(
+                current_request
+            )
+            if direct_call is not None:
+                tool_name, arguments = direct_call
+                direct_tool_call = ToolCall(
+                    tool_name,
+                    arguments,
+                    f"direct_{uuid.uuid4().hex}",
+                )
+                messages.append(ChatMessage("assistant", "", (direct_tool_call,)))
+                visible_messages.append(messages[-1])
+                result = self._execute_tool_call(direct_tool_call)
+                tool_message = ChatMessage(
+                    "tool",
+                    result.content,
+                    name=tool_name,
+                    images=result.images,
+                    tool_call_id=direct_tool_call.id,
+                )
+                messages.append(tool_message)
+                visible_messages.append(tool_message)
+                # The application already selected and executed the only
+                # authoritative tool needed for this request. Qwen only
+                # formats the result and cannot replace it with a refusal or
+                # another guessed tool call.
+                route_tools = None
             while not self.cancel_event.is_set():
                 cycle_response: list[str] = []
                 tool_calls: list[ToolCall] = []
@@ -154,26 +189,8 @@ class ChatWorker(QObject):
                         self.failed.emit("Generation stopped.", "cancelled")
                         return
                     call_id = tool_call.id or f"{tool_call.name}-{uuid.uuid4().hex}"
-                    permission = self.tool_manager.permission_for(tool_call.name, tool_call.arguments)
-                    self.tool_started.emit(call_id, tool_call.name, tool_call.arguments, permission.value)
-                    approved = permission in {
-                        PermissionLevel.SAFE,
-                        PermissionLevel.NORMAL,
-                    }
-                    if not approved:
-                        approved = self._wait_for_approval(call_id, tool_call, permission)
-                    try:
-                        result = self.tool_manager.execute(tool_call.name, tool_call.arguments, approved)
-                    except ToolConfirmationRequired:
-                        result = ToolCallResult(False, "The user did not approve this action.")
+                    result = self._execute_tool_call(tool_call, call_id)
                     tool_results.append(result)
-                    self.tool_completed.emit(
-                        call_id,
-                        tool_call.name,
-                        result.content,
-                        result.success,
-                        result.images,
-                    )
                     tool_message = ChatMessage(
                         "tool",
                         result.content,
@@ -192,6 +209,41 @@ class ChatWorker(QObject):
             self.failed.emit(
                 format_backend_error(error, self.service.backend_name), "error"
             )
+
+    def _execute_tool_call(
+        self,
+        tool_call: ToolCall,
+        call_id: str | None = None,
+    ) -> ToolCallResult:
+        resolved_call_id = call_id or tool_call.id or f"{tool_call.name}-{uuid.uuid4().hex}"
+        permission = self.tool_manager.permission_for(
+            tool_call.name, tool_call.arguments
+        )
+        self.tool_started.emit(
+            resolved_call_id,
+            tool_call.name,
+            tool_call.arguments,
+            permission.value,
+        )
+        approved = permission in {PermissionLevel.SAFE, PermissionLevel.NORMAL}
+        if not approved:
+            approved = self._wait_for_approval(
+                resolved_call_id, tool_call, permission
+            )
+        try:
+            result = self.tool_manager.execute(
+                tool_call.name, tool_call.arguments, approved
+            )
+        except ToolConfirmationRequired:
+            result = ToolCallResult(False, "The user did not approve this action.")
+        self.tool_completed.emit(
+            resolved_call_id,
+            tool_call.name,
+            result.content,
+            result.success,
+            result.images,
+        )
+        return result
 
     def cancel(self) -> None:
         self.cancel_event.set()
