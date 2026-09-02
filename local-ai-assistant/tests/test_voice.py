@@ -56,11 +56,30 @@ class VoiceServiceTests(unittest.TestCase):
         )
 
     def test_conversation_end_phrases_are_conservative(self) -> None:
+        for phrase in (
+            "bye",
+            "Goodbye.",
+            "see you later",
+            "see ya",
+            "I'm done",
+            "that's all",
+            "end the conversation",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertTrue(conversation_end_requested(phrase))
         self.assertTrue(conversation_end_requested("Okay, goodbye"))
         self.assertTrue(conversation_end_requested("go to sleep now"))
         self.assertTrue(conversation_end_requested("please stop listening"))
+        self.assertTrue(conversation_end_requested("I am done now"))
+        self.assertTrue(conversation_end_requested("that's all"))
+        self.assertTrue(conversation_end_requested("please stop listenin"))
+        self.assertTrue(conversation_end_requested("goodby"))
         self.assertFalse(conversation_end_requested("don't stop listening, keep going"))
+        self.assertFalse(conversation_end_requested("I am not done yet"))
+        self.assertFalse(conversation_end_requested("please don't say goodbye"))
+        self.assertFalse(conversation_end_requested("stand by for instructions"))
         self.assertFalse(conversation_end_requested("stop the timer"))
+        self.assertFalse(conversation_end_requested("tell me about goodbyes"))
 
     def test_vad_waits_for_sustained_silence_after_speech(self) -> None:
         detector = VoiceActivityDetector(

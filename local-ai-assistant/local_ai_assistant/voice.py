@@ -230,11 +230,19 @@ def remove_wake_word(text: str, wake_word: str, threshold: float = 0.72) -> str 
 
 
 CONVERSATION_END_PHRASES = (
+    ("bye",),
     ("goodbye",),
+    ("goodby",),
     ("good", "bye"),
+    ("good", "by"),
+    ("see", "you"),
+    ("see", "ya"),
+    ("im", "done"),
+    ("thats", "all"),
     ("stop", "listening"),
     ("go", "to", "sleep"),
     ("end", "conversation"),
+    ("end", "the", "conversation"),
     ("stop", "conversation"),
     ("cancel", "conversation"),
     ("exit", "conversation"),
@@ -242,23 +250,63 @@ CONVERSATION_END_PHRASES = (
 
 
 def conversation_end_requested(text: str) -> bool:
-    """Recognize explicit, conservative requests to leave voice conversation mode."""
+    """Recognize explicit, tolerant requests to leave voice conversation mode.
+
+    The match is intentionally phrase-based rather than substring-based. This
+    allows normal punctuation and a few common Whisper contraction spellings
+    without turning unrelated words such as "timer" into an exit command.
+    """
     tokens = _normalise_spoken_text(text)
+    # Whisper may split contractions differently depending on the model and
+    # audio quality. Collapse only the contractions used by the supported exit
+    # phrases; keeping the rest tokenized makes the detector conservative.
+    collapsed: list[str] = []
+    index = 0
+    while index < len(tokens):
+        pair = tuple(tokens[index : index + 2])
+        if pair in {("i", "am"), ("i", "m")}:
+            collapsed.append("im")
+            index += 2
+            continue
+        if pair in {("that", "s"), ("that", "is")}:
+            collapsed.append("thats")
+            index += 2
+            continue
+        collapsed.append(tokens[index])
+        index += 1
+    tokens = collapsed
     if not tokens:
         return False
     for phrase in CONVERSATION_END_PHRASES:
         for index in range(len(tokens) - len(phrase) + 1):
-            if tuple(tokens[index : index + len(phrase)]) != phrase:
+            candidate = tuple(tokens[index : index + len(phrase)])
+            if candidate != phrase and not _conversation_phrase_fuzzy_match(
+                candidate, phrase
+            ):
                 continue
-            preceding = tokens[max(0, index - 3) : index]
-            if phrase[:2] == ("stop", "listening") and (
-                ("don" in preceding and "t" in preceding)
-                or ("do" in preceding and "not" in preceding)
-                or "never" in preceding
+            preceding = tokens[max(0, index - 5) : index]
+            if "not" in preceding or "never" in preceding:
+                continue
+            if any(
+                tuple(preceding[offset : offset + 2]) in {("don", "t"), ("do", "not")}
+                for offset in range(len(preceding) - 1)
             ):
                 continue
             return True
     return False
+
+
+def _conversation_phrase_fuzzy_match(
+    candidate: tuple[str, ...], phrase: tuple[str, ...]
+) -> bool:
+    """Allow small transcription errors without fuzzing short one-word exits."""
+    if len(phrase) < 2 or len(candidate) != len(phrase):
+        return False
+    from difflib import SequenceMatcher
+
+    return (
+        SequenceMatcher(None, " ".join(candidate), " ".join(phrase)).ratio() >= 0.86
+    )
 
 
 class VoiceActivityDetector:

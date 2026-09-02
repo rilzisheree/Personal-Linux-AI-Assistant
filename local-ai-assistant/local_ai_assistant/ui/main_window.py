@@ -67,6 +67,7 @@ from .core_widget import CoreWidget
 from .settings_dialog import SettingsDialog
 
 LOGGER = logging.getLogger("lura.ui")
+CONVERSATION_GOODBYE_RESPONSE = "Goodbye, Sir."
 
 
 @dataclass(frozen=True)
@@ -894,8 +895,9 @@ class MainWindow(QMainWindow):
             return
         self._set_voice_idle()
         if self._conversation_active and conversation_end_requested(text):
+            self._wake_command_recording = False
             self._end_conversation("CONVERSATION ENDED // GOODBYE")
-            self._wake_restart_pending = self.config.wake_word_enabled
+            self._show_conversation_goodbye(text)
             return
         if not text.strip():
             if self._conversation_active:
@@ -1134,6 +1136,21 @@ class MainWindow(QMainWindow):
             return
         self.message_input.setText(command)
         self._send_message()
+
+    def _show_conversation_goodbye(self, command: str) -> None:
+        """Close a voice session with a local response, without calling the AI."""
+        command = command.strip()
+        if command:
+            self.messages.append(ChatMessage("user", command))
+            self.chat_view.add_message("user", command)
+        self.messages.append(ChatMessage("assistant", CONVERSATION_GOODBYE_RESPONSE))
+        self.chat_view.add_message("assistant", CONVERSATION_GOODBYE_RESPONSE)
+        self._persist_current_conversation()
+        # This is deliberately a local, fixed response: the exit command must
+        # not wait for or depend on another model request. The conversation has
+        # already ended, so the normal wake-word listener may resume only after
+        # this one-shot response and never starts another conversation turn.
+        self._speak_response(CONVERSATION_GOODBYE_RESPONSE)
 
     def _schedule_next_conversation_turn(self) -> None:
         if (

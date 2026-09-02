@@ -61,6 +61,40 @@ class MainWindowVoiceTests(unittest.TestCase):
             "WAKE WORD DETECTED // LISTENING…"
         )
 
+    def test_conversation_goodbye_is_only_handled_in_active_mode(self) -> None:
+        window = MainWindow.__new__(MainWindow)
+        window._latency_trace = None
+        window.voice_transcription_thread = None
+        window._confirmation_recording = False
+        window._set_voice_idle = Mock()
+        window._conversation_active = True
+        window._wake_command_recording = True
+        window._end_conversation = Mock()
+        window._show_conversation_goodbye = Mock()
+
+        MainWindow._transcription_finished(window, "Goodbye", "/tmp/missing.wav")
+
+        window._end_conversation.assert_called_once_with(
+            "CONVERSATION ENDED // GOODBYE"
+        )
+        window._show_conversation_goodbye.assert_called_once_with("Goodbye")
+        self.assertFalse(window._wake_command_recording)
+
+        idle_window = MainWindow.__new__(MainWindow)
+        idle_window._latency_trace = None
+        idle_window.voice_transcription_thread = None
+        idle_window._confirmation_recording = False
+        idle_window._set_voice_idle = Mock()
+        idle_window._conversation_active = False
+        idle_window._wake_command_recording = True
+        idle_window.message_input = Mock()
+        idle_window._send_message = Mock()
+
+        MainWindow._transcription_finished(idle_window, "Goodbye", "/tmp/missing.wav")
+
+        idle_window._send_message.assert_called_once_with()
+        idle_window.message_input.setText.assert_called_once_with("Goodbye")
+
 
 if __name__ == "__main__":
     unittest.main()
