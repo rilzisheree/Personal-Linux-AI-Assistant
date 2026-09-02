@@ -108,6 +108,23 @@ class MainWindowVoiceTests(unittest.TestCase):
             "Goodbye, Sir.", force_voice=True
         )
 
+    def test_one_shot_speech_queues_response_when_chunker_is_empty(self) -> None:
+        window = MainWindow.__new__(MainWindow)
+        window._speech_chunker = Mock()
+        window._speech_chunker.flush.return_value = []
+        window.speech_worker = None
+        window._queue_speech_chunk = Mock()
+        window._set_orb_state = Mock()
+        window._latency_trace = None
+
+        MainWindow._finish_speech_stream(
+            window, "Goodbye, Sir.", force_voice=True
+        )
+
+        window._queue_speech_chunk.assert_called_once_with(
+            "Goodbye, Sir.", force_voice=True
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

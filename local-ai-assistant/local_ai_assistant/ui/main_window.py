@@ -1244,8 +1244,14 @@ class MainWindow(QMainWindow):
         self, response: str, *, force_voice: bool = False
     ) -> None:
         if self._speech_chunker is not None:
-            for sentence in self._speech_chunker.flush():
+            sentences = self._speech_chunker.flush()
+            for sentence in sentences:
                 self._queue_speech_chunk(sentence, force_voice=force_voice)
+            # One-shot responses, such as the conversation goodbye, have an
+            # empty chunker because nothing was streamed into it first. Do not
+            # finish an empty worker; send the response itself to TTS.
+            if not sentences and response.strip() and self.speech_worker is None:
+                self._queue_speech_chunk(response, force_voice=force_voice)
         elif response.strip():
             self._queue_speech_chunk(response, force_voice=force_voice)
         if self.speech_worker is not None:
