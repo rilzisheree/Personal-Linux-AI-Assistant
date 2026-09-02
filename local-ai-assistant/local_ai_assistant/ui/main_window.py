@@ -2056,7 +2056,7 @@ class MainWindow(QMainWindow):
             return
 
         if self.status_notification is not None:
-            self.status_notification.close()
+            self.status_notification.hide()
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),
