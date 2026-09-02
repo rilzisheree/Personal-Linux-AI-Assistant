@@ -344,12 +344,14 @@ class VoiceRecordWorker(QObject):
         destination: Path,
         duration_seconds: int | None = None,
         detect_speech: bool = False,
+        min_speech_duration: float | None = None,
     ) -> None:
         super().__init__()
         self.service = service
         self.destination = destination
         self.duration_seconds = duration_seconds
         self.detect_speech = detect_speech
+        self.min_speech_duration = min_speech_duration
         self.speech_detected = False
         self._stop_event = threading.Event()
         self._process: subprocess.Popen | None = None
@@ -412,7 +414,11 @@ class VoiceRecordWorker(QObject):
         detector = VoiceActivityDetector(
             threshold=self.service.config.voice_vad_threshold,
             silence_duration=self.service.config.voice_silence_duration,
-            min_speech_duration=self.service.config.voice_min_speech_duration,
+            min_speech_duration=(
+                self.min_speech_duration
+                if self.min_speech_duration is not None
+                else self.service.config.voice_min_speech_duration
+            ),
         )
         offset = 44
         while process.poll() is None and not self._stop_event.is_set():

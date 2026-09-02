@@ -241,14 +241,10 @@ class MainWindow(QMainWindow):
             app is not None
             and app.applicationState() != Qt.ApplicationState.ApplicationActive
         )
-        outside_main_window = (
-            not self.isVisible() or self.isMinimized() or application_inactive
-        )
         should_show = (
             not self._quitting
             and self.config.voice_input_enabled
             and self._voice_state != "idle"
-            and outside_main_window
         )
         if should_show:
             notification.show_for_desktop()
@@ -839,6 +835,10 @@ class MainWindow(QMainWindow):
             self.voice_service,
             destination,
             detect_speech=True,
+            min_speech_duration=max(
+                self.config.voice_min_speech_duration,
+                0.45,
+            ),
         )
         self.voice_record_worker.moveToThread(self.voice_record_thread)
         self.voice_record_thread.started.connect(self.voice_record_worker.run)

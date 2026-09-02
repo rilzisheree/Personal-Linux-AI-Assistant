@@ -312,6 +312,8 @@ def _conversation_phrase_fuzzy_match(
 class VoiceActivityDetector:
     """Adaptive activity detector for 16-bit, 16 kHz mono WAV recordings."""
 
+    FRAME_SAMPLES = 320  # 20 ms at 16 kHz
+
     def __init__(
         self,
         *,
@@ -348,41 +350,57 @@ class VoiceActivityDetector:
         usable = len(samples) - (len(samples) % 2)
         if usable <= 0:
             return False
-        rms, peak = self._levels(samples[:usable])
-        duration = usable / 2 / self.sample_rate
+        frame_bytes = self.FRAME_SAMPLES * 2
+        for start in range(0, usable, frame_bytes):
+            frame = samples[start : min(start + frame_bytes, usable)]
+            duration = len(frame) / 2 / self.sample_rate
+            if duration <= 0:
+                continue
+            frame_end = now - (
+                (usable - start - len(frame)) / 2 / self.sample_rate
+            )
+            self._consume_frame(frame, duration, frame_end)
+        if not self.speech_started:
+            return False
+        return self.should_stop(now)
+
+    def _consume_frame(self, samples: bytes, duration: float, now: float) -> None:
+        rms, _peak = self._levels(samples)
         self._observed_duration += duration
 
-        if not self.speech_started:
+        if (
+            not self.speech_started
+            and self._observed_duration <= self._calibration_duration
+        ):
             # Establish the room baseline before accepting speech. Do not keep
             # adapting after calibration: otherwise a fan, keyboard burst, or
             # the beginning of a quiet sentence can train the detector upward
             # or make intermittent noise accumulate into a false start.
-            if self._observed_duration <= self._calibration_duration:
-                self._noise_floor = min(
-                    self._noise_floor * 0.8 + rms * 0.2,
-                    float(self.threshold) * 0.8,
-                )
+            self._noise_floor = min(
+                self._noise_floor * 0.8 + rms * 0.2,
+                float(self.threshold) * 0.8,
+            )
+            self._voiced_duration = 0.0
+            return
+
         dynamic_floor = max(float(self.threshold), self._noise_floor * 2.5)
         # RMS is deliberately the primary test. Peak-only detection is too
         # eager around keyboard clicks and other short impulse sounds.
-        voiced = rms >= dynamic_floor
-        if voiced:
+        if rms >= dynamic_floor:
             self._voiced_duration += duration
             self._last_voice_at = now
         else:
             # Before speech begins, require one uninterrupted stretch of
-            # voiced audio. Once speech has started, the silence timer below
-            # provides the separate pause-tolerant hangover behavior.
+            # voiced frames. A short click mixed into a large recorder poll
+            # must not count as speech for the entire poll.
             self._voiced_duration = 0.0
 
-        if not self.speech_started:
-            if (
-                self._observed_duration >= self._calibration_duration
-                and self._voiced_duration >= self.min_speech_duration
-            ):
-                self.speech_started = True
-            return False
-        return self.should_stop(now)
+        if (
+            not self.speech_started
+            and self._observed_duration >= self._calibration_duration
+            and self._voiced_duration >= self.min_speech_duration
+        ):
+            self.speech_started = True
 
     def should_stop(self, now: float) -> bool:
         """Check for end-of-speech even when a recorder poll has no new bytes."""
