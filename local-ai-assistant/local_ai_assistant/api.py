@@ -318,7 +318,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                         tool_manager.permission_for(
                             tool_call.name, tool_call.arguments
                         )
-                        != PermissionLevel.SAFE
+                        not in {PermissionLevel.SAFE, PermissionLevel.NORMAL}
                     ):
                         result = ToolCallResult(
                             False,

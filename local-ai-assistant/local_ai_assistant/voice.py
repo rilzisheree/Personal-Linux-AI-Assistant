@@ -49,6 +49,50 @@ def is_no_speech_error(message: str) -> bool:
     )
 
 
+def confirmation_decision(text: str) -> bool | None:
+    """Return an approval decision only for a clear, short yes/no response."""
+
+    tokens = _normalise_spoken_text(text)
+    if not tokens or len(tokens) > 5:
+        return None
+    affirmative = {"yes", "yeah", "yep", "approve", "approved", "allow", "okay", "ok"}
+    negative = {"no", "nope", "nah", "cancel", "cancelled", "deny", "denied"}
+    if tokens[0] in affirmative and not any(token in negative for token in tokens):
+        return True
+    if tokens[0] in negative and not any(token in affirmative for token in tokens):
+        return False
+    return None
+
+
+def speech_text(text: str) -> str:
+    """Remove markup, JSON-like syntax, and emoji before local playback."""
+
+    try:
+        structured = json.loads(text)
+    except (TypeError, json.JSONDecodeError):
+        structured = None
+    if isinstance(structured, (dict, list)):
+        text = _speech_values(structured)
+    text = re.sub(r"```.*?```", " ", text, flags=re.DOTALL)
+    text = re.sub(r"https?://\S+", " website ", text)
+    text = re.sub(r"[*_`#>~]", "", text)
+    text = re.sub(
+        r"[\U0001F000-\U0001FAFF\u2600-\u27BF]",
+        "",
+        text,
+    )
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def _speech_values(value: object) -> str:
+    if isinstance(value, dict):
+        return " ".join(_speech_values(item) for item in value.values())
+    if isinstance(value, list):
+        return " ".join(_speech_values(item) for item in value)
+    return str(value)
+
+
 class SpeechChunker:
     """Split streamed model output at natural boundaries for local TTS."""
 
@@ -680,7 +724,7 @@ class VoiceService:
 
     @staticmethod
     def _read_transcript_from_text(text: str) -> str:
-        text = text.strip()
+        text = speech_text(text)
         if not text:
             raise VoiceError("No speech was detected.")
         return text

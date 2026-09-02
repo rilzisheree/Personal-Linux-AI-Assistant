@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import QDateTime, QObject, QThread, QTimer, Qt, Signal, Slot
@@ -33,6 +34,7 @@ from ..config import AppConfig
 from ..conversations import Conversation, ConversationStore
 from ..desktop_integration import set_autostart_enabled
 from ..memory import MemoryStore
+from ..profile import UserProfileStore
 from ..ollama import ChatMessage, OllamaClient
 from ..performance import LatencyTrace
 from ..prompting import build_system_prompt
@@ -45,12 +47,15 @@ from ..tools import PermissionLevel, ToolManager
 from ..voice import (
     SpeechChunker,
     VoiceService,
+    confirmation_decision,
     conversation_end_requested,
     is_no_speech_error,
+    speech_text,
 )
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
+    SpeechWorker,
     SpeechStreamWorker,
     TelegramBotWorker,
     VoiceRecordWorker,
@@ -64,6 +69,15 @@ from .settings_dialog import SettingsDialog
 LOGGER = logging.getLogger("lura.ui")
 
 
+@dataclass(frozen=True)
+class PendingConfirmation:
+    call_id: str
+    name: str
+    arguments: dict
+    permission: str
+    expires_at: float
+
+
 class MainWindow(QMainWindow):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
@@ -72,7 +86,11 @@ class MainWindow(QMainWindow):
         self.service = RoutedAssistantService(self.client)
         self.voice_service = VoiceService(config)
         self.memory_store = MemoryStore()
-        self.tool_manager = ToolManager(memory_store=self.memory_store)
+        self.profile_store = UserProfileStore()
+        self.tool_manager = ToolManager(
+            memory_store=self.memory_store,
+            profile_store=self.profile_store,
+        )
         self.api_server: ApiServer | None = None
         self.api_thread = None
         self.telegram_thread: QThread | None = None
@@ -95,6 +113,8 @@ class MainWindow(QMainWindow):
         self.voice_transcription_worker: VoiceTranscriptionWorker | None = None
         self.wake_word_thread: QThread | None = None
         self.wake_word_worker: WakeWordWorker | None = None
+        self.confirmation_speech_thread: QThread | None = None
+        self.confirmation_speech_worker: SpeechWorker | None = None
         self.speech_thread: QThread | None = None
         self.speech_worker: SpeechStreamWorker | None = None
         self.last_voice_error: str | None = None
@@ -112,6 +132,11 @@ class MainWindow(QMainWindow):
         self._manual_handoff_started_at: float | None = None
         self._wake_restart_pending = False
         self._wake_listener_restart_allowed = True
+        self._pending_confirmation: PendingConfirmation | None = None
+        self._confirmation_recording = False
+        self._confirmation_timer = QTimer(self)
+        self._confirmation_timer.setSingleShot(True)
+        self._confirmation_timer.timeout.connect(self._confirmation_expired)
         self._speech_chunker: SpeechChunker | None = None
         self._latency_trace: LatencyTrace | None = None
         self._conversation_active = False
@@ -438,7 +463,15 @@ class MainWindow(QMainWindow):
     @Slot()
     def _send_message(self) -> None:
         prompt = self.message_input.text().strip()
-        if not prompt or self.chat_worker is not None:
+        if not prompt:
+            return
+        if self._pending_confirmation is not None:
+            decision = confirmation_decision(prompt)
+            self.message_input.clear()
+            self._resolve_pending_confirmation(decision)
+            if decision is not None:
+                return
+        if self.chat_worker is not None:
             return
         model = self.model_selector.currentText().strip() or self._configured_model(self.config)
         self.messages.append(ChatMessage("user", prompt))
@@ -465,7 +498,10 @@ class MainWindow(QMainWindow):
             model,
             self.tool_manager,
             self.config.ollama_context_size,
-            build_system_prompt(self.memory_store.context()),
+            build_system_prompt(
+                self.memory_store.context(),
+                self.profile_store.context(),
+            ),
         )
         self.chat_worker.moveToThread(self.chat_thread)
         self.chat_thread.started.connect(self.chat_worker.run)
@@ -512,7 +548,10 @@ class MainWindow(QMainWindow):
     @Slot(str, str, object, str)
     def _tool_started(self, call_id: str, name: str, arguments: object, permission: str) -> None:
         details = json.dumps(arguments, indent=2, sort_keys=True) if isinstance(arguments, dict) else str(arguments)
-        if permission == PermissionLevel.SAFE.value:
+        if permission in {
+            PermissionLevel.SAFE.value,
+            PermissionLevel.NORMAL.value,
+        }:
             content = f"Running {name}…"
         else:
             content = f"⚠ Approval required for {name}\n\n{details}"
@@ -522,21 +561,135 @@ class MainWindow(QMainWindow):
     def _tool_confirmation_requested(
         self, call_id: str, name: str, arguments: object, permission: str
     ) -> None:
-        if not self.chat_worker:
+        if not self.chat_worker or not isinstance(arguments, dict):
             return
-        details = json.dumps(arguments, indent=2, sort_keys=True) if isinstance(arguments, dict) else str(arguments)
-        label = "dangerous" if permission == PermissionLevel.DANGEROUS.value else "confirmation-required"
-        dialog = QMessageBox(self)
-        dialog.setIcon(QMessageBox.Icon.Warning)
-        dialog.setWindowTitle("Permission required")
-        dialog.setText(f"Lura wants to run a {label} tool: {name}")
-        dialog.setInformativeText(f"Arguments:\n{details}\n\nAllow this action?")
-        allow_button = dialog.addButton("Allow", QMessageBox.ButtonRole.AcceptRole)
-        dialog.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
-        dialog.exec()
-        approved = dialog.clickedButton() is allow_button
-        if self.chat_worker:
-            self.chat_worker.resolve_tool_call(call_id, approved)
+        # The request is bound to this exact call ID and expires. A later
+        # "yes" can never authorize a different tool call.
+        self._pending_confirmation = PendingConfirmation(
+            call_id,
+            name,
+            dict(arguments),
+            permission,
+            time.monotonic() + 8.0,
+        )
+        self._confirmation_timer.start(8000)
+        self._set_voice_status(
+            f"CONFIRMATION REQUIRED // {self._confirmation_prompt(name, arguments)}"
+        )
+        self.message_input.setPlaceholderText("Say or type yes/no to approve this action…")
+        self.message_input.setEnabled(True)
+        self.send_button.setEnabled(True)
+        if self.config.voice_input_enabled:
+            self._start_confirmation_speech()
+        else:
+            self._set_voice_status("CONFIRMATION REQUIRED // TYPE YES OR NO")
+
+    @staticmethod
+    def _confirmation_prompt(name: str, arguments: dict) -> str:
+        app = str(arguments.get("app", "")).strip()
+        path = str(arguments.get("path", "")).strip()
+        prompts = {
+            "shutdown": "Sir, may I shut down the computer?",
+            "reboot": "Sir, may I restart the computer?",
+            "delete_file": f"Sir, may I delete {path or 'that file'}?",
+            "exec": "Sir, may I run the requested system command?",
+            "restart_app": f"Sir, may I restart {app or 'that application'}?",
+            "update_user_profile": "Sir, may I update your personal profile?",
+        }
+        return prompts.get(name, f"Sir, may I perform {name.replace('_', ' ')}?")
+
+    def _start_confirmation_speech(self) -> None:
+        if (
+            self._pending_confirmation is None
+            or self.confirmation_speech_worker is not None
+            or self.config.tts_engine == "disabled"
+        ):
+            self._start_confirmation_recording()
+            return
+        self.confirmation_speech_thread = QThread(self)
+        self.confirmation_speech_worker = SpeechWorker(
+            self.voice_service,
+            self._confirmation_prompt(
+                self._pending_confirmation.name,
+                self._pending_confirmation.arguments,
+            ),
+        )
+        self.confirmation_speech_worker.moveToThread(self.confirmation_speech_thread)
+        self.confirmation_speech_thread.started.connect(
+            self.confirmation_speech_worker.run
+        )
+        self.confirmation_speech_worker.finished.connect(
+            self._confirmation_speech_finished
+        )
+        self.confirmation_speech_worker.failed.connect(
+            self._confirmation_speech_failed
+        )
+        self.confirmation_speech_worker.finished.connect(
+            self.confirmation_speech_thread.quit
+        )
+        self.confirmation_speech_worker.failed.connect(
+            self.confirmation_speech_thread.quit
+        )
+        self.confirmation_speech_thread.finished.connect(
+            self._confirmation_speech_thread_finished
+        )
+        self.confirmation_speech_thread.start()
+        self._set_voice_status("CONFIRMATION REQUIRED // SPEAKING…")
+
+    @Slot()
+    def _confirmation_speech_finished(self) -> None:
+        self._start_confirmation_recording()
+
+    @Slot(str)
+    def _confirmation_speech_failed(self, message: str) -> None:
+        LOGGER.warning("Confirmation prompt speech failed: %s", message)
+        self._set_voice_status("CONFIRMATION REQUIRED // LISTENING…")
+        self._start_confirmation_recording()
+
+    def _confirmation_speech_thread_finished(self) -> None:
+        if self.confirmation_speech_worker:
+            self.confirmation_speech_worker.deleteLater()
+        if self.confirmation_speech_thread:
+            self.confirmation_speech_thread.deleteLater()
+        self.confirmation_speech_worker = None
+        self.confirmation_speech_thread = None
+        self._sync_stop_button()
+
+    def _start_confirmation_recording(self) -> None:
+        if (
+            self._pending_confirmation is None
+            or self._confirmation_recording
+            or self._quitting
+            or time.monotonic() >= self._pending_confirmation.expires_at
+        ):
+            if self._pending_confirmation is not None and time.monotonic() >= self._pending_confirmation.expires_at:
+                self._confirmation_expired()
+            return
+        self._confirmation_recording = True
+        self._start_recording(automatic=True, confirmation=True)
+
+    @Slot()
+    def _confirmation_expired(self) -> None:
+        if self._pending_confirmation is not None:
+            self._resolve_pending_confirmation(None)
+        if self._confirmation_recording and self.voice_record_worker is not None:
+            self.voice_record_worker.stop()
+
+    def _resolve_pending_confirmation(self, decision: bool | None) -> None:
+        pending = self._pending_confirmation
+        if pending is None:
+            return
+        approved = decision is True and time.monotonic() < pending.expires_at
+        self._pending_confirmation = None
+        self._confirmation_timer.stop()
+        self.message_input.setPlaceholderText("Ask Lura anything…")
+        if self.chat_worker is not None:
+            self.chat_worker.resolve_tool_call(pending.call_id, approved)
+        self._set_voice_status(
+            "ACTION APPROVED // CONTINUING"
+            if approved
+            else "ACTION CANCELLED // NO VALID CONFIRMATION"
+        )
 
     @Slot(str, str, str, bool, object)
     def _tool_completed(
@@ -566,13 +719,15 @@ class MainWindow(QMainWindow):
         self,
         automatic: bool = False,
         manual_handoff: bool = False,
+        confirmation: bool = False,
     ) -> None:
         if (
             not self.config.voice_input_enabled
-            or self.chat_worker is not None
+            or (self.chat_worker is not None and not confirmation)
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
             or (self.wake_word_worker is not None and automatic)
+            or (self._pending_confirmation is not None and not confirmation)
         ):
             self._set_orb_state("idle")
             return
@@ -585,7 +740,7 @@ class MainWindow(QMainWindow):
                 self._start_manual_recording_when_ready()
             return
         self.last_voice_error = None
-        self._wake_command_recording = automatic
+        self._wake_command_recording = automatic and not confirmation
         LOGGER.info(
             "[WakeWord] Triggering assistant recording (%s)",
             "wake word" if automatic else "manual orb",
@@ -596,7 +751,7 @@ class MainWindow(QMainWindow):
         self.voice_record_worker = VoiceRecordWorker(
             self.voice_service,
             destination,
-            self.config.active_listening_duration if automatic else None,
+            6 if confirmation else (self.config.active_listening_duration if automatic else None),
         )
         self.voice_record_worker.moveToThread(self.voice_record_thread)
         self.voice_record_thread.started.connect(self.voice_record_worker.run)
@@ -605,7 +760,11 @@ class MainWindow(QMainWindow):
         self.voice_record_worker.failed.connect(self._recording_failed)
         self.voice_record_thread.finished.connect(self._recording_thread_finished)
         self.voice_record_thread.start()
-        self._set_voice_status("STARTING MICROPHONE…")
+        self._set_voice_status(
+            "CONFIRMATION REQUIRED // SAY YES OR NO…"
+            if confirmation
+            else "STARTING MICROPHONE…"
+        )
         self.message_input.setEnabled(False)
         self.send_button.setEnabled(False)
         self._sync_stop_button()
@@ -618,7 +777,11 @@ class MainWindow(QMainWindow):
         self.mic_button.setProperty("recording", True)
         self.mic_button.style().unpolish(self.mic_button)
         self.mic_button.style().polish(self.mic_button)
-        self._set_voice_status("RECORDING // RELEASE TO TRANSCRIBE")
+        self._set_voice_status(
+            "CONFIRMATION REQUIRED // SAY YES OR NO…"
+            if self._confirmation_recording
+            else "RECORDING // RELEASE TO TRANSCRIBE"
+        )
 
     @Slot()
     def _stop_recording(self) -> None:
@@ -644,7 +807,11 @@ class MainWindow(QMainWindow):
         self._latency_trace.mark("end_of_user_speech")
         self._latency_trace.mark("stt_started")
         self._set_orb_state("thinking")
-        self._set_voice_status("TRANSCRIBING WITH LOCAL WHISPER…")
+        self._set_voice_status(
+            "CONFIRMATION REQUIRED // TRANSCRIBING…"
+            if self._confirmation_recording
+            else "TRANSCRIBING WITH LOCAL WHISPER…"
+        )
         self.voice_transcription_thread = QThread(self)
         self.voice_transcription_worker = VoiceTranscriptionWorker(
             self.voice_service, Path(audio_path)
@@ -664,6 +831,14 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
+        if self._confirmation_recording:
+            self._confirmation_recording = False
+            self._resolve_pending_confirmation(None)
+            if self.voice_record_thread is not None:
+                self.voice_record_thread.quit()
+            self._set_voice_idle()
+            self._set_voice_status("ACTION CANCELLED // VOICE CONFIRMATION FAILED")
+            return
         self.last_voice_error = message
         was_in_conversation = self._conversation_active
         self._wake_command_recording = False
@@ -707,6 +882,11 @@ class MainWindow(QMainWindow):
         if self.voice_transcription_thread is not None:
             self.voice_transcription_thread.quit()
         self._remove_recording(audio_path)
+        if self._confirmation_recording:
+            self._confirmation_recording = False
+            self._set_voice_idle()
+            self._resolve_pending_confirmation(confirmation_decision(text))
+            return
         self._set_voice_idle()
         if self._conversation_active and conversation_end_requested(text):
             self._end_conversation("CONVERSATION ENDED // GOODBYE")
@@ -728,6 +908,14 @@ class MainWindow(QMainWindow):
     @Slot(str, str)
     def _transcription_failed(self, message: str, audio_path: str) -> None:
         self._remove_recording(audio_path)
+        if self._confirmation_recording:
+            self._confirmation_recording = False
+            self._resolve_pending_confirmation(None)
+            if self.voice_transcription_thread is not None:
+                self.voice_transcription_thread.quit()
+            self._set_voice_idle()
+            self._set_voice_status("ACTION CANCELLED // NO VALID VOICE RESPONSE")
+            return
         was_in_conversation = self._conversation_active
         if was_in_conversation:
             if is_no_speech_error(message):
@@ -791,7 +979,11 @@ class MainWindow(QMainWindow):
             )
         else:
             self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
-        if self.chat_worker is None and self.speech_worker is None:
+        if (
+            self.chat_worker is None
+            and self.speech_worker is None
+            and self.confirmation_speech_worker is None
+        ):
             self._set_orb_state("idle")
 
     def _set_voice_status(self, message: str) -> None:
@@ -1165,6 +1357,10 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _stop_generation(self) -> None:
+        if self._pending_confirmation is not None:
+            self._resolve_pending_confirmation(None)
+        if self.confirmation_speech_worker is not None:
+            self.confirmation_speech_worker.cancel()
         if self._conversation_active:
             self._end_conversation("CONVERSATION ENDED // MANUAL STOP")
         if self.chat_worker:
@@ -1189,6 +1385,7 @@ class MainWindow(QMainWindow):
                 self.speech_worker,
                 self.voice_record_worker,
                 self.wake_word_worker,
+                self.confirmation_speech_worker,
             )
         )
         active = active or self._conversation_active
@@ -1416,7 +1613,10 @@ class MainWindow(QMainWindow):
         self._sync_quit_behavior()
         self.client = self._create_ai_client(self.config)
         self.service = RoutedAssistantService(self.client)
-        self.tool_manager = ToolManager(memory_store=self.memory_store)
+        self.tool_manager = ToolManager(
+            memory_store=self.memory_store,
+            profile_store=self.profile_store,
+        )
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()
         self.model_selector.clear()
@@ -1605,6 +1805,7 @@ class MainWindow(QMainWindow):
             (self.voice_record_thread, self.voice_record_worker),
             (self.voice_transcription_thread, self.voice_transcription_worker),
             (self.wake_word_thread, self.wake_word_worker),
+            (self.confirmation_speech_thread, self.confirmation_speech_worker),
             (self.speech_thread, self.speech_worker),
             (self.telegram_thread, self.telegram_worker),
         )

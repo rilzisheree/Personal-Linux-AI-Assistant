@@ -156,7 +156,10 @@ class ChatWorker(QObject):
                     call_id = tool_call.id or f"{tool_call.name}-{uuid.uuid4().hex}"
                     permission = self.tool_manager.permission_for(tool_call.name, tool_call.arguments)
                     self.tool_started.emit(call_id, tool_call.name, tool_call.arguments, permission.value)
-                    approved = permission == PermissionLevel.SAFE
+                    approved = permission in {
+                        PermissionLevel.SAFE,
+                        PermissionLevel.NORMAL,
+                    }
                     if not approved:
                         approved = self._wait_for_approval(call_id, tool_call, permission)
                     try:

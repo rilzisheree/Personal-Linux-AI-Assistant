@@ -67,9 +67,18 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 
 - Stream local Ollama or Google Gemini chat responses.
 - Switch models discovered from the configured Ollama endpoint.
+- Keep an editable local user profile in
+  `~/.config/local-ai-assistant/user_profile.json`; profile facts are kept
+  separate from live system probes.
+- Discover Flatpak applications through `flatpak list` and native applications
+  through freedesktop desktop entries before launching or closing them.
+- Query structured current PC state through controlled GPU, CPU, RAM, storage,
+  process, window, display, network, power, and application tools.
 - Save, switch, clear, and export conversations locally.
 - Run safe system-information tools and open applications.
-- Review and approve confirmation-required or dangerous terminal/app actions.
+- Run normal reversible actions automatically, while confirmation-required and
+  dangerous actions use a short-lived exact-call voice approval through local
+  Piper and Whisper when available.
 - Capture screenshots for local vision-capable Ollama models.
 - Inspect and manipulate files, Hyprland windows, and pointer/keyboard input
   through explicit tool calls.
@@ -98,6 +107,9 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - The Phase 7 web companion is `artifacts/lura-web/`; it uses the existing
   cookie-authenticated HTTP/SSE API and intentionally does not expose desktop
   control tools remotely.
+- Arbitrary shell execution is not available to the model. The legacy `exec`
+  seam accepts only a small read-only command allowlist, and the structured
+  tools are the preferred interface.
 - The Gemini provider is text/SSE based. The reference Mark-LI project uses
   Gemini Live for realtime audio, which is a different API and is not used by
   this text chat path.

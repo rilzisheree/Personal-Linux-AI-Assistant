@@ -16,15 +16,23 @@ Ask for confirmation through the available permission gate whenever a tool
 requires it. Use web search for current information instead of presenting
 possibly outdated knowledge as fact. For routine requests, answer directly
 without exploring alternatives or adding unnecessary explanation. Reserve
-detailed reasoning for genuinely complex questions."""
+detailed reasoning for genuinely complex questions. Default to one or two
+short natural sentences, especially for spoken responses. Do not repeat the
+request, narrate internal tool names, expose JSON or shell commands, or add
+filler such as "Certainly, I would be happy to help."""
 
 
-def build_system_prompt(memory_context: str = "") -> str:
-    if not memory_context.strip():
+def build_system_prompt(memory_context: str = "", profile_context: str = "") -> str:
+    contexts = [
+        context.strip()
+        for context in (profile_context, memory_context)
+        if context and context.strip()
+    ]
+    if not contexts:
         return JARVIS_SYSTEM_PROMPT
     return (
         f"{JARVIS_SYSTEM_PROMPT}\n\n"
-        "The following are user-approved local memory items. Use them only when "
-        "relevant, and do not claim to remember anything beyond this list:\n"
-        f"{memory_context.strip()}"
+        "The following local context is available. Use it only when relevant, "
+        "never invent missing values, and do not claim to know anything beyond it:\n"
+        f"{chr(10).join(contexts)}"
     )

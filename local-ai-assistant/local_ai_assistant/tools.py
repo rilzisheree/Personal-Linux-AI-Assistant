@@ -20,10 +20,13 @@ from html.parser import HTMLParser
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
+from .applications import ApplicationRecord, ApplicationRegistry
 from .memory import MemoryStore
+from .profile import UserProfileStore, collect_system_profile
 
 class PermissionLevel(str, Enum):
     SAFE = "safe"
+    NORMAL = "normal"
     CONFIRMATION_REQUIRED = "confirmation_required"
     DANGEROUS = "dangerous"
 
@@ -147,13 +150,17 @@ class ToolManager:
     def __init__(
         self,
         memory_store: MemoryStore | None = None,
+        profile_store: UserProfileStore | None = None,
     ) -> None:
         self.memory_store = memory_store or MemoryStore()
+        self.profile_store = profile_store or UserProfileStore()
+        self.application_registry = ApplicationRegistry()
         self._definitions = {
             "open_app": ToolDefinition(
                 "open_app",
-                "Open a desktop application by executable name.",
-                PermissionLevel.SAFE,
+                "Open an installed desktop application by its display name or application ID. "
+                "Resolve it from installed Flatpak or native application data; never guess an executable.",
+                PermissionLevel.NORMAL,
                 {
                     "type": "object",
                     "properties": {"app": {"type": "string", "description": "Executable name, such as firefox"}},
@@ -163,8 +170,8 @@ class ToolManager:
             ),
             "close_app": ToolDefinition(
                 "close_app",
-                "Close all processes for a desktop application.",
-                PermissionLevel.CONFIRMATION_REQUIRED,
+                "Close an installed desktop application by display name or application ID.",
+                PermissionLevel.NORMAL,
                 {
                     "type": "object",
                     "properties": {"app": {"type": "string", "description": "Executable name"}},
@@ -243,7 +250,7 @@ class ToolManager:
             "take_screenshot": ToolDefinition(
                 "take_screenshot",
                 "Capture the current Linux desktop screen for local vision analysis.",
-                PermissionLevel.CONFIRMATION_REQUIRED,
+                PermissionLevel.NORMAL,
                 {"type": "object", "properties": {}},
                 self._take_screenshot,
             ),
@@ -392,7 +399,7 @@ class ToolManager:
             "open_website": ToolDefinition(
                 "open_website",
                 "Open an http or https website in the user's default browser.",
-                PermissionLevel.CONFIRMATION_REQUIRED,
+                PermissionLevel.NORMAL,
                 {
                     "type": "object",
                     "properties": {"url": {"type": "string", "description": "Website URL"}},
@@ -438,6 +445,89 @@ class ToolManager:
             ),
             "list_memory": self._system_definition(
                 "list_memory", "List facts the user explicitly asked Lura to remember.", self._list_memory
+            ),
+            "get_user_profile": self._system_definition(
+                "get_user_profile", "Read the editable local user profile.", self._get_user_profile
+            ),
+            "update_user_profile": ToolDefinition(
+                "update_user_profile",
+                "Update editable local user profile fields. Only save fields explicitly supplied by the user.",
+                PermissionLevel.CONFIRMATION_REQUIRED,
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "owner": {"type": "string"},
+                        "preferred_address": {"type": "string"},
+                        "assistant_role": {"type": "string"},
+                        "application_install_preference": {"type": "string"},
+                    },
+                },
+                self._update_user_profile,
+            ),
+            "get_system_profile": self._system_definition(
+                "get_system_profile",
+                "Collect current stable Linux, desktop, CPU, GPU, monitor, and Flatpak facts.",
+                self._get_system_profile,
+            ),
+            "get_system_info": self._system_definition(
+                "get_system_info",
+                "Collect a complete current system profile and live status snapshot.",
+                self._get_system_info,
+            ),
+            "get_system_status": self._system_definition(
+                "get_system_status",
+                "Collect live CPU, memory, disk, GPU, process, window, network, and power status.",
+                self._get_system_status,
+            ),
+            "get_gpu_status": self._system_definition(
+                "get_gpu_status", "Get current NVIDIA GPU identity, utilization, temperature, and VRAM.", self._get_gpu_status
+            ),
+            "get_cpu_status": self._system_definition(
+                "get_cpu_status", "Get current CPU identity and utilization.", self._get_cpu_status
+            ),
+            "get_memory_status": self._system_definition(
+                "get_memory_status", "Get current RAM usage.", self._get_memory_status
+            ),
+            "get_storage_status": self._system_definition(
+                "get_storage_status", "Get current root filesystem storage.", self._get_storage_status
+            ),
+            "get_processes": self._system_definition(
+                "get_processes", "List processes using CPU or memory.", self._get_processes
+            ),
+            "get_gpu_processes": self._system_definition(
+                "get_gpu_processes", "List processes currently using NVIDIA GPU resources.", self._get_gpu_processes
+            ),
+            "get_display_info": self._system_definition(
+                "get_display_info", "Get current monitor resolution and refresh rate.", self._get_display_info
+            ),
+            "list_applications": self._system_definition(
+                "list_applications", "List applications discovered from installed Flatpak and native desktop data.", self._list_applications
+            ),
+            "set_volume": ToolDefinition(
+                "set_volume",
+                "Set the default audio output volume to a percentage.",
+                PermissionLevel.NORMAL,
+                {
+                    "type": "object",
+                    "properties": {"level": {"type": "integer", "minimum": 0, "maximum": 150}},
+                    "required": ["level"],
+                },
+                self._set_volume,
+            ),
+            "shutdown": ToolDefinition(
+                "shutdown",
+                "Shut down the computer.",
+                PermissionLevel.DANGEROUS,
+                {"type": "object", "properties": {}},
+                self._shutdown,
+            ),
+            "reboot": ToolDefinition(
+                "reboot",
+                "Restart the computer.",
+                PermissionLevel.DANGEROUS,
+                {"type": "object", "properties": {}},
+                self._reboot,
             ),
         }
 
@@ -508,34 +598,39 @@ class ToolManager:
         if definition is None:
             return ToolCallResult(False, f"Unknown tool: {name}")
         permission = self.permission_for(name, arguments)
-        if permission != PermissionLevel.SAFE and not approved:
+        if permission not in {PermissionLevel.SAFE, PermissionLevel.NORMAL} and not approved:
             raise ToolConfirmationRequired(f"{name} requires user confirmation.")
         try:
             return definition.handler(arguments)
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             return _failed(error)
 
-    @staticmethod
-    def _application_command(arguments: dict) -> list[str]:
+    def _application(self, arguments: dict) -> ApplicationRecord:
         app = _string_argument(arguments, "app")
-        command = shlex.split(app)
-        if not command or any(part.startswith("-") for part in command[1:]):
-            raise ValueError("Application calls may include an executable name only.")
-        executable = command[0]
-        if not shutil.which(executable) and not Path(executable).is_file():
-            raise ValueError(f"Application not found: {executable}")
-        return command
+        return self.application_registry.resolve(app)
 
     def _open_app(self, arguments: dict) -> ToolCallResult:
-        command = self._application_command(arguments)
+        application = self._application(arguments)
         subprocess.Popen(
-            command,
+            application.launch_command,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
-        return ToolCallResult(True, f"{command[0]} opened.")
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "action": "open_app",
+                    "application": application.name,
+                    "application_id": application.app_id,
+                    "kind": application.kind,
+                    "command": list(application.launch_command),
+                    "status": "opened",
+                }
+            ),
+        )
 
     @staticmethod
     def _open_website(arguments: dict) -> ToolCallResult:
@@ -593,20 +688,398 @@ class ToolManager:
         context = self.memory_store.context()
         return ToolCallResult(True, context or "No saved memories.")
 
+    def _get_user_profile(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        return ToolCallResult(True, json.dumps(self.profile_store.profile(), ensure_ascii=False))
+
+    def _update_user_profile(self, arguments: dict) -> ToolCallResult:
+        profile = self.profile_store.update(arguments)
+        return ToolCallResult(True, json.dumps(profile, ensure_ascii=False))
+
+    def _get_system_profile(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        return ToolCallResult(True, json.dumps(collect_system_profile(), ensure_ascii=False))
+
+    def _get_system_info(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        profile = collect_system_profile()
+        status = self._status_payload()
+        return ToolCallResult(
+            True,
+            json.dumps({"system_profile": profile, "live_system_state": status}, ensure_ascii=False),
+        )
+
+    def _get_system_status(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        return ToolCallResult(True, json.dumps(self._status_payload(), ensure_ascii=False))
+
+    def _status_payload(self) -> dict:
+        def payload(result: ToolCallResult) -> object:
+            try:
+                return json.loads(result.content)
+            except (TypeError, json.JSONDecodeError):
+                return {"available": result.success, "summary": result.content}
+
+        return {
+            "gpu": payload(self._get_gpu_status({})),
+            "cpu": payload(self._get_cpu_status({})),
+            "memory": payload(self._get_memory_status({})),
+            "storage": payload(self._get_storage_status({})),
+            "processes": payload(self._get_processes({})),
+            "gpu_processes": payload(self._get_gpu_processes({})),
+            "windows": payload(self._list_windows({})),
+            "display": payload(self._get_display_info({})),
+            "battery": payload(self._get_battery({})),
+            "volume": payload(self._get_volume({})),
+            "uptime": _read_uptime(),
+            "network": {"online_route": Path("/proc/net/route").is_file()},
+        }
+
+    @staticmethod
+    def _get_gpu_status(arguments: dict) -> ToolCallResult:
+        del arguments
+        try:
+            result = subprocess.run(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            return ToolCallResult(False, json.dumps({"available": False, "error": str(error)}))
+        if result.returncode:
+            return ToolCallResult(
+                False,
+                json.dumps({"available": False, "error": "NVIDIA GPU is unavailable."}),
+            )
+        gpus: list[dict[str, object]] = []
+        for line in result.stdout.splitlines():
+            fields = [field.strip() for field in line.split(",")]
+            if len(fields) < 5:
+                continue
+            name, utilization, temperature, memory_used, memory_total = fields[:5]
+            try:
+                gpu = {
+                    "name": name,
+                    "utilization_percent": float(utilization),
+                    "temperature_c": float(temperature),
+                    "vram_used_mb": float(memory_used),
+                    "vram_total_mb": float(memory_total),
+                }
+            except ValueError:
+                continue
+            gpus.append(gpu)
+        if not gpus:
+            return ToolCallResult(
+                False,
+                json.dumps({"available": False, "error": "NVIDIA GPU data is unavailable."}),
+            )
+        return ToolCallResult(True, json.dumps({"available": True, "gpus": gpus}))
+
+    @staticmethod
+    def _get_cpu_status(arguments: dict) -> ToolCallResult:
+        del arguments
+        try:
+            first = _read_cpu_times()
+            time.sleep(0.1)
+            second = _read_cpu_times()
+            total_delta = second[0] - first[0]
+            idle_delta = second[3] - first[3]
+            usage = (
+                max(0.0, min(100.0, 100 * (1 - idle_delta / total_delta)))
+                if total_delta > 0
+                else None
+            )
+        except (OSError, ValueError, IndexError):
+            usage = None
+        model = collect_system_profile().get("cpu", "unknown")
+        return ToolCallResult(
+            usage is not None,
+            json.dumps(
+                {
+                    "model": model,
+                    "utilization_percent": round(usage, 1) if usage is not None else None,
+                    "available": usage is not None,
+                }
+            ),
+        )
+
+    @staticmethod
+    def _get_memory_status(arguments: dict) -> ToolCallResult:
+        del arguments
+        values: dict[str, int] = {}
+        try:
+            for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+                key, separator, value = line.partition(":")
+                if separator:
+                    values[key] = int(value.strip().split()[0])
+        except (OSError, ValueError):
+            return ToolCallResult(False, json.dumps({"available": False}))
+        total = values.get("MemTotal")
+        available = values.get("MemAvailable")
+        if not total or available is None:
+            return ToolCallResult(False, json.dumps({"available": False}))
+        used = total - available
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "available": True,
+                    "used_mb": round(used / 1024, 1),
+                    "available_mb": round(available / 1024, 1),
+                    "total_mb": round(total / 1024, 1),
+                    "utilization_percent": round(used / total * 100, 1),
+                }
+            ),
+        )
+
+    @staticmethod
+    def _get_storage_status(arguments: dict) -> ToolCallResult:
+        del arguments
+        usage = shutil.disk_usage("/")
+        used = usage.total - usage.free
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "path": "/",
+                    "used_gb": round(used / 2**30, 1),
+                    "free_gb": round(usage.free / 2**30, 1),
+                    "total_gb": round(usage.total / 2**30, 1),
+                    "utilization_percent": round(used / usage.total * 100, 1),
+                }
+            ),
+        )
+
+    @staticmethod
+    def _get_processes(arguments: dict) -> ToolCallResult:
+        del arguments
+        try:
+            result = subprocess.run(
+                ["ps", "-eo", "pid=,comm=,%cpu=,%mem=", "--sort=-%cpu"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as error:
+            return ToolCallResult(False, json.dumps({"available": False, "error": str(error)}))
+        processes: list[dict[str, object]] = []
+        for line in result.stdout.splitlines()[:30]:
+            fields = line.split()
+            if len(fields) < 4:
+                continue
+            try:
+                processes.append(
+                    {
+                        "pid": int(fields[0]),
+                        "command": fields[1],
+                        "cpu_percent": float(fields[2]),
+                        "memory_percent": float(fields[3]),
+                    }
+                )
+            except ValueError:
+                continue
+        return ToolCallResult(
+            result.returncode == 0,
+            json.dumps({"available": result.returncode == 0, "processes": processes}),
+        )
+
+    @staticmethod
+    def _get_gpu_processes(arguments: dict) -> ToolCallResult:
+        del arguments
+        try:
+            result = subprocess.run(
+                [
+                    "nvidia-smi",
+                    "--query-compute-apps=pid,process_name,used_memory",
+                    "--format=csv,noheader,nounits",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return ToolCallResult(False, json.dumps({"available": False, "processes": []}))
+        processes: list[dict[str, object]] = []
+        for line in result.stdout.splitlines():
+            fields = [field.strip() for field in line.split(",")]
+            if len(fields) < 3:
+                continue
+            try:
+                processes.append(
+                    {"pid": int(fields[0]), "process": fields[1], "vram_used_mb": float(fields[2])}
+                )
+            except ValueError:
+                continue
+        return ToolCallResult(
+            result.returncode == 0,
+            json.dumps({"available": result.returncode == 0, "processes": processes}),
+        )
+
+    @staticmethod
+    def _get_display_info(arguments: dict) -> ToolCallResult:
+        del arguments
+        if shutil.which("hyprctl"):
+            try:
+                result = subprocess.run(
+                    ["hyprctl", "monitors", "-j"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+                monitors = json.loads(result.stdout) if result.returncode == 0 else []
+                if isinstance(monitors, list):
+                    return ToolCallResult(
+                        True,
+                        json.dumps(
+                            {
+                                "available": True,
+                                "monitors": [
+                                    {
+                                        "name": item.get("name"),
+                                        "description": item.get("description"),
+                                        "width": item.get("width"),
+                                        "height": item.get("height"),
+                                        "refresh_hz": item.get("refreshRate"),
+                                        "x": item.get("x"),
+                                        "y": item.get("y"),
+                                    }
+                                    for item in monitors
+                                    if isinstance(item, dict)
+                                ],
+                            }
+                        ),
+                    )
+            except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+                pass
+        if shutil.which("xrandr"):
+            try:
+                result = subprocess.run(
+                    ["xrandr", "--current"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+                outputs = [
+                    line.strip()
+                    for line in result.stdout.splitlines()
+                    if " connected" in line
+                ]
+                return ToolCallResult(
+                    bool(outputs),
+                    json.dumps({"available": bool(outputs), "monitors": outputs}),
+                )
+            except (OSError, subprocess.SubprocessError):
+                pass
+        return ToolCallResult(False, json.dumps({"available": False, "monitors": []}))
+
+    def _list_applications(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        records = self.application_registry.list()
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "count": len(records),
+                    "applications": [
+                        {
+                            "id": record.app_id,
+                            "name": record.name,
+                            "kind": record.kind,
+                            "launch_command": list(record.launch_command),
+                        }
+                        for record in records[:200]
+                    ],
+                },
+                ensure_ascii=False,
+            ),
+        )
+
+    @staticmethod
+    def _set_volume(arguments: dict) -> ToolCallResult:
+        level = _integer_argument(arguments, "level", 0, 150)
+        if shutil.which("wpctl"):
+            result = subprocess.run(
+                ["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{level}%"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        elif shutil.which("pactl"):
+            result = subprocess.run(
+                ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{level}%"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+            )
+        else:
+            return ToolCallResult(False, "No supported volume control utility is available.")
+        return ToolCallResult(
+            result.returncode == 0,
+            json.dumps(
+                {
+                    "level_percent": level,
+                    "status": "updated" if result.returncode == 0 else "failed",
+                    "error": result.stderr.strip() if result.returncode else "",
+                }
+            ),
+        )
+
+    @staticmethod
+    def _shutdown(arguments: dict) -> ToolCallResult:
+        del arguments
+        return _power_action("poweroff")
+
+    @staticmethod
+    def _reboot(arguments: dict) -> ToolCallResult:
+        del arguments
+        return _power_action("reboot")
+
     def _close_app(self, arguments: dict) -> ToolCallResult:
-        command = self._application_command(arguments)
+        application = self._application(arguments)
+        if application.kind == "flatpak":
+            if not shutil.which("flatpak"):
+                return ToolCallResult(False, "Flatpak is unavailable.")
+            result = subprocess.run(
+                ["flatpak", "kill", application.app_id],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if result.returncode:
+                return ToolCallResult(False, result.stderr.strip() or f"{application.name} is not running.")
+            return ToolCallResult(
+                True,
+                json.dumps({"action": "close_app", "application": application.name, "kind": "flatpak", "status": "closed"}),
+            )
+        executable = Path(application.launch_command[0]).name
         result = subprocess.run(
-            ["pkill", "-x", Path(command[0]).name],
+            ["pkill", "-x", executable],
             capture_output=True,
             text=True,
             timeout=10,
             check=False,
         )
         if result.returncode == 1:
-            return ToolCallResult(False, f"{command[0]} is not running.")
+            return ToolCallResult(False, f"{application.name} is not running.")
         if result.returncode != 0:
-            return ToolCallResult(False, result.stderr.strip() or f"Could not close {command[0]}.")
-        return ToolCallResult(True, f"{command[0]} closed.")
+            return ToolCallResult(False, result.stderr.strip() or f"Could not close {application.name}.")
+        return ToolCallResult(
+            True,
+            json.dumps({"action": "close_app", "application": application.name, "kind": "native", "status": "closed"}),
+        )
 
     def _restart_app(self, arguments: dict) -> ToolCallResult:
         closed = self._close_app(arguments)
@@ -618,9 +1091,22 @@ class ToolManager:
     @staticmethod
     def _exec(arguments: dict) -> ToolCallResult:
         command = _string_argument(arguments, "command")
+        try:
+            parts = shlex.split(command)
+        except ValueError as error:
+            return ToolCallResult(False, f"Command could not be parsed: {error}")
+        if not parts or parts[0] not in {
+            "df", "free", "lscpu", "ls", "nvidia-smi", "ps", "uname", "uptime",
+            "flatpak", "cat", "printf",
+        }:
+            return ToolCallResult(
+                False,
+                "Arbitrary shell commands are disabled. Use Lura's controlled tools instead.",
+            )
+        if any(part in {";", "&&", "||", "|", ">", ">>", "<"} for part in parts):
+            return ToolCallResult(False, "Shell operators are not allowed.")
         completed = subprocess.run(
-            command,
-            shell=True,
+            parts,
             capture_output=True,
             text=True,
             timeout=30,
@@ -997,62 +1483,19 @@ class ToolManager:
 
     @staticmethod
     def _get_cpu_usage(arguments: dict) -> ToolCallResult:
-        del arguments
-        first = _read_cpu_times()
-        time.sleep(0.1)
-        second = _read_cpu_times()
-        total_delta = second[0] - first[0]
-        idle_delta = second[3] - first[3]
-        if total_delta <= 0:
-            return ToolCallResult(False, "CPU usage is unavailable.")
-        usage = max(0.0, min(100.0, 100 * (1 - idle_delta / total_delta)))
-        return ToolCallResult(True, f"{usage:.1f}% CPU usage")
+        return ToolManager._get_cpu_status(arguments)
 
     @staticmethod
     def _get_gpu_usage(arguments: dict) -> ToolCallResult:
-        del arguments
-        try:
-            result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
-                capture_output=True,
-                text=True,
-                timeout=5,
-                check=False,
-            )
-        except (OSError, subprocess.SubprocessError) as error:
-            return ToolCallResult(False, f"NVIDIA GPU usage unavailable: {error}")
-        values = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-        if result.returncode or not values:
-            return ToolCallResult(False, "NVIDIA GPU usage is unavailable.")
-        return ToolCallResult(True, f"{', '.join(values)}% GPU usage")
+        return ToolManager._get_gpu_status(arguments)
 
     @staticmethod
     def _get_ram_usage(arguments: dict) -> ToolCallResult:
-        del arguments
-        values: dict[str, int] = {}
-        try:
-            for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
-                key, separator, value = line.partition(":")
-                if separator:
-                    values[key] = int(value.strip().split()[0])
-        except (OSError, ValueError):
-            return ToolCallResult(False, "RAM usage is unavailable.")
-        total = values.get("MemTotal")
-        available = values.get("MemAvailable")
-        if not total or available is None:
-            return ToolCallResult(False, "RAM usage is unavailable.")
-        used = total - available
-        return ToolCallResult(True, f"{used / 1024:.0f} MiB used of {total / 1024:.0f} MiB ({used / total * 100:.1f}%)")
+        return ToolManager._get_memory_status(arguments)
 
     @staticmethod
     def _get_disk_usage(arguments: dict) -> ToolCallResult:
-        del arguments
-        usage = shutil.disk_usage("/")
-        used = usage.total - usage.free
-        return ToolCallResult(
-            True,
-            f"{used / 2**30:.1f} GiB used of {usage.total / 2**30:.1f} GiB ({used / usage.total * 100:.1f}%)",
-        )
+        return ToolManager._get_storage_status(arguments)
 
     @staticmethod
     def _get_temperature(arguments: dict) -> ToolCallResult:
@@ -1171,3 +1614,35 @@ def _read_cpu_times() -> tuple[int, ...]:
     if len(values) < 4:
         raise ValueError("CPU statistics are unavailable.")
     return tuple(int(value) for value in values)
+
+
+def _read_uptime() -> dict[str, float | bool]:
+    try:
+        seconds = float(Path("/proc/uptime").read_text(encoding="utf-8").split()[0])
+    except (OSError, ValueError, IndexError):
+        return {"available": False}
+    return {"available": True, "seconds": seconds, "hours": round(seconds / 3600, 2)}
+
+
+def _power_action(action: str) -> ToolCallResult:
+    command = ["systemctl", action] if shutil.which("systemctl") else [action]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        return ToolCallResult(False, json.dumps({"action": action, "error": str(error)}))
+    return ToolCallResult(
+        result.returncode == 0,
+        json.dumps(
+            {
+                "action": action,
+                "status": "requested" if result.returncode == 0 else "failed",
+                "error": result.stderr.strip() if result.returncode else "",
+            }
+        ),
+    )

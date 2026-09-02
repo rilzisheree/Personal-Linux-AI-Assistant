@@ -1,0 +1,503 @@
+We're keeping the current Gemma router at ~89% accuracy for now. Do NOT retrain or replace it.
+
+I want to focus on the final Luna assistant functionality.
+
+## 1. Give Luna better knowledge of me
+
+Create a persistent user profile/context that Luna can access when appropriate.
+
+At minimum, Luna should know:
+
+* My name
+* That I am the owner/user of Luna
+* My preferred name/addressing style
+* That Luna is my personal AI assistant
+* My PC environment
+* My operating system
+* My desktop environment/window manager
+* My GPU
+* My CPU
+* My monitor setup
+* That I primarily use Flatpak for installing desktop applications
+
+IMPORTANT:
+
+Do not hard-code assumptions that can become outdated.
+
+Separate static user information from live system information.
+
+For example:
+
+USER PROFILE:
+
+* Name
+* Preferences
+* How Luna should address me
+
+SYSTEM PROFILE:
+
+* OS
+* Desktop environment
+* GPU
+* CPU
+* Installed applications
+
+LIVE SYSTEM STATE:
+
+* Current GPU utilization
+* GPU temperature
+* VRAM usage
+* CPU utilization
+* RAM usage
+* Disk usage
+* Running processes
+* Network status
+* Battery/power status if applicable
+* Current windows/applications
+
+Live system state should ALWAYS be queried from the computer instead of relying on stored values.
+
+Also make the profile easy for me to edit later.
+
+---
+
+## 2. Make application launching Flatpak-aware
+
+This is very important.
+
+I use Flatpak for roughly 95% of my desktop applications.
+
+Luna currently tries to use incorrect launch commands.
+
+Build an application discovery system instead of hard-coding random commands.
+
+At startup or during setup, discover installed applications using the appropriate Linux commands, including Flatpak applications.
+
+For Flatpak specifically, discover:
+
+* Application ID
+* Display name
+* Installed status
+* Launch command
+
+For example, Luna should be able to understand:
+
+"Open Discord"
+
+and resolve that to the actual installed Flatpak application rather than guessing a binary name.
+
+Use the system's actual installed application data.
+
+Prefer:
+
+```text
+flatpak list
+```
+
+and appropriate Flatpak launch commands such as:
+
+```text
+flatpak run <APPLICATION_ID>
+```
+
+rather than assuming the application has a normal executable in PATH.
+
+Also support normal native applications when they exist.
+
+Create an application registry/cache if useful, but refresh it when necessary so newly installed apps can be discovered.
+
+The goal is:
+
+```text
+User: "Open Discord"
+        ↓
+Luna identifies Discord
+        ↓
+Find installed application
+        ↓
+Determine whether it is Flatpak/native
+        ↓
+Run the correct command
+```
+
+Do NOT make Luna guess commands when the application can be discovered from the system.
+
+---
+
+## 3. Give Luna proper PC/system awareness
+
+Create reliable tools/functions that Luna can call to inspect my computer.
+
+I want her to be able to answer questions such as:
+
+"How's my PC doing?"
+
+"What's my GPU?"
+
+"How much VRAM am I using?"
+
+"What's my GPU temperature?"
+
+"What's my CPU usage?"
+
+"How much RAM am I using?"
+
+"How much storage do I have left?"
+
+"What GPU do I have?"
+
+"What CPU do I have?"
+
+"What processes are using my GPU?"
+
+"What's using my CPU?"
+
+"What's my current RAM usage?"
+
+"What apps are running?"
+
+"What windows are open?"
+
+"What's my current resolution and refresh rate?"
+
+"What's my Linux version?"
+
+"How long has my PC been running?"
+
+Build proper tools for these instead of asking the LLM to guess.
+
+For NVIDIA specifically, use appropriate NVIDIA system information such as `nvidia-smi` where available.
+
+The tool should return structured data to Luna.
+
+For example:
+
+```json
+{
+  "gpu": "NVIDIA GeForce RTX 4060",
+  "gpu_utilization": 42,
+  "temperature_c": 58,
+  "vram_used_mb": 3200,
+  "vram_total_mb": 8192
+}
+```
+
+Then Luna can turn that into a natural response.
+
+Do NOT require a user confirmation for harmless read-only system information.
+
+Commands such as `nvidia-smi`, `lscpu`, `free`, `df`, reading `/proc`, querying Flatpak, listing processes, etc. should be considered safe read-only operations.
+
+---
+
+# 4. Replace click-to-confirm with voice confirmation
+
+Currently Luna sometimes displays a confirmation UI where I have to click OK before she executes a command.
+
+I want to replace this with a **voice confirmation system**.
+
+For commands that require confirmation:
+
+Luna should say something like:
+
+> "Sir, may I shut down the computer?"
+
+Then I can answer:
+
+> "Yes."
+
+or:
+
+> "No."
+
+The application should detect the answer and either execute or cancel the pending action.
+
+Do NOT require me to click a confirmation button for normal command execution.
+
+The confirmation should happen through voice whenever possible.
+
+---
+
+# 5. Create permission levels
+
+Do NOT simply give Luna unrestricted shell access.
+
+Create a permission/risk system.
+
+### LEVEL 0 — Read-only / automatically allowed
+
+No confirmation required.
+
+Examples:
+
+```text
+nvidia-smi
+lscpu
+free
+df
+uptime
+uname
+ls
+ps
+flatpak list
+checking GPU status
+checking CPU status
+checking RAM
+checking disk space
+checking system information
+listing windows
+listing installed apps
+```
+
+These should execute automatically.
+
+### LEVEL 1 — Normal reversible actions
+
+Generally allow automatically when they are clearly requested.
+
+Examples:
+
+```text
+Open Discord
+Open Firefox
+Close Spotify
+Set volume
+Change brightness
+Take screenshot
+Open a website
+```
+
+If an action is potentially disruptive, it can still request confirmation.
+
+### LEVEL 2 — Potentially disruptive actions
+
+Require voice confirmation.
+
+Examples:
+
+```text
+Restart an application
+Kill a process
+Delete temporary files
+Change important system settings
+Modify configuration
+Install/remove software
+```
+
+Luna should ask:
+
+> "Sir, may I do that?"
+
+and wait for a voice response.
+
+### LEVEL 3 — Dangerous/destructive actions
+
+ALWAYS require explicit voice confirmation.
+
+Examples:
+
+```text
+Shut down PC
+Reboot PC
+Delete files
+Format drives
+Modify partitions
+Run destructive shell commands
+Change security settings
+```
+
+For these, Luna must NEVER execute automatically.
+
+---
+
+# 6. Confirmation must be tied to the exact command
+
+Do NOT accept an old "yes" for a different command.
+
+Example:
+
+Luna:
+
+> "Sir, may I shut down the computer?"
+
+User:
+
+> "Yes."
+
+→ Execute shutdown.
+
+But if the user says:
+
+> "Yes"
+
+after the confirmation has expired or there is no pending confirmation:
+
+→ Ignore it as a command authorization.
+
+Use a short expiration window for pending confirmations.
+
+Also cancel the confirmation if the user says something unrelated.
+
+---
+
+# 7. Never blindly execute arbitrary LLM-generated shell commands
+
+This is critical.
+
+The LLM should NOT be able to generate arbitrary shell commands and immediately execute them.
+
+Instead, create a controlled tool layer.
+
+For example:
+
+```text
+open_app(app)
+close_app(app)
+restart_app(app)
+get_gpu_status()
+get_cpu_status()
+get_memory_status()
+get_disk_status()
+get_system_info()
+get_processes()
+get_windows()
+take_screenshot()
+set_volume(level)
+shutdown()
+reboot()
+```
+
+The LLM requests a tool/action.
+
+The application decides whether that tool is allowed automatically or requires confirmation.
+
+This should be enforced by application code, not by the LLM's system prompt.
+
+---
+
+# 8. Make Luna's responses shorter
+
+I don't want Luna constantly giving long responses.
+
+Default to concise, natural answers.
+
+For simple requests:
+
+> "Done, Sir."
+
+> "Discord is open."
+
+> "Your GPU is at 58°C."
+
+> "You have 12 GB of RAM available."
+
+> "I'm listening."
+
+Only give detailed explanations when:
+
+1. I explicitly ask for details.
+2. The task genuinely requires explanation.
+3. The information would otherwise be unclear.
+
+Avoid repeating my entire request.
+
+Avoid unnecessary introductions.
+
+Avoid saying things like:
+
+> "Certainly! I'd be happy to assist you with that."
+
+Instead:
+
+> "Sure, Sir."
+
+Keep spoken responses especially concise because Luna reads them aloud.
+
+---
+
+# 9. Voice and chat should stay synchronized
+
+Luna currently responds both in chat and through voice.
+
+Keep both channels synchronized.
+
+The text response should be available in the chat UI.
+
+The spoken response should use the same semantic response but can be slightly shortened if appropriate for speech.
+
+Do NOT make Luna speak technical JSON, emojis, markdown formatting, tool names, or shell commands.
+
+For example, if the internal response contains:
+
+```text
+GPU utilization: 42% 🔥
+```
+
+Luna's voice should NOT say:
+
+> "GPU utilization 42 percent fire emoji."
+
+Strip emojis, markdown, code formatting, and other non-speech elements before TTS.
+
+---
+
+# 10. Inspect the existing architecture first
+
+Before making changes, inspect the current Luna codebase.
+
+Do NOT rewrite the application.
+
+Do NOT redesign the UI.
+
+Do NOT replace the existing Gemma router.
+
+Do NOT replace Qwen3.5 2B.
+
+Do NOT change the wake-word system.
+
+Do NOT change the TTS system unless required for the response-cleaning mentioned above.
+
+Build these features into the existing architecture.
+
+After implementing everything, test:
+
+### Personal context
+
+* Does Luna know my name?
+* Does she consistently address me correctly?
+
+### Applications
+
+* Open a Flatpak app
+* Close a Flatpak app
+* Open a native app
+* Handle an unknown application gracefully
+
+### PC tools
+
+* GPU information
+* GPU utilization
+* GPU temperature
+* VRAM
+* CPU utilization
+* RAM
+* Disk
+* Processes
+* Windows
+* System information
+
+### Permissions
+
+* Read-only commands execute without confirmation
+* Normal actions work
+* Dangerous actions ask for voice confirmation
+* "Yes" executes the pending action
+* "No" cancels it
+* Expired confirmations cannot execute
+* No arbitrary shell command can bypass the permission system
+
+### Response style
+
+Test both chat and voice and ensure Luna is concise by default.
+
+Keep the existing Gemma router benchmark around 89% and do not modify it unless absolutely necessary.
