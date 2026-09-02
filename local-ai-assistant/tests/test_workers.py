@@ -12,12 +12,21 @@ from local_ai_assistant.tools import ToolManager
 from local_ai_assistant.voice import VoiceError
 from local_ai_assistant.workers import (
     ChatWorker,
+    DEFAULT_WAKE_WORD_WINDOW_SECONDS,
     VoiceRecordWorker,
     VoiceTranscriptionWorker,
 )
 
 
 class VoiceWorkerTests(unittest.TestCase):
+    def test_wake_word_worker_uses_a_short_low_latency_window_by_default(self) -> None:
+        from local_ai_assistant.workers import WakeWordWorker
+
+        worker = WakeWordWorker(Mock(), "Lura")
+
+        self.assertEqual(worker.chunk_seconds, DEFAULT_WAKE_WORD_WINDOW_SECONDS)
+        self.assertLessEqual(worker.chunk_seconds, 1.5)
+
     def test_wake_word_worker_transcribes_on_cpu(self) -> None:
         from local_ai_assistant.workers import WakeWordWorker
 

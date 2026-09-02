@@ -34,6 +34,7 @@ from .voice import (
 
 MAX_TOOL_ROUNDS = 8
 LOGGER = logging.getLogger("lura.workers")
+DEFAULT_WAKE_WORD_WINDOW_SECONDS = 1.5
 
 
 class ChatWorker(QObject):
@@ -437,7 +438,7 @@ class WakeWordWorker(QObject):
         self,
         service: VoiceService,
         wake_word: str | tuple[str, ...],
-        chunk_seconds: float = 4.0,
+        chunk_seconds: float = DEFAULT_WAKE_WORD_WINDOW_SECONDS,
     ) -> None:
         super().__init__()
         self.service = service
@@ -477,13 +478,14 @@ class WakeWordWorker(QObject):
                         remove_wake_word(transcript, matched_wake_word) or ""
                     )
                 return
+            overlap_seconds = min(self.chunk_seconds / 2, 2.0)
             LOGGER.info(
                 "[WakeWord] Listening: %.1fs windows with %.1fs overlap",
                 self.chunk_seconds,
-                min(self.chunk_seconds / 2, 2.0),
+                overlap_seconds,
             )
             window_bytes = max(1, int(self.chunk_seconds * 16_000 * 2))
-            overlap_bytes = min(window_bytes // 2, int(2.0 * 16_000 * 2))
+            overlap_bytes = min(window_bytes // 2, int(overlap_seconds * 16_000 * 2))
             pcm = b""
             offset = 44
             while not self._stop_event.is_set():
