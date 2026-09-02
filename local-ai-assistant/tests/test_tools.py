@@ -131,6 +131,7 @@ class ToolManagerTests(unittest.TestCase):
             popen_mock.call_args.args[0],
             ("firefox", "--new-window"),
         )
+        self.assertFalse(popen_mock.call_args.kwargs["start_new_session"])
         self.assertEqual(json.loads(result.content)["kind"], "custom")
 
     @patch("local_ai_assistant.tools.shutil.which", return_value="/usr/bin/firefox")

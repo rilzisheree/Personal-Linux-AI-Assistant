@@ -857,12 +857,21 @@ class ToolManager:
             application_id = application.app_id
             launch_command = application.launch_command
             kind = application.kind
+        launch_environment = None
+        if kind == "custom":
+            # Browser command-line clients use the existing desktop session to
+            # forward a URL to an already-running instance. Do not detach
+            # custom launchers from that session, and do not inherit the
+            # Firefox flag that explicitly disables remote forwarding.
+            launch_environment = os.environ.copy()
+            launch_environment.pop("MOZ_NO_REMOTE", None)
         subprocess.Popen(
             launch_command,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            start_new_session=True,
+            start_new_session=kind != "custom",
+            env=launch_environment,
         )
         return ToolCallResult(
             True,
