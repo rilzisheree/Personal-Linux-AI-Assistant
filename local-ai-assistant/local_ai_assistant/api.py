@@ -27,7 +27,23 @@ from .tools import PermissionLevel, ToolCallResult, ToolManager
 
 MAX_REQUEST_BYTES = 1_000_000
 MAX_REMOTE_TOOL_ROUNDS = 4
-REMOTE_TOOL_NAMES = frozenset({"open_app"})
+# Remote clients may use read-only current-information tools and the existing
+# allowlisted app launcher. Desktop mutation, input, shell, and file tools stay
+# local-only because they require the trusted Qt permission flow.
+REMOTE_TOOL_NAMES = frozenset(
+    {
+        "open_app",
+        "web_search",
+        "search_news",
+        "knowledge_search",
+        "get_weather",
+        "convert_currency",
+        "find_places",
+        "get_directions",
+        "travel_search",
+        "game_search",
+    }
+)
 DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 
 

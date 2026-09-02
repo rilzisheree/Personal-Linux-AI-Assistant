@@ -27,8 +27,20 @@ class FakeOllamaClient:
         assert messages
         assert model == "qwen3.5:4b"
         assert not cancel_event.is_set()
-        assert len(tools) == 1
-        assert tools[0]["function"]["name"] == "open_app"
+        assert {
+            tool["function"]["name"] for tool in tools
+        } == {
+            "open_app",
+            "web_search",
+            "search_news",
+            "knowledge_search",
+            "get_weather",
+            "convert_currency",
+            "find_places",
+            "get_directions",
+            "travel_search",
+            "game_search",
+        }
         assert context_size == 8192
         yield StreamEvent(content="Hello")
         yield StreamEvent(content=" from the API")
@@ -45,8 +57,7 @@ class RemoteToolOllamaClient:
         assert messages
         assert model == "qwen3.5:4b"
         assert not cancel_event.is_set()
-        assert len(tools) == 1
-        assert tools[0]["function"]["name"] == "open_app"
+        assert "open_app" in {tool["function"]["name"] for tool in tools}
         if type(self).calls == 0:
             type(self).calls += 1
             yield StreamEvent(
@@ -55,6 +66,37 @@ class RemoteToolOllamaClient:
             yield StreamEvent(done=True)
             return
         yield StreamEvent(content="Firefox opened.")
+        yield StreamEvent(done=True)
+
+
+class RemoteSearchOllamaClient:
+    calls = 0
+
+    def __init__(self, _url: str, timeout: float = 8.0) -> None:
+        self.timeout = timeout
+
+    def stream_chat(self, messages, model, cancel_event, tools, context_size):
+        assert messages
+        assert model == "qwen3.5:4b"
+        assert not cancel_event.is_set()
+        tool_names = {tool["function"]["name"] for tool in tools}
+        assert "web_search" in tool_names
+        assert "search_news" in tool_names
+        assert "exec" not in tool_names
+        if type(self).calls == 0:
+            type(self).calls += 1
+            yield StreamEvent(
+                tool_calls=(
+                    ToolCall(
+                        "web_search",
+                        {"query": "latest AI news", "max_results": 3},
+                        "search-1",
+                    ),
+                )
+            )
+            yield StreamEvent(done=True)
+            return
+        yield StreamEvent(content="Here are the latest results.")
         yield StreamEvent(done=True)
 
 
@@ -260,6 +302,44 @@ class ApiTests(unittest.TestCase):
             payload,
         )
         self.assertIn('"message":"Firefox opened."', payload)
+
+    @patch("local_ai_assistant.api.OllamaClient", RemoteSearchOllamaClient)
+    @patch(
+        "local_ai_assistant.api.ToolManager.execute",
+        return_value=ToolCallResult(
+            True,
+            '{"query":"latest AI news","results":[{"title":"AI update","url":"https://example.com","snippet":"A current result."}]}',
+        ),
+    )
+    def test_remote_web_search_tool_round_trip(self, execute) -> None:
+        RemoteSearchOllamaClient.calls = 0
+        cookie = self.login()
+        status, payload, _ = self.request(
+            "POST",
+            "/api/conversations",
+            {"title": "Remote search"},
+            cookie=cookie,
+        )
+        self.assertEqual(status, 201)
+        conversation_id = payload["conversation"]["id"]
+
+        status, payload, _ = self.request(
+            "POST",
+            f"/api/conversations/{conversation_id}/messages",
+            {"content": "Search the web for the latest AI news."},
+            cookie=cookie,
+        )
+        self.assertEqual(status, 200)
+        self.assertIn(
+            'event: tool\ndata: {"name":"web_search","success":true,"message":"{\\"query\\":\\"latest AI news\\",\\"results\\":[{\\"title\\":\\"AI update\\",\\"url\\":\\"https://example.com\\",\\"snippet\\":\\"A current result.\\"}]}"',
+            payload,
+        )
+        self.assertIn('"message":"Here are the latest results."', payload)
+        execute.assert_called_once_with(
+            "web_search",
+            {"query": "latest AI news", "max_results": 3},
+            approved=True,
+        )
 
     def test_invalid_password_and_account_registration_are_rejected(self) -> None:
         status, payload, headers = self.request(

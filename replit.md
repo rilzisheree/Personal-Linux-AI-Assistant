@@ -70,8 +70,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - Conversation history remains local SQLite for the current desktop milestone;
   the first launch imports the previous local JSON format, while a remote API
   provides a separate single-user SQLite store for API clients. The remote API
-  only allowlists the safe `open_app` action; confirmation-required and dangerous
-  desktop tools remain local-only.
+  exposes safe current-information tools and the allowlisted `open_app` action;
+  confirmation-required and dangerous desktop tools remain local-only.
 
 ## Product
 
@@ -107,8 +107,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   using the local provider. Hosted Gemini requires a valid `GEMINI_API_KEY`
   Secret and a model available to that Google API key.
 - The Phase 6 API uses one local password, keeps API data separate from the
-  desktop history database, streams chat over SSE, and only exposes the
-  allowlisted safe `open_app` action remotely. The desktop app asks for the password
+  desktop history database, streams chat over SSE, and exposes safe
+  current-information tools plus the allowlisted `open_app` action remotely. The desktop app asks for the password
   on launch and starts a localhost API automatically unless
   `LURA_API_AUTOSTART=0`. Phase 3 Linux
   integration is implemented through the tool registry: Hyprland window

@@ -17,10 +17,10 @@ the desktop app and Ollama remain local.
 
 ## Authenticated API service (Phase 6)
 
-The optional API service provides password-protected access to conversations
-and the allowlisted safe `open_app` action. It can use local Ollama or hosted
-Google Gemini, and stores the single local user's sessions and conversations
-in a separate SQLite database.
+The optional API service provides password-protected access to conversations,
+safe current-information tools, and the allowlisted `open_app` action. It can
+use local Ollama or hosted Google Gemini, and stores the single local user's
+sessions and conversations in a separate SQLite database.
 
 Start it manually from this directory with:
 
@@ -85,15 +85,19 @@ Available endpoints:
 - `GET /api/health`
 
 There are no email accounts or registration flows. Remote API requests can use
-the allowlisted safe `open_app` tool so the phone can launch an installed
-application on the trusted Linux machine. Telegram can also use app lifecycle
+the safe current-information tools (`web_search`, `search_news`,
+`knowledge_search`, `get_weather`, `convert_currency`, `find_places`,
+`get_directions`, `travel_search`, and `game_search`) plus the allowlisted
+`open_app` tool so the phone can launch an installed application on the trusted
+Linux machine. Telegram can also use app lifecycle
 and window tools (`close_app`, `restart_app`, `list_windows`, `focus_window`,
 `move_window`, and `resize_window`), take desktop screenshots, system status
 tools, and read-only file search/reading. Captured screenshots are uploaded
 only to the configured private Telegram chat. Terminal commands, file
 mutations, keyboard/mouse input, and destructive window/file tools remain
 available only inside the trusted desktop app with its existing permission
-dialogs.
+dialogs. Remote clients never receive shell, file-mutation, keyboard/mouse,
+or destructive window tools.
 
 ## Telegram phone companion
 
