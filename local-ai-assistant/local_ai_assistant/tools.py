@@ -682,6 +682,14 @@ class ToolManager:
         if identity_question:
             return "get_identity", {}
 
+        if self.custom_app_commands and re.search(
+            r"\b(?:open|launch|start|run|use|show|bring\s+up)\b",
+            folded,
+        ):
+            for alias in self.custom_app_commands:
+                if re.search(re.escape(alias.casefold()), folded):
+                    return "open_app", {"app": alias}
+
         url = re.search(r"https?://[^\s]+", text, re.IGNORECASE)
         if url and re.match(r"^(?:please\s+)?(?:open|launch|visit|go to)\b", folded):
             return "open_website", {"url": url.group(0).rstrip(".,!?")}

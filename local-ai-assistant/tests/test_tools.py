@@ -152,6 +152,20 @@ class ToolManagerTests(unittest.TestCase):
             ("firefox", "--new-tab", "https://youtube.com"),
         )
 
+    def test_custom_launcher_dispatch_accepts_extra_polite_wording(self) -> None:
+        manager = ToolManager(
+            custom_app_commands={
+                "Youtube tab": "firefox --new-tab https://youtube.com"
+            }
+        )
+
+        self.assertEqual(
+            manager.direct_tool_call_for_request(
+                "I need you to please open my YouTube tab now."
+            ),
+            ("open_app", {"app": "Youtube tab"}),
+        )
+
     def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
         manager = ToolManager(custom_app_commands={"Youtube tab": "firefox"})
 
