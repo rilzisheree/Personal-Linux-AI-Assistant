@@ -15,8 +15,44 @@ QMainWindow {
     background: #03070d;
 }
 
-QWidget#globalOrb {
+QWidget#statusNotification {
+    background: #08131f;
+    border: 1px solid #28435b;
+    border-radius: 15px;
+}
+
+QWidget#statusNotification[state="listening"] {
+    background: #0b1c1d;
+    border-color: #3c927e;
+}
+
+QWidget#statusNotification[state="processing"] {
+    background: #151125;
+    border-color: #7356b8;
+}
+
+QWidget#statusNotification[state="speaking"] {
+    background: #091a2c;
+    border-color: #337db5;
+}
+
+QWidget#statusNotification[state="error"] {
+    background: #24131a;
+    border-color: #9b4e61;
+}
+
+QLabel#statusNotificationDot {
     background: transparent;
+    font-size: 14px;
+}
+
+QLabel#statusNotificationText {
+    background: transparent;
+    color: #d9ecfa;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding-bottom: 1px;
 }
 
 QFrame#topBar {

@@ -64,8 +64,8 @@ from ..workers import (
 )
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
-from .global_orb import GlobalOrb
 from .settings_dialog import SettingsDialog
+from .status_notification import StatusNotification
 
 LOGGER = logging.getLogger("lura.ui")
 CONVERSATION_GOODBYE_RESPONSE = "Goodbye, Sir."
@@ -148,9 +148,8 @@ class MainWindow(QMainWindow):
         self._interruption_recording = False
         self._barge_in_active = False
         self._discard_interruption_recording = False
-        self._global_orb_state = "idle"
-        self.global_orb: GlobalOrb | None = None
-        self._main_window_has_been_shown = False
+        self._voice_state = "idle"
+        self.status_notification: StatusNotification | None = None
         self._conversation_transition_timer = QTimer(self)
         self._conversation_transition_timer.setSingleShot(True)
         self._conversation_transition_timer.timeout.connect(
@@ -166,7 +165,7 @@ class MainWindow(QMainWindow):
         self.resize(1280, 760)
         self.setMinimumSize(900, 580)
         self._build_ui()
-        self._setup_global_orb()
+        self._setup_status_notification()
         self._setup_tray()
         self._sync_quit_behavior()
         self.api_server, self.api_thread = start_background_server(
@@ -223,40 +222,19 @@ class MainWindow(QMainWindow):
                 not (self.config.background_mode_enabled and self.tray_icon is not None)
             )
 
-    def _setup_global_orb(self) -> None:
-        self.global_orb = GlobalOrb(self)
-        self.global_orb.pressed.connect(self._global_orb_pressed)
-        self.global_orb.released.connect(self._global_orb_released)
+    def _setup_status_notification(self) -> None:
+        self.status_notification = StatusNotification(self)
         app = QApplication.instance()
         if app is not None:
             app.applicationStateChanged.connect(self._application_state_changed)
-        self._sync_global_orb()
-
-    def _global_orb_pressed(self) -> None:
-        if (
-            self._quitting
-            or self.chat_worker is not None
-            or self.speech_worker is not None
-            or self.voice_record_worker is not None
-            or self.voice_transcription_worker is not None
-        ):
-            if self.global_orb is not None:
-                self.global_orb.set_state(self._global_orb_state)
-            return
-        self._start_recording()
-
-    def _global_orb_released(self) -> None:
-        if self.voice_record_worker is not None or self._manual_recording_pending:
-            self._stop_recording()
-        elif self.global_orb is not None:
-            self.global_orb.set_state(self._global_orb_state)
+        self._sync_status_notification()
 
     def _application_state_changed(self, _state) -> None:
-        self._sync_global_orb()
+        self._sync_status_notification()
 
-    def _sync_global_orb(self) -> None:
-        orb = self.global_orb
-        if orb is None:
+    def _sync_status_notification(self) -> None:
+        notification = self.status_notification
+        if notification is None:
             return
         app = QApplication.instance()
         application_inactive = (
@@ -264,23 +242,18 @@ class MainWindow(QMainWindow):
             and app.applicationState() != Qt.ApplicationState.ApplicationActive
         )
         outside_main_window = (
-            self._main_window_has_been_shown
-            and (not self.isVisible() or self.isMinimized() or application_inactive)
+            not self.isVisible() or self.isMinimized() or application_inactive
         )
         should_show = (
             not self._quitting
             and self.config.voice_input_enabled
+            and self._voice_state != "idle"
             and outside_main_window
         )
         if should_show:
-            orb.show_for_desktop()
+            notification.show_for_desktop()
         else:
-            orb.hide()
-
-    def showEvent(self, event) -> None:
-        self._main_window_has_been_shown = True
-        super().showEvent(event)
-        self._sync_global_orb()
+            notification.hide()
 
     @staticmethod
     def _tray_icon() -> QIcon:
@@ -302,7 +275,7 @@ class MainWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
-        self._sync_global_orb()
+        self._sync_status_notification()
 
     @Slot()
     def hide_to_tray(self, silent: bool = False) -> None:
@@ -312,7 +285,7 @@ class MainWindow(QMainWindow):
                 self.status_label.setText("System tray unavailable")
             return
         self.hide()
-        self._sync_global_orb()
+        self._sync_status_notification()
         if not silent:
             self.tray_icon.showMessage(
                 "Lura is still running",
@@ -559,7 +532,7 @@ class MainWindow(QMainWindow):
         if self._latency_trace is None:
             self._latency_trace = LatencyTrace("conversation")
         self.active_assistant_bubble = self.chat_view.add_message("assistant", "")
-        self._set_orb_state("thinking")
+        self._set_voice_state("thinking")
         self._set_generating(True)
 
         self.chat_thread = QThread(self)
@@ -804,7 +777,7 @@ class MainWindow(QMainWindow):
                 and not confirmation
             )
         ):
-            self._set_orb_state("idle")
+            self._set_voice_state("idle")
             return
         if self.wake_word_worker is not None:
             if not automatic:
@@ -820,7 +793,7 @@ class MainWindow(QMainWindow):
             "[WakeWord] Triggering assistant recording (%s)",
             "wake word" if automatic else "manual orb",
         )
-        self._set_orb_state("listening")
+        self._set_voice_state("listening")
         destination = self.voice_service.new_recording_path()
         self.voice_record_thread = QThread(self)
         self.voice_record_worker = VoiceRecordWorker(
@@ -894,7 +867,7 @@ class MainWindow(QMainWindow):
             self.chat_worker.cancel()
         if self.speech_worker is not None:
             self.speech_worker.cancel()
-        self._set_orb_state("listening")
+        self._set_voice_state("listening")
         self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
         self._sync_stop_button()
 
@@ -910,7 +883,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _recording_started(self) -> None:
-        self._set_orb_state("listening")
+        self._set_voice_state("listening")
         self.mic_button.setText("STOP")
         self.mic_button.setEnabled(True)
         self.mic_button.setProperty("recording", True)
@@ -925,7 +898,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _stop_recording(self) -> None:
         if self.voice_record_worker is not None:
-            self._set_orb_state("thinking")
+            self._set_voice_state("thinking")
             self.mic_button.setEnabled(False)
             self.voice_record_worker.stop()
             self._set_voice_status("PROCESSING LOCAL AUDIO…")
@@ -938,7 +911,7 @@ class MainWindow(QMainWindow):
             self._manual_handoff_started_at = None
             self._wake_restart_pending = self.config.wake_word_enabled
         else:
-            self._set_orb_state("idle")
+            self._set_voice_state("idle")
 
     @Slot(str)
     def _recording_finished(self, audio_path: str) -> None:
@@ -987,7 +960,7 @@ class MainWindow(QMainWindow):
         self._latency_trace = LatencyTrace()
         self._latency_trace.mark("end_of_user_speech")
         self._latency_trace.mark("stt_started")
-        self._set_orb_state("thinking")
+        self._set_voice_state("thinking")
         self._set_voice_status(
             "CONFIRMATION REQUIRED // TRANSCRIBING…"
             if self._confirmation_recording
@@ -1036,7 +1009,7 @@ class MainWindow(QMainWindow):
         self._wake_command_recording = False
         if was_in_conversation:
             self._end_conversation("CONVERSATION ENDED // MICROPHONE ERROR")
-        self._set_orb_state("error")
+        self._set_voice_state("error")
         self._set_voice_idle()
         self._set_voice_status(f"VOICE ERROR // {message[:180]}")
         self._set_status("error")
@@ -1128,7 +1101,7 @@ class MainWindow(QMainWindow):
                 self._end_conversation("CONVERSATION ENDED // NO RESPONSE")
             else:
                 self._end_conversation("CONVERSATION ENDED // MICROPHONE ERROR")
-        self._set_orb_state("error")
+        self._set_voice_state("error")
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self._wake_command_recording = False
         self._set_status("error")
@@ -1166,7 +1139,7 @@ class MainWindow(QMainWindow):
 
     def _set_voice_idle(self) -> None:
         if self._barge_in_active:
-            self._set_orb_state("listening")
+            self._set_voice_state("listening")
             self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
             return
         self.mic_button.setText("MIC")
@@ -1193,9 +1166,9 @@ class MainWindow(QMainWindow):
             self.chat_worker is None
             and self.speech_worker is None
             and self.confirmation_speech_worker is None
-            and self._global_orb_state != "error"
+            and self._voice_state != "error"
         ):
-            self._set_orb_state("idle")
+            self._set_voice_state("idle")
 
     def _set_voice_status(self, message: str) -> None:
         self.composer_hint.setText(message)
@@ -1213,7 +1186,7 @@ class MainWindow(QMainWindow):
         ):
             return
         self._wake_listener_restart_allowed = True
-        self._set_orb_state("idle")
+        self._set_voice_state("idle")
         self.wake_word_thread = QThread(self)
         self.wake_word_worker = WakeWordWorker(
             self.voice_service,
@@ -1229,7 +1202,7 @@ class MainWindow(QMainWindow):
         self._set_voice_status(
             f"WAKE LISTENING // SAY {' / '.join(self.config.wake_words)}"
         )
-        self._sync_global_orb()
+        self._sync_status_notification()
 
     @Slot()
     def _wake_word_detected(self, command: str = "") -> None:
@@ -1367,7 +1340,7 @@ class MainWindow(QMainWindow):
         self._conversation_timeout_timer.stop()
         self._conversation_timeout_timer.start(self.config.conversation_timeout * 1000)
         delay_ms = round(self.config.conversation_transition_delay * 1000)
-        self._set_orb_state("idle")
+        self._set_voice_state("idle")
         self._set_voice_status("CONVERSATION ACTIVE // LISTENING SOON")
         self._conversation_transition_timer.start(delay_ms)
 
@@ -1420,7 +1393,7 @@ class MainWindow(QMainWindow):
             or self.speech_worker is not None
         ):
             return None
-        self._set_orb_state("speaking")
+        self._set_voice_state("speaking")
         self.speech_thread = QThread(self)
         self.speech_worker = SpeechStreamWorker(self.voice_service)
         self.speech_worker.moveToThread(self.speech_thread)
@@ -1462,7 +1435,7 @@ class MainWindow(QMainWindow):
         if self.speech_worker is not None:
             self.speech_worker.finish()
         else:
-            self._set_orb_state("idle")
+            self._set_voice_state("idle")
             if self._latency_trace is not None:
                 self._latency_trace.mark("spoken_response_skipped")
                 self._latency_trace.finish()
@@ -1477,7 +1450,7 @@ class MainWindow(QMainWindow):
     def _speech_started(self) -> None:
         if self._latency_trace is not None:
             self._latency_trace.mark("tts_started")
-        self._set_orb_state("speaking")
+        self._set_voice_state("speaking")
         self._start_interruption_listener()
 
     @Slot()
@@ -1493,7 +1466,7 @@ class MainWindow(QMainWindow):
     @Slot()
     def _speech_finished(self) -> None:
         if self._barge_in_active:
-            self._set_orb_state("listening")
+            self._set_voice_state("listening")
             self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
             self._sync_stop_button()
             return
@@ -1502,7 +1475,7 @@ class MainWindow(QMainWindow):
             self._latency_trace.mark("spoken_response_completed")
             self._latency_trace.finish()
             self._latency_trace = None
-        self._set_orb_state("idle")
+        self._set_voice_state("idle")
         if not self._conversation_active:
             self._set_voice_status("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         self._sync_stop_button()
@@ -1515,7 +1488,7 @@ class MainWindow(QMainWindow):
             self._latency_trace.mark("tts_failed")
             self._latency_trace.finish()
             self._latency_trace = None
-        self._set_orb_state("error")
+        self._set_voice_state("error")
         self._set_voice_status(f"VOICE ERROR // {message[:220]}")
         self.status_label.setText("Voice output unavailable")
         self.status_label.setToolTip(message)
@@ -1556,7 +1529,7 @@ class MainWindow(QMainWindow):
             self._latency_trace.mark("ollama_failed")
             self._latency_trace.finish()
             self._latency_trace = None
-        self._set_orb_state("idle" if kind == "cancelled" else "error")
+        self._set_voice_state("idle" if kind == "cancelled" else "error")
         if kind == "cancelled":
             if self.active_assistant_bubble and self.active_response:
                 self.active_assistant_bubble.set_content(self.active_response + "\n\n*Generation stopped.*")
@@ -1593,7 +1566,7 @@ class MainWindow(QMainWindow):
 
     def _set_generating(self, generating: bool) -> None:
         if generating:
-            self._set_orb_state("thinking")
+            self._set_voice_state("thinking")
         self.send_button.setEnabled(not generating)
         self._sync_stop_button()
         self.message_input.setEnabled(not generating)
@@ -1695,7 +1668,7 @@ class MainWindow(QMainWindow):
         self.runtime_status_value.setText("OFFLINE")
         self._set_status("error")
         if self.chat_worker is None:
-            self._set_orb_state("error")
+            self._set_voice_state("error")
 
     def _connection_thread_finished(self) -> None:
         finished_thread = self.sender()
@@ -2018,20 +1991,20 @@ class MainWindow(QMainWindow):
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
 
-    def _set_orb_state(self, state: str) -> None:
+    def _set_voice_state(self, state: str) -> None:
         # All voice entry points converge here, so the visible state cannot
         # drift from the operation that currently owns the microphone.
         state = "processing" if state == "thinking" else state
-        self._global_orb_state = state if state in {
+        self._voice_state = state if state in {
             "idle",
             "listening",
             "processing",
             "speaking",
             "error",
         } else "idle"
-        self.core_widget.set_state(self._global_orb_state)
-        if self.global_orb is not None:
-            self.global_orb.set_state(self._global_orb_state)
+        self.core_widget.set_state(self._voice_state)
+        if self.status_notification is not None:
+            self.status_notification.set_state(self._voice_state)
         labels = {
             "idle": "READY // HOLD TO SPEAK"
             if self.config.voice_input_enabled
@@ -2041,8 +2014,8 @@ class MainWindow(QMainWindow):
             "speaking": "SPEAKING // LOCAL VOICE",
             "error": "CHANNEL ERROR // CHECK STATUS",
         }
-        self.core_status.setText(labels[self._global_orb_state])
-        self._sync_global_orb()
+        self.core_status.setText(labels[self._voice_state])
+        self._sync_status_notification()
 
     @Slot()
     def _toggle_focus_mode(self) -> None:
@@ -2082,8 +2055,8 @@ class MainWindow(QMainWindow):
             self.hide_to_tray()
             return
 
-        if self.global_orb is not None:
-            self.global_orb.close()
+        if self.status_notification is not None:
+            self.status_notification.close()
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),

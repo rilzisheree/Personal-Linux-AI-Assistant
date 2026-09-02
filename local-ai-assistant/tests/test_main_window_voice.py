@@ -21,10 +21,10 @@ class MainWindowVoiceTests(unittest.TestCase):
         window._stop_wake_word_listener = Mock()
         window._start_manual_recording_when_ready = Mock()
         window._set_voice_status = Mock()
-        window._set_orb_state = Mock()
+        window._set_voice_state = Mock()
         return window
 
-    def test_manual_orb_press_pauses_wake_listener_for_handoff(self) -> None:
+    def test_manual_voice_press_pauses_wake_listener_for_handoff(self) -> None:
         window = self._window_with_wake_listener()
 
         MainWindow._start_recording(window)
@@ -35,7 +35,7 @@ class MainWindowVoiceTests(unittest.TestCase):
         window._set_voice_status.assert_called_once_with(
             "SWITCHING TO MANUAL MICROPHONE…"
         )
-        window._set_orb_state.assert_not_called()
+        window._set_voice_state.assert_not_called()
 
     def test_automatic_recording_does_not_compete_with_wake_listener(self) -> None:
         window = self._window_with_wake_listener()
@@ -45,7 +45,7 @@ class MainWindowVoiceTests(unittest.TestCase):
         self.assertFalse(window._manual_recording_pending)
         window._stop_wake_word_listener.assert_not_called()
         window._start_manual_recording_when_ready.assert_not_called()
-        window._set_orb_state.assert_called_once_with("idle")
+        window._set_voice_state.assert_called_once_with("idle")
 
     def test_wake_detection_keeps_command_pending_until_listener_stops(self) -> None:
         window = MainWindow.__new__(MainWindow)
@@ -114,7 +114,7 @@ class MainWindowVoiceTests(unittest.TestCase):
         window._speech_chunker.flush.return_value = []
         window.speech_worker = None
         window._queue_speech_chunk = Mock()
-        window._set_orb_state = Mock()
+        window._set_voice_state = Mock()
         window._latency_trace = None
 
         MainWindow._finish_speech_stream(
@@ -125,24 +125,24 @@ class MainWindowVoiceTests(unittest.TestCase):
             "Goodbye, Sir.", force_voice=True
         )
 
-    def test_orb_state_updates_embedded_and_global_orbs(self) -> None:
+    def test_voice_state_updates_embedded_core_and_notification(self) -> None:
         window = MainWindow.__new__(MainWindow)
-        window._global_orb_state = "idle"
+        window._voice_state = "idle"
         window.config = SimpleNamespace(voice_input_enabled=True)
         window.core_widget = Mock()
-        window.global_orb = Mock()
+        window.status_notification = Mock()
         window.core_status = Mock()
-        window._sync_global_orb = Mock()
+        window._sync_status_notification = Mock()
 
-        MainWindow._set_orb_state(window, "thinking")
+        MainWindow._set_voice_state(window, "thinking")
 
-        self.assertEqual(window._global_orb_state, "processing")
+        self.assertEqual(window._voice_state, "processing")
         window.core_widget.set_state.assert_called_once_with("processing")
-        window.global_orb.set_state.assert_called_once_with("processing")
+        window.status_notification.set_state.assert_called_once_with("processing")
         window.core_status.setText.assert_called_once_with(
             "PROCESSING // LOCAL MODEL"
         )
-        window._sync_global_orb.assert_called_once_with()
+        window._sync_status_notification.assert_called_once_with()
 
 
 if __name__ == "__main__":
