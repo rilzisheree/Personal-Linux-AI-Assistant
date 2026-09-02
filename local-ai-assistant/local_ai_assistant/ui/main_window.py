@@ -78,9 +78,6 @@ class PendingConfirmation:
     expires_at: float
 
 
-CHAT_CONTENT_MAX_WIDTH = 960
-
-
 class MainWindow(QMainWindow):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
@@ -385,8 +382,11 @@ class MainWindow(QMainWindow):
         self.chat_view = ChatView()
         self.chat_view.setObjectName("transcript")
         self.chat_view.setMinimumHeight(150)
-        self.chat_view.setMaximumWidth(CHAT_CONTENT_MAX_WIDTH)
-        stage_layout.addWidget(self.chat_view, 1, Qt.AlignmentFlag.AlignHCenter)
+        self.chat_view.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+        stage_layout.addWidget(self.chat_view, 1)
 
         self.composer = QFrame()
         self.composer.setObjectName("composer")
@@ -394,7 +394,6 @@ class MainWindow(QMainWindow):
         composer_layout.setContentsMargins(0, 10, 0, 0)
         composer_layout.setSpacing(7)
         self.composer.setMinimumWidth(620)
-        self.composer.setMaximumWidth(CHAT_CONTENT_MAX_WIDTH)
         self.composer.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
@@ -434,7 +433,7 @@ class MainWindow(QMainWindow):
         self.composer_hint = QLabel("DIRECT LOCAL CHANNEL // NO CLOUD ROUTING")
         self.composer_hint.setObjectName("composerHint")
         composer_layout.addWidget(self.composer_hint)
-        stage_layout.addWidget(self.composer, 0, Qt.AlignmentFlag.AlignHCenter)
+        stage_layout.addWidget(self.composer, 0)
 
         self.creator_credit = QLabel("Made by Jooie -")
         self.creator_credit.setObjectName("creatorCredit")
