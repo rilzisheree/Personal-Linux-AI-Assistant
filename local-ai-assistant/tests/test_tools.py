@@ -55,6 +55,17 @@ class ToolManagerTests(unittest.TestCase):
             "keyboard_press",
         ):
             self.assertIn(name, names)
+        for name in (
+            "get_weather",
+            "search_news",
+            "knowledge_search",
+            "convert_currency",
+            "find_places",
+            "get_directions",
+            "travel_search",
+            "game_search",
+        ):
+            self.assertIn(name, names)
 
     def test_safe_system_tool_does_not_need_approval(self) -> None:
         result = self.manager.execute("get_disk_usage", {})

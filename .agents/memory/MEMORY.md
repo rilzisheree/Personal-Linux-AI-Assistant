@@ -10,3 +10,4 @@
 - [Python lock repair](uv-lock-pyside.md) — An imported uv.lock can omit the root PySide6 package record while retaining its addon records, blocking dependency installs.
 - [Authoritative local dispatch](authoritative-local-dispatch.md) — Explicit desktop actions and live machine facts must be selected/executed by the app before the LLM formats results.
 - [Native Firefox launcher session](firefox-launcher-session.md) — Custom Firefox URL launchers must inherit the active desktop session to reuse an existing browser.
+- [Current currency endpoint](current-currency-endpoint.md) — Use the public ExchangeRate-API v6 endpoint for live SAR-compatible conversion; legacy Frankfurter paths may redirect or 404.

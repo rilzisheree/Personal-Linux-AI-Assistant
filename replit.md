@@ -45,6 +45,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - Local SQLite persistence for conversations and JSON persistence for settings
 - Dependency-free single-user password-protected HTTP API with server-sent event
   chat streaming
+- Standard-library current-information clients for weather, search, maps, and
+  currency conversion
 
 ## Where things live
 
@@ -54,6 +56,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   protocol adapter
 - `local-ai-assistant/local_ai_assistant/tools.py` — native tool schemas,
   implementations, and permission gates
+- `local-ai-assistant/local_ai_assistant/information_tools.py` — current
+  information HTTP/RSS clients and response normalization
 - `local-ai-assistant/local_ai_assistant/conversations.py` — local history
   persistence
 
@@ -80,6 +84,9 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   through freedesktop desktop entries before launching or closing them.
 - Query structured current PC state through controlled GPU, CPU, RAM, storage,
   process, window, display, network, power, and application tools.
+- Retrieve current weather, news, web and Wikipedia knowledge, currency rates,
+  places, directions, travel research, and game information through safe
+  model-selected information tools.
 - Save, switch, clear, and export conversations locally.
 - Run safe system-information tools and open applications.
 - Run normal reversible actions automatically, while confirmation-required and
@@ -124,6 +131,10 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - The Gemini provider is text/SSE based. The reference Mark-LI project uses
   Gemini Live for realtime audio, which is a different API and is not used by
   this text chat path.
+- Current-information tools use public Open-Meteo, Google News RSS, Wikipedia,
+  ExchangeRate-API, OpenStreetMap/OSRM, and DuckDuckGo endpoints. They require
+  outbound internet access, return explicit failures, and never substitute
+  guessed live data.
 
 ## Pointers
 

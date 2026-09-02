@@ -204,6 +204,28 @@ Whisper and Piper model downloads are large, so the Python packages are
 installed by the project but the model files are downloaded only when needed.
 Text chat remains usable when voice tools are unavailable.
 
+## Information tools
+
+Lura automatically selects the safe information tool that matches a request
+through Ollama's native function-calling flow. It can retrieve:
+
+- Current weather and multi-day forecasts through Open-Meteo and OpenStreetMap
+  geocoding. Set `LURA_DEFAULT_LOCATION` if weather requests should use a
+  default city; otherwise include a location in the request.
+- Recent news through Google News RSS.
+- Wikipedia knowledge searches and article summaries.
+- Current currency conversion through ExchangeRate-API; currency arguments use
+  three-letter ISO codes such as `SAR`, `USD`, and `EUR`.
+- Place searches and driving, walking, or cycling routes through OpenStreetMap
+  and OSRM.
+- General web, travel, and game searches through DuckDuckGo's HTML endpoint.
+
+These services require outbound internet access but no application API keys.
+Responses include source metadata, and service timeouts, invalid requests, empty
+results, and unavailable endpoints are returned as failed tool results so Lura
+does not invent live information. The language model summarizes results rather
+than reading a list of links verbatim.
+
 ## Prepare Ollama
 
 Start Ollama using the normal CachyOS/Linux service or application method, then
@@ -515,6 +537,7 @@ local-ai-assistant/
 │   ├── conversations.py       # local conversation model and JSON store
 │   ├── errors.py              # user-facing error categories
 │   ├── gemini_api.py          # Gemini adapter for the separate web/API path
+│   ├── information_tools.py   # current weather, search, maps, and currency APIs
 │   ├── ollama.py              # direct Ollama HTTP and streaming adapter
 │   ├── voice.py               # local recording, Whisper, and TTS adapters
 │   ├── tools.py               # tool registry and permission gates
@@ -528,6 +551,7 @@ local-ai-assistant/
 │   ├── test_config.py
 │   ├── test_conversations.py
 │   ├── test_ollama_parser.py
+│   ├── test_information_tools.py
 │   ├── test_tools.py
 │   ├── test_voice.py
 │   └── test_workers.py

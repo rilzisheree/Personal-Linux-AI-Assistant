@@ -22,6 +22,17 @@ from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from .applications import ApplicationRecord, ApplicationRegistry
+from .information_tools import (
+    InformationResult,
+    currency as information_currency,
+    directions as information_directions,
+    find_places as information_find_places,
+    game_search as information_game_search,
+    knowledge_search as information_knowledge_search,
+    news as information_news,
+    travel_search as information_travel_search,
+    weather as information_weather,
+)
 from .memory import MemoryStore
 from .profile import UserProfileStore, collect_system_profile
 
@@ -145,6 +156,15 @@ def _string_argument(arguments: dict, name: str) -> str:
     return value.strip()
 
 
+def _optional_string_argument(arguments: dict, name: str) -> str:
+    value = arguments.get(name, "")
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ValueError(f"Tool argument '{name}' must be a string.")
+    return value.strip()
+
+
 def _first_inline_data(payload: object) -> str | None:
     if isinstance(payload, dict):
         for key in ("inlineData", "inline_data"):
@@ -165,6 +185,10 @@ def _first_inline_data(payload: object) -> str | None:
 
 def _failed(error: Exception) -> ToolCallResult:
     return ToolCallResult(False, str(error) or error.__class__.__name__)
+
+
+def _information_result(result: InformationResult) -> ToolCallResult:
+    return ToolCallResult(result.success, result.content)
 
 
 class ToolManager:
@@ -458,7 +482,8 @@ class ToolManager:
             ),
             "web_search": ToolDefinition(
                 "web_search",
-                "Search the public web for current information and return concise results.",
+                "Search the public web for current information. Use the returned sources "
+                "to answer or summarize; do not dump links without an explanation.",
                 PermissionLevel.SAFE,
                 {
                     "type": "object",
@@ -469,6 +494,147 @@ class ToolManager:
                     "required": ["query"],
                 },
                 self._web_search,
+            ),
+            "get_weather": ToolDefinition(
+                "get_weather",
+                "Get current weather and a forecast for a city or location. Use this for "
+                "weather, temperature, rain, and forecast questions. The location may be "
+                "omitted only when LURA_DEFAULT_LOCATION is configured.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "City, region, address, or other location",
+                        },
+                        "date": {
+                            "type": "string",
+                            "description": "today, tomorrow, or a date in YYYY-MM-DD format",
+                        },
+                        "units": {
+                            "type": "string",
+                            "enum": ["metric", "imperial"],
+                        },
+                    },
+                },
+                self._get_weather,
+            ),
+            "search_news": ToolDefinition(
+                "search_news",
+                "Search recent news and return dated headlines and source summaries. "
+                "Use this for today's news, breaking news, or news about a country, topic, "
+                "game, company, or person.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Topic or location; omit for the latest general news",
+                        },
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 8},
+                    },
+                },
+                self._search_news,
+            ),
+            "knowledge_search": ToolDefinition(
+                "knowledge_search",
+                "Search Wikipedia for reliable general-knowledge information and a concise "
+                "article summary. Use this for people, history, places, science, and concepts.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Subject to look up"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 5},
+                    },
+                    "required": ["query"],
+                },
+                self._knowledge_search,
+            ),
+            "convert_currency": ToolDefinition(
+                "convert_currency",
+                "Convert money using a current exchange rate. Use ISO 4217 three-letter "
+                "currency codes such as SAR, USD, EUR, or GBP; never use a hardcoded rate.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "amount": {"type": "number", "minimum": 0},
+                        "from_currency": {"type": "string", "description": "Three-letter source currency code"},
+                        "to_currency": {"type": "string", "description": "Three-letter target currency code"},
+                    },
+                    "required": ["amount", "from_currency", "to_currency"],
+                },
+                self._convert_currency,
+            ),
+            "find_places": ToolDefinition(
+                "find_places",
+                "Find places, businesses, or services and return map coordinates and links. "
+                "Use this for restaurants, pharmacies, shops, and nearby places.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Place, business, or service to find"},
+                        "near": {"type": "string", "description": "City, neighborhood, or area to search near"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 8},
+                    },
+                    "required": ["query"],
+                },
+                self._find_places,
+            ),
+            "get_directions": ToolDefinition(
+                "get_directions",
+                "Find a route and travel time between two natural-language locations. "
+                "Use this for directions and distance questions.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "origin": {"type": "string", "description": "Starting city, address, or landmark"},
+                        "destination": {"type": "string", "description": "Destination city, address, or landmark"},
+                        "mode": {
+                            "type": "string",
+                            "enum": ["driving", "walking", "cycling"],
+                        },
+                    },
+                    "required": ["origin", "destination"],
+                },
+                self._get_directions,
+            ),
+            "travel_search": ToolDefinition(
+                "travel_search",
+                "Research travel information with current web sources. Use this for "
+                "destinations, travel requirements, itineraries, attractions, prices, "
+                "schedules, or flight questions; current details must be verified.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "destination": {"type": "string", "description": "Destination or route"},
+                        "topic": {"type": "string", "description": "Travel question or information needed"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 8},
+                    },
+                    "required": ["destination"],
+                },
+                self._travel_search,
+            ),
+            "game_search": ToolDefinition(
+                "game_search",
+                "Search current gaming information and guides. Use this for game strategies, "
+                "builds, bosses, release dates, seasons, patches, and updates.",
+                PermissionLevel.SAFE,
+                {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "Game, character, boss, or gaming question"},
+                        "max_results": {"type": "integer", "minimum": 1, "maximum": 8},
+                    },
+                    "required": ["query"],
+                },
+                self._game_search,
             ),
             "remember": ToolDefinition(
                 "remember",
@@ -926,6 +1092,100 @@ class ToolManager:
         for index, item in enumerate(results.items[:max_results], start=1):
             lines.append(f"{index}. {item['title']}\n   {item['url']}\n   {item['snippet']}")
         return ToolCallResult(True, "\n".join(lines))
+
+    @staticmethod
+    def _get_weather(arguments: dict) -> ToolCallResult:
+        units = _optional_string_argument(arguments, "units") or "metric"
+        return _information_result(
+            information_weather(
+                _optional_string_argument(arguments, "location"),
+                _optional_string_argument(arguments, "date"),
+                units,
+            )
+        )
+
+    @staticmethod
+    def _search_news(arguments: dict) -> ToolCallResult:
+        max_results = (
+            _integer_argument(arguments, "max_results", 1, 8)
+            if "max_results" in arguments
+            else 5
+        )
+        return _information_result(
+            information_news(_optional_string_argument(arguments, "query"), max_results)
+        )
+
+    @staticmethod
+    def _knowledge_search(arguments: dict) -> ToolCallResult:
+        query = _string_argument(arguments, "query")
+        max_results = (
+            _integer_argument(arguments, "max_results", 1, 5)
+            if "max_results" in arguments
+            else 3
+        )
+        return _information_result(information_knowledge_search(query, max_results))
+
+    @staticmethod
+    def _convert_currency(arguments: dict) -> ToolCallResult:
+        amount = arguments.get("amount")
+        return _information_result(
+            information_currency(
+                amount,
+                _string_argument(arguments, "from_currency"),
+                _string_argument(arguments, "to_currency"),
+            )
+        )
+
+    @staticmethod
+    def _find_places(arguments: dict) -> ToolCallResult:
+        max_results = (
+            _integer_argument(arguments, "max_results", 1, 8)
+            if "max_results" in arguments
+            else 5
+        )
+        return _information_result(
+            information_find_places(
+                _string_argument(arguments, "query"),
+                _optional_string_argument(arguments, "near"),
+                max_results,
+            )
+        )
+
+    @staticmethod
+    def _get_directions(arguments: dict) -> ToolCallResult:
+        return _information_result(
+            information_directions(
+                _string_argument(arguments, "origin"),
+                _string_argument(arguments, "destination"),
+                _optional_string_argument(arguments, "mode") or "driving",
+            )
+        )
+
+    @staticmethod
+    def _travel_search(arguments: dict) -> ToolCallResult:
+        max_results = (
+            _integer_argument(arguments, "max_results", 1, 8)
+            if "max_results" in arguments
+            else 5
+        )
+        return _information_result(
+            information_travel_search(
+                _string_argument(arguments, "destination"),
+                _optional_string_argument(arguments, "topic"),
+                max_results,
+            )
+        )
+
+    @staticmethod
+    def _game_search(arguments: dict) -> ToolCallResult:
+        max_results = (
+            _integer_argument(arguments, "max_results", 1, 8)
+            if "max_results" in arguments
+            else 5
+        )
+        return _information_result(
+            information_game_search(_string_argument(arguments, "query"), max_results)
+        )
 
     def _remember(self, arguments: dict) -> ToolCallResult:
         fact = _string_argument(arguments, "fact")
