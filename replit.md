@@ -32,6 +32,9 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
 - Settings includes an editable User Profile section for the user's name,
   preferred address, assistant role, owner label, and application-install
   preference. These values are saved separately from live system status.
+- Settings includes a Permissions tab for per-action default/always-allow/
+  ask/block policies and custom app launchers. A launcher such as `Firefox` →
+  `firefox` is executed as a direct process with no shell interpretation.
 
 ## Stack
 
@@ -114,6 +117,10 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   seam accepts only a small read-only command allowlist without approval;
   mutating or unknown commands remain confirmation-gated, and the structured
   tools are the preferred interface.
+- Unambiguous requests such as “can you open Firefox?” are dispatched by the
+  application before the response model runs, so the model cannot replace a
+  local launch with a generic permission refusal. Custom launchers use the same
+  `open_app` permission policy.
 - The Gemini provider is text/SSE based. The reference Mark-LI project uses
   Gemini Live for realtime audio, which is a different API and is not used by
   this text chat path.

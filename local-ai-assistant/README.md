@@ -55,6 +55,25 @@ these environment variables when needed:
 - `LURA_API_AUTOSTART` — set to `0` to prevent desktop API autostart
 - `LURA_API_PORT` — desktop autostart port, defaulting to `8000`
 
+The desktop Settings dialog includes a **Permissions** tab. Use it to choose
+whether supported local actions use their default safety level, always run when
+safe, ask for approval every time, or stay blocked. Dangerous actions continue
+to require confirmation even when another policy is selected.
+
+The same tab includes custom app launchers for applications that are not
+discoverable from Flatpak or desktop-entry data. Add an exact name and a direct
+command, for example:
+
+```text
+Name: Firefox
+Command: firefox
+```
+
+Arguments are supported (`firefox --new-window`), but shell operators and shell
+wrappers are rejected. The launcher is executed through `open_app`, so its
+permission policy still applies. Requests such as “Can you open Firefox?” are
+handled by the local dispatcher before the language model formats the result.
+
 Available endpoints:
 
 - `POST /api/auth/login` with `{ "password": "..." }`

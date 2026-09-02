@@ -162,6 +162,8 @@ class MainWindow(QMainWindow):
             config.ollama_url,
             config.model,
             config.ollama_context_size,
+            tool_permissions=config.tool_permissions,
+            custom_app_commands=config.custom_app_commands,
         )
         self._populate_conversations()
         self.chat_view.set_messages(self.messages)
@@ -1630,6 +1632,8 @@ class MainWindow(QMainWindow):
             memory_store=self.memory_store,
             profile_store=self.profile_store,
             assistant_name=self.config.assistant_name,
+            tool_permissions=self.config.tool_permissions,
+            custom_app_commands=self.config.custom_app_commands,
         )
         self.voice_service = VoiceService(self.config)
         self._set_voice_idle()

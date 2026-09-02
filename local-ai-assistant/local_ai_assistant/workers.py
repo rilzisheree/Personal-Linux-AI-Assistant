@@ -80,16 +80,6 @@ class ChatWorker(QObject):
         tool_rounds = 0
         try:
             self.ollama_started.emit()
-            route = self.service.route_request(
-                messages,
-                ollama_tools,
-                self.cancel_event,
-            )
-            if self.cancel_event.is_set():
-                self.conversation_ready.emit(visible_messages)
-                self.failed.emit("Generation stopped.", "cancelled")
-                return
-            route_tools = ollama_tools if route.route != "simple" else None
             current_request = next(
                 (
                     message.content
@@ -101,6 +91,7 @@ class ChatWorker(QObject):
             direct_call = self.tool_manager.direct_tool_call_for_request(
                 current_request
             )
+            route_tools = None
             if direct_call is not None:
                 tool_name, arguments = direct_call
                 direct_tool_call = ToolCall(
@@ -125,6 +116,17 @@ class ChatWorker(QObject):
                 # formats the result and cannot replace it with a refusal or
                 # another guessed tool call.
                 route_tools = None
+            else:
+                route = self.service.route_request(
+                    messages,
+                    ollama_tools,
+                    self.cancel_event,
+                )
+                if self.cancel_event.is_set():
+                    self.conversation_ready.emit(visible_messages)
+                    self.failed.emit("Generation stopped.", "cancelled")
+                    return
+                route_tools = ollama_tools if route.route != "simple" else None
             while not self.cancel_event.is_set():
                 cycle_response: list[str] = []
                 tool_calls: list[ToolCall] = []
@@ -226,7 +228,7 @@ class ChatWorker(QObject):
             permission.value,
         )
         approved = permission in {PermissionLevel.SAFE, PermissionLevel.NORMAL}
-        if not approved:
+        if permission not in {PermissionLevel.SAFE, PermissionLevel.NORMAL, PermissionLevel.BLOCKED}:
             approved = self._wait_for_approval(
                 resolved_call_id, tool_call, permission
             )

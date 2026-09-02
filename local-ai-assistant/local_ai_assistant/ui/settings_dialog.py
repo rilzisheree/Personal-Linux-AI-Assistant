@@ -26,11 +26,38 @@ from PySide6.QtWidgets import (
 
 from ..config import (
     AppConfig,
+    PERMISSION_POLICIES,
+    PERMISSION_POLICY_LABELS,
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
 )
 from ..profile import DEFAULT_USER_PROFILE
 from ..voice import VoiceService
+
+
+PERMISSION_CONTROLS = (
+    ("open_app", "Open applications"),
+    ("close_app", "Close applications"),
+    ("restart_app", "Restart applications"),
+    ("open_website", "Open websites"),
+    ("exec", "Run terminal commands"),
+    ("take_screenshot", "Take screenshots"),
+    ("move_window", "Move windows"),
+    ("resize_window", "Resize windows"),
+    ("close_window", "Close windows"),
+    ("write_file", "Overwrite files"),
+    ("create_file", "Create files"),
+    ("delete_file", "Delete files"),
+    ("move_file", "Move files"),
+    ("copy_file", "Copy files"),
+    ("mouse_move", "Move the pointer"),
+    ("mouse_click", "Click the pointer"),
+    ("keyboard_type", "Type keyboard text"),
+    ("keyboard_press", "Press keyboard keys"),
+    ("set_volume", "Change volume"),
+    ("shutdown", "Shut down the computer"),
+    ("reboot", "Restart the computer"),
+)
 
 
 class SettingsDialog(QDialog):
@@ -58,6 +85,8 @@ class SettingsDialog(QDialog):
                     if key in DEFAULT_USER_PROFILE and isinstance(value, str)
                 }
             )
+        self.permission_inputs: dict[str, QComboBox] = {}
+        self.custom_app_command_rows: list[tuple[QWidget, QLineEdit, QLineEdit]] = []
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 22)
@@ -74,6 +103,10 @@ class SettingsDialog(QDialog):
         tabs.setObjectName("settingsTabs")
         layout.addWidget(tabs, 1)
         tabs.addTab(self._scroll_page(self._assistant_page(config)), "Assistant")
+        tabs.addTab(
+            self._scroll_page(self._permissions_page(config)),
+            "Permissions",
+        )
         tabs.addTab(
             self._scroll_page(
                 self._ai_page(config)
@@ -260,6 +293,63 @@ class SettingsDialog(QDialog):
         note.setObjectName("settingsHint")
         note.setWordWrap(True)
         layout.addWidget(note)
+        layout.addStretch(1)
+        return page
+
+    def _permissions_page(self, config: AppConfig) -> QWidget:
+        page, layout = self._page_layout(
+            "Local action permissions",
+            "Choose which actions Lura may run automatically. Blocked actions are "
+            "never sent to the operating system, and dangerous actions still require "
+            "a confirmation.",
+        )
+        access_group, access_form = self._group("PERMISSION RULES")
+        for name, label in PERMISSION_CONTROLS:
+            selector = QComboBox()
+            for policy in PERMISSION_POLICIES:
+                selector.addItem(PERMISSION_POLICY_LABELS[policy], policy)
+            selected = config.tool_permissions.get(name, "default")
+            selector.setCurrentIndex(max(0, selector.findData(selected)))
+            selector.setToolTip(f"Permission policy for {label.casefold()}.")
+            self.permission_inputs[name] = selector
+            access_form.addRow(label, selector)
+        layout.addWidget(access_group)
+
+        note = QLabel(
+            "Always allow removes the approval step for safe, normal, and "
+            "confirmation-gated actions. It never turns a dangerous action into "
+            "an automatic one. Terminal access remains limited to the command "
+            "allowlist unless you explicitly add a launcher below."
+        )
+        note.setObjectName("settingsHint")
+        note.setWordWrap(True)
+        layout.addWidget(note)
+
+        launch_group, launch_form = self._group("CUSTOM APP LAUNCHERS")
+        launch_note = QLabel(
+            "Add an exact app name and a direct executable command, for example "
+            "Firefox  →  firefox or Firefox  →  firefox --new-window. "
+            "Shell operators and shell wrappers are rejected."
+        )
+        launch_note.setObjectName("settingsHint")
+        launch_note.setWordWrap(True)
+        launch_form.addRow("", launch_note)
+        self.custom_commands_container = QWidget()
+        self.custom_commands_layout = QVBoxLayout(self.custom_commands_container)
+        self.custom_commands_layout.setContentsMargins(0, 0, 0, 0)
+        self.custom_commands_layout.setSpacing(6)
+        for alias, command in config.custom_app_commands.items():
+            self._add_custom_app_command_row(alias, command)
+        if not self.custom_app_command_rows:
+            self._add_custom_app_command_row()
+        self.add_custom_command_button = QPushButton("+ Add launcher")
+        self.add_custom_command_button.setObjectName("quietButton")
+        self.add_custom_command_button.clicked.connect(
+            lambda _checked=False: self._add_custom_app_command_row()
+        )
+        launch_form.addRow("App commands", self.custom_commands_container)
+        launch_form.addRow("", self.add_custom_command_button)
+        layout.addWidget(launch_group)
         layout.addStretch(1)
         return page
 
@@ -500,6 +590,12 @@ class SettingsDialog(QDialog):
             theme=str(self.theme_input.currentData()),
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),
+            tool_permissions={
+                name: str(selector.currentData())
+                for name, selector in self.permission_inputs.items()
+                if selector.currentData() != "default"
+            },
+            custom_app_commands=self._custom_app_commands(),
         )
 
     def telegram_token(self) -> str:
@@ -557,6 +653,54 @@ class SettingsDialog(QDialog):
         voice = self.tts_voice_input.itemData(index)
         if isinstance(voice, str) and voice.lower().endswith(".onnx"):
             self.tts_engine_input.setCurrentIndex(self.tts_engine_input.findData("piper"))
+
+    def _add_custom_app_command_row(
+        self,
+        alias: str = "",
+        command: str = "",
+    ) -> None:
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(8)
+        alias_input = QLineEdit(alias)
+        alias_input.setPlaceholderText("App name, e.g. Firefox")
+        command_input = QLineEdit(command)
+        command_input.setPlaceholderText("Command, e.g. firefox")
+        remove_button = QPushButton("Remove")
+        remove_button.setObjectName("quietButton")
+        remove_button.clicked.connect(
+            lambda _checked=False, row=row: self._remove_custom_app_command_row(row)
+        )
+        row_layout.addWidget(alias_input, 1)
+        row_layout.addWidget(command_input, 2)
+        row_layout.addWidget(remove_button)
+        self.custom_commands_layout.addWidget(row)
+        self.custom_app_command_rows.append((row, alias_input, command_input))
+
+    def _remove_custom_app_command_row(self, row: QWidget) -> None:
+        for index, (candidate, _alias, _command) in enumerate(
+            self.custom_app_command_rows
+        ):
+            if candidate is row:
+                self.custom_commands_layout.removeWidget(row)
+                row.deleteLater()
+                self.custom_app_command_rows.pop(index)
+                return
+
+    def _custom_app_commands(self) -> dict[str, str]:
+        commands: dict[str, str] = {}
+        for _row, alias_input, command_input in self.custom_app_command_rows:
+            alias = alias_input.text().strip()
+            command = command_input.text().strip()
+            if not alias and not command:
+                continue
+            if not alias or not command:
+                raise ValueError("Each custom app launcher needs both a name and a command.")
+            if any(existing.casefold() == alias.casefold() for existing in commands):
+                raise ValueError(f"Custom app launcher '{alias}' is duplicated.")
+            commands[alias] = command
+        return commands
 
     def _populate_microphones(self, selected: str | None = None) -> None:
         if selected is None:

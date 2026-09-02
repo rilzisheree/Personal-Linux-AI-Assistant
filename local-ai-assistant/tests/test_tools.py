@@ -85,6 +85,14 @@ class ToolManagerTests(unittest.TestCase):
             ("open_app", {"app": "Firefox"}),
         )
         self.assertEqual(
+            self.manager.direct_tool_call_for_request("Can you open Firefox?"),
+            ("open_app", {"app": "Firefox"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request("Please launch Firefox on my computer."),
+            ("open_app", {"app": "Firefox"}),
+        )
+        self.assertEqual(
             self.manager.direct_tool_call_for_request("Close Discord"),
             ("close_app", {"app": "Discord"}),
         )
@@ -110,6 +118,35 @@ class ToolManagerTests(unittest.TestCase):
             popen_mock.call_args.args[0],
             ("flatpak", "run", "org.mozilla.firefox"),
         )
+
+    @patch("local_ai_assistant.tools.shutil.which", return_value="/usr/bin/firefox")
+    @patch("local_ai_assistant.tools.subprocess.Popen")
+    def test_custom_launcher_executes_direct_command(self, popen_mock, _which_mock) -> None:
+        manager = ToolManager(custom_app_commands={"Firefox": "firefox --new-window"})
+
+        result = manager.execute("open_app", {"app": "Firefox"})
+
+        self.assertTrue(result.success)
+        self.assertEqual(
+            popen_mock.call_args.args[0],
+            ("firefox", "--new-window"),
+        )
+        self.assertEqual(json.loads(result.content)["kind"], "custom")
+
+    def test_permission_policies_block_or_auto_approve_actions(self) -> None:
+        blocked = ToolManager(tool_permissions={"open_app": "blocked"})
+        self.assertEqual(
+            blocked.permission_for("open_app", {"app": "Firefox"}),
+            PermissionLevel.BLOCKED,
+        )
+        self.assertFalse(blocked.execute("open_app", {"app": "Firefox"}).success)
+
+        allowed = ToolManager(tool_permissions={"exec": "always_allow"})
+        self.assertEqual(
+            allowed.permission_for("exec", {"command": "printf ok"}),
+            PermissionLevel.NORMAL,
+        )
+        self.assertEqual(allowed.execute("exec", {"command": "printf ok"}).content, "ok")
 
     def test_identity_tool_keeps_user_and_assistant_names_separate(self) -> None:
         manager = ToolManager(assistant_name="Nova")

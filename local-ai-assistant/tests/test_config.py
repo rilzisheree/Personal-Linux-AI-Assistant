@@ -123,3 +123,16 @@ class ConfigTests(unittest.TestCase):
             loaded = AppConfig.load(path)
         self.assertEqual(loaded.wake_words, ("Luna", "Luda"))
         self.assertEqual(loaded.wake_word, "Luna")
+
+    def test_permission_and_custom_launcher_settings_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.json"
+            original = AppConfig(
+                tool_permissions={"open_app": "always_allow", "exec": "ask"},
+                custom_app_commands={"Firefox": "firefox --new-window"},
+            )
+            original.save(path)
+            loaded = AppConfig.load(path)
+
+        self.assertEqual(loaded.tool_permissions, original.tool_permissions)
+        self.assertEqual(loaded.custom_app_commands, original.custom_app_commands)

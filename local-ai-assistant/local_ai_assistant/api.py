@@ -13,13 +13,14 @@ from typing import Any, cast
 from urllib.parse import unquote, urlsplit
 
 from .config import (
+    AppConfig,
     DEFAULT_CONTEXT_SIZE,
     DEFAULT_MODEL,
     DEFAULT_OLLAMA_URL,
 )
 from .errors import format_backend_error
 from .gemini_api import GeminiApiClient
-from .ollama import ChatMessage, OllamaClient, OllamaProtocolError
+from .ollama import ChatMessage, OllamaClient, OllamaProtocolError, ToolCall
 from .api_store import ApiStore, SESSION_TTL_SECONDS
 from .tools import PermissionLevel, ToolCallResult, ToolManager
 
@@ -56,6 +57,8 @@ class ApiServer(ThreadingHTTPServer):
         provider: str = "ollama",
         gemini_api_key: str = "",
         gemini_model: str = DEFAULT_GEMINI_MODEL,
+        tool_permissions: dict[str, str] | None = None,
+        custom_app_commands: dict[str, str] | None = None,
     ) -> None:
         super().__init__(address, ApiRequestHandler)
         self.store = store
@@ -69,6 +72,8 @@ class ApiServer(ThreadingHTTPServer):
         self.provider = provider.strip().lower()
         self.gemini_api_key = gemini_api_key.strip()
         self.gemini_model = gemini_model.strip() or DEFAULT_GEMINI_MODEL
+        self.tool_permissions = dict(tool_permissions or {})
+        self.custom_app_commands = dict(custom_app_commands or {})
 
 
 def start_background_server(
@@ -79,6 +84,8 @@ def start_background_server(
     provider: str = "ollama",
     gemini_api_key: str = "",
     gemini_model: str = DEFAULT_GEMINI_MODEL,
+    tool_permissions: dict[str, str] | None = None,
+    custom_app_commands: dict[str, str] | None = None,
 ) -> tuple[ApiServer | None, threading.Thread | None]:
     """Start a localhost API for the desktop app without blocking Qt."""
 
@@ -95,6 +102,8 @@ def start_background_server(
             provider=provider,
             gemini_api_key=gemini_api_key,
             gemini_model=gemini_model,
+            tool_permissions=tool_permissions,
+            custom_app_commands=custom_app_commands,
         )
     except (OSError, ValueError, RuntimeError) as error:
         # An independently running API is valid; do not prevent the desktop
@@ -250,18 +259,43 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         cancel_event = threading.Event()
         response_parts: list[str] = []
         client = self._ai_client()
-        tool_manager = ToolManager()
+        server = self._api_server()
+        tool_manager = ToolManager(
+            tool_permissions=server.tool_permissions,
+            custom_app_commands=server.custom_app_commands,
+        )
         remote_tools = []
-        if self._api_server().provider in {"ollama", "gemini"}:
+        if server.provider in {"ollama", "gemini"}:
             remote_tools = [
                 schema
                 for schema in tool_manager.definitions_for_ollama()
                 if schema.get("function", {}).get("name") in REMOTE_TOOL_NAMES
             ]
         messages = list(conversation.messages)
+        self._write_sse("started", {"conversation_id": conversation_id})
+        direct_call = tool_manager.direct_tool_call_for_request(content.strip())
+        if direct_call is not None and direct_call[0] in REMOTE_TOOL_NAMES:
+            tool_name, arguments = direct_call
+            tool_call = ToolCall(tool_name, arguments, f"direct_{threading.get_ident()}")
+            try:
+                result = tool_manager.execute(tool_name, arguments)
+            except Exception as error:
+                result = ToolCallResult(False, str(error))
+            self._write_sse(
+                "tool",
+                {"name": tool_name, "success": result.success, "message": result.content},
+            )
+            messages.append(ChatMessage("assistant", "", (tool_call,)))
+            messages.append(
+                ChatMessage(
+                    "tool",
+                    result.content,
+                    name=tool_name,
+                    tool_call_id=tool_call.id,
+                )
+            )
         tool_rounds = 0
         try:
-            self._write_sse("started", {"conversation_id": conversation_id})
             while True:
                 cycle_response: list[str] = []
                 tool_calls = []
@@ -522,6 +556,7 @@ def main() -> int:
     default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_MODEL
     model = os.environ.get("LURA_MODEL", default_model).strip()
     gemini_model = os.environ.get("LURA_GEMINI_MODEL", model).strip()
+    local_config = AppConfig.load()
     database_path = Path(
         os.environ.get("LURA_API_DATABASE", str(ApiStore.default_path()))
     ).expanduser()
@@ -537,6 +572,8 @@ def main() -> int:
         provider=provider,
         gemini_api_key=configured_gemini_key,
         gemini_model=gemini_model,
+        tool_permissions=local_config.tool_permissions,
+        custom_app_commands=local_config.custom_app_commands,
     )
     print(f"Lura API listening on {host}:{port}")
     try:

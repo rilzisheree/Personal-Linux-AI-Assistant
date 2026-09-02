@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -27,6 +27,13 @@ DEFAULT_VOICE_VAD_THRESHOLD = 350
 DEFAULT_CONVERSATION_TIMEOUT = 8
 DEFAULT_CONVERSATION_TRANSITION_DELAY = 0.35
 DEFAULT_WAKE_WORD = "Lura"
+PERMISSION_POLICIES = ("default", "always_allow", "ask", "blocked")
+PERMISSION_POLICY_LABELS = {
+    "default": "Default safety",
+    "always_allow": "Always allow",
+    "ask": "Ask every time",
+    "blocked": "Block",
+}
 
 
 @dataclass
@@ -61,6 +68,8 @@ class AppConfig:
     theme: str = "obsidian"
     orb_intensity: int = 65
     animation_intensity: int = 70
+    tool_permissions: dict[str, str] = field(default_factory=dict)
+    custom_app_commands: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.ollama_url = self.ollama_url.strip().rstrip("/")
@@ -118,6 +127,14 @@ class AppConfig:
                 self.conversation_transition_delay.strip()
             )
         self.theme = self.theme.strip().lower()
+        self.tool_permissions = _normalized_settings_map(
+            self.tool_permissions,
+            allowed_values=PERMISSION_POLICIES,
+        )
+        self.custom_app_commands = _normalized_settings_map(
+            self.custom_app_commands,
+            max_value_length=500,
+        )
         self.validate()
 
     def validate(self) -> None:
@@ -219,6 +236,10 @@ class AppConfig:
             raise ValueError("TTS engine must be disabled or piper.")
         if not self.tts_voice:
             raise ValueError("TTS voice cannot be empty.")
+        if not isinstance(self.tool_permissions, dict):
+            raise ValueError("Tool permissions must be an object.")
+        if not isinstance(self.custom_app_commands, dict):
+            raise ValueError("Custom app commands must be an object.")
 
     @classmethod
     def defaults(cls) -> "AppConfig":
@@ -306,6 +327,8 @@ class AppConfig:
                 animation_intensity=_int_setting(
                     raw.get("animation_intensity", 70), 70
                 ),
+                tool_permissions=raw.get("tool_permissions", {}),
+                custom_app_commands=raw.get("custom_app_commands", {}),
             )
         except FileNotFoundError:
             return cls.defaults()
@@ -337,6 +360,30 @@ def _bool_setting(value: object, default: bool) -> bool:
         if normalized in {"false", "0", "no", "off"}:
             return False
     return default
+
+
+def _normalized_settings_map(
+    value: object,
+    *,
+    allowed_values: tuple[str, ...] | None = None,
+    max_value_length: int = 120,
+) -> dict[str, str]:
+    """Normalize user-editable string maps without trusting config contents."""
+
+    if not isinstance(value, dict):
+        return {}
+    normalized: dict[str, str] = {}
+    for raw_key, raw_value in value.items():
+        if not isinstance(raw_key, str) or not isinstance(raw_value, str):
+            continue
+        key = raw_key.strip()
+        item = raw_value.strip()
+        if not key or not item or len(key) > 120 or len(item) > max_value_length:
+            continue
+        if allowed_values is not None and item not in allowed_values:
+            continue
+        normalized[key] = item
+    return normalized
 
 
 def _int_setting(value: object, default: int) -> int:

@@ -30,6 +30,7 @@ class PermissionLevel(str, Enum):
     NORMAL = "normal"
     CONFIRMATION_REQUIRED = "confirmation_required"
     DANGEROUS = "dangerous"
+    BLOCKED = "blocked"
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,16 @@ _READ_ONLY_EXEC_COMMANDS = {
     "uptime",
     "cat",
 }
+_UNSAFE_LAUNCH_EXECUTABLES = {
+    "bash",
+    "dash",
+    "fish",
+    "sh",
+    "sudo",
+    "doas",
+    "zsh",
+}
+_LAUNCH_SHELL_OPERATORS = re.compile(r"[;&|<>]")
 _WINDOW_ADDRESS = re.compile(r"^0x[0-9a-f]+$", re.IGNORECASE)
 _WORKSPACE_NAME = re.compile(r"^[A-Za-z0-9_:-]+$")
 _MAX_SEARCH_RESULTS = 50
@@ -164,11 +175,23 @@ class ToolManager:
         memory_store: MemoryStore | None = None,
         profile_store: UserProfileStore | None = None,
         assistant_name: str = "Lura",
+        tool_permissions: dict[str, str] | None = None,
+        custom_app_commands: dict[str, str] | None = None,
     ) -> None:
         self.memory_store = memory_store or MemoryStore()
         self.profile_store = profile_store or UserProfileStore()
         self.assistant_name = assistant_name.strip() or "Lura"
         self.application_registry = ApplicationRegistry()
+        self.tool_permissions = {
+            key.strip(): value.strip()
+            for key, value in (tool_permissions or {}).items()
+            if isinstance(key, str) and isinstance(value, str) and key.strip() and value.strip()
+        }
+        self.custom_app_commands = {
+            key.strip(): value.strip()
+            for key, value in (custom_app_commands or {}).items()
+            if isinstance(key, str) and isinstance(value, str) and key.strip() and value.strip()
+        }
         self._definitions = {
             "open_app": ToolDefinition(
                 "open_app",
@@ -652,7 +675,8 @@ class ToolManager:
             return "open_website", {"url": url.group(0).rstrip(".,!?")}
 
         app_match = re.match(
-            r"^(?:please\s+)?(open|launch|start|run|close|quit|exit|stop)\s+"
+            r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
+            r"(open|launch|start|run|close|quit|exit|stop)\s+"
             r"(?:the\s+)?(.+)$",
             text,
             re.IGNORECASE,
@@ -660,6 +684,12 @@ class ToolManager:
         if app_match:
             action = app_match.group(1).casefold()
             app = re.sub(r"\s+(?:for me|please)$", "", app_match.group(2).strip(), flags=re.IGNORECASE)
+            app = re.sub(
+                r"\s+on\s+(?:my|the)\s+computer$",
+                "",
+                app,
+                flags=re.IGNORECASE,
+            ).strip()
             is_generic_instruction = bool(
                 re.match(
                     r"^(?:a|an|the)\s+(?:python\s+)?"
@@ -711,13 +741,27 @@ class ToolManager:
         definition = self._definitions.get(name)
         if definition is None:
             return PermissionLevel.DANGEROUS
+        policy = self.tool_permissions.get(name, "default")
+        if policy == "blocked":
+            return PermissionLevel.BLOCKED
         if name == "exec":
             command = arguments.get("command", "")
             if isinstance(command, str) and _DANGEROUS_COMMANDS.search(command):
-                return PermissionLevel.DANGEROUS
-            if isinstance(command, str) and _is_read_only_exec(command):
-                return PermissionLevel.SAFE
-        return definition.permission
+                base_permission = PermissionLevel.DANGEROUS
+            elif isinstance(command, str) and _is_read_only_exec(command):
+                base_permission = PermissionLevel.SAFE
+            else:
+                base_permission = definition.permission
+        else:
+            base_permission = definition.permission
+        if policy == "ask" and base_permission != PermissionLevel.DANGEROUS:
+            return PermissionLevel.CONFIRMATION_REQUIRED
+        # Explicit permission can remove the confirmation step from safe,
+        # normal, and confirmation-gated actions. Dangerous actions retain
+        # their confirmation gate even when the user chooses Always allow.
+        if policy == "always_allow" and base_permission == PermissionLevel.CONFIRMATION_REQUIRED:
+            return PermissionLevel.NORMAL
+        return base_permission
 
     def execute(self, name: str, arguments: dict, approved: bool = False) -> ToolCallResult:
         if not isinstance(arguments, dict):
@@ -726,6 +770,8 @@ class ToolManager:
         if definition is None:
             return ToolCallResult(False, f"Unknown tool: {name}")
         permission = self.permission_for(name, arguments)
+        if permission == PermissionLevel.BLOCKED:
+            return ToolCallResult(False, f"Permission blocked for {name}.")
         if permission not in {PermissionLevel.SAFE, PermissionLevel.NORMAL} and not approved:
             raise ToolConfirmationRequired(f"{name} requires user confirmation.")
         try:
@@ -737,10 +783,56 @@ class ToolManager:
         app = _string_argument(arguments, "app")
         return self.application_registry.resolve(app)
 
+    def _custom_application(self, app: str) -> tuple[str, tuple[str, ...]] | None:
+        configured = next(
+            (
+                (alias, command)
+                for alias, command in self.custom_app_commands.items()
+                if alias.casefold() == app.casefold()
+            ),
+            None,
+        )
+        if configured is None:
+            return None
+        alias, command = configured
+        if _LAUNCH_SHELL_OPERATORS.search(command) or "\x00" in command:
+            raise ValueError(
+                f"Custom launcher for {alias} contains shell operators. "
+                "Use a direct executable and arguments only."
+            )
+        try:
+            parts = tuple(shlex.split(command))
+        except ValueError as error:
+            raise ValueError(f"Custom launcher for {alias} could not be parsed: {error}") from error
+        if not parts:
+            raise ValueError(f"Custom launcher for {alias} is empty.")
+        executable = Path(parts[0]).name.casefold()
+        if executable in _UNSAFE_LAUNCH_EXECUTABLES:
+            raise ValueError(
+                f"Custom launcher for {alias} must start with the application executable, "
+                f"not {executable}."
+            )
+        if not shutil.which(parts[0]) and not (Path(parts[0]).is_file() and os.access(parts[0], os.X_OK)):
+            raise ValueError(
+                f"Custom launcher for {alias} is unavailable: {parts[0]}"
+            )
+        return alias, parts
+
     def _open_app(self, arguments: dict) -> ToolCallResult:
-        application = self._application(arguments)
+        app = _string_argument(arguments, "app")
+        custom_application = self._custom_application(app)
+        if custom_application is not None:
+            application_name, launch_command = custom_application
+            application_id = application_name
+            kind = "custom"
+        else:
+            application = self.application_registry.resolve(app)
+            application_name = application.name
+            application_id = application.app_id
+            launch_command = application.launch_command
+            kind = application.kind
         subprocess.Popen(
-            application.launch_command,
+            launch_command,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
@@ -751,10 +843,10 @@ class ToolManager:
             json.dumps(
                 {
                     "action": "open_app",
-                    "application": application.name,
-                    "application_id": application.app_id,
-                    "kind": application.kind,
-                    "command": list(application.launch_command),
+                    "application": application_name,
+                    "application_id": application_id,
+                    "kind": kind,
+                    "command": list(launch_command),
                     "status": "opened",
                 }
             ),

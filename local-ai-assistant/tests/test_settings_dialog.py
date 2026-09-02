@@ -64,6 +64,27 @@ class SettingsDialogTests(unittest.TestCase):
         )
         dialog.close()
 
+    def test_permissions_and_custom_launcher_round_trip(self) -> None:
+        dialog = SettingsDialog(
+            AppConfig(custom_app_commands={"Firefox": "firefox"})
+        )
+        dialog.permission_inputs["open_app"].setCurrentIndex(
+            dialog.permission_inputs["open_app"].findData("always_allow")
+        )
+        alias_input = dialog.custom_app_command_rows[0][1]
+        command_input = dialog.custom_app_command_rows[0][2]
+        alias_input.setText("Firefox")
+        command_input.setText("firefox --new-window")
+
+        updated = dialog.config()
+
+        self.assertEqual(updated.tool_permissions["open_app"], "always_allow")
+        self.assertEqual(
+            updated.custom_app_commands,
+            {"Firefox": "firefox --new-window"},
+        )
+        dialog.close()
+
 
 if __name__ == "__main__":
     unittest.main()
