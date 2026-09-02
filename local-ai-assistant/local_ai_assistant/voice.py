@@ -317,6 +317,32 @@ def conversation_end_requested(text: str) -> bool:
     return False
 
 
+REMINDER_STOP_PHRASES = (
+    ("stop",),
+    ("stop", "alarm"),
+    ("stop", "the", "alarm"),
+    ("stop", "this", "alarm"),
+    ("stop", "reminder"),
+    ("stop", "the", "reminder"),
+    ("stop", "this", "reminder"),
+    ("cancel", "alarm"),
+    ("cancel", "reminder"),
+    ("dismiss", "alarm"),
+    ("dismiss", "reminder"),
+)
+
+
+def reminder_stop_requested(text: str) -> bool:
+    """Recognize a short command that dismisses an active reminder alarm."""
+    tokens = _normalise_spoken_text(text)
+    if not tokens or len(tokens) > 5:
+        return False
+    return any(
+        len(tokens) == len(phrase) and tuple(tokens) == phrase
+        for phrase in REMINDER_STOP_PHRASES
+    )
+
+
 def _conversation_phrase_fuzzy_match(
     candidate: tuple[str, ...], phrase: tuple[str, ...]
 ) -> bool:

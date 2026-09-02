@@ -13,12 +13,32 @@ from local_ai_assistant.voice import VoiceError
 from local_ai_assistant.workers import (
     ChatWorker,
     DEFAULT_WAKE_WORD_WINDOW_SECONDS,
+    ReminderAlarmWorker,
     VoiceRecordWorker,
     VoiceTranscriptionWorker,
 )
 
 
 class VoiceWorkerTests(unittest.TestCase):
+    def test_reminder_alarm_repeats_until_cancelled(self) -> None:
+        service = Mock()
+        worker = ReminderAlarmWorker(service, "drink water", repeat_interval=0)
+        finished: list[bool] = []
+        worker.finished.connect(lambda: finished.append(True))
+
+        def speak(_text: str, _cancel_event) -> None:
+            worker.cancel()
+
+        service.speak.side_effect = speak
+        worker.run()
+
+        service.speak.assert_called_once()
+        self.assertEqual(
+            service.speak.call_args.args[0],
+            "Reminder. It's time to drink water.",
+        )
+        self.assertEqual(finished, [True])
+
     def test_wake_word_worker_uses_a_short_low_latency_window_by_default(self) -> None:
         from local_ai_assistant.workers import WakeWordWorker
 

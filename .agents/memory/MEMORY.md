@@ -11,3 +11,4 @@
 - [Authoritative local dispatch](authoritative-local-dispatch.md) — Explicit desktop actions and live machine facts must be selected/executed by the app before the LLM formats results.
 - [Native Firefox launcher session](firefox-launcher-session.md) — Custom Firefox URL launchers must inherit the active desktop session to reuse an existing browser.
 - [Current currency endpoint](current-currency-endpoint.md) — Use the public ExchangeRate-API v6 endpoint for live SAR-compatible conversion; legacy Frankfurter paths may redirect or 404.
+- [Qt reminder bridge](qt-reminder-bridge.md) — Background reminder callbacks must enter the Qt UI through queued signals rather than touching widgets from scheduler threads.

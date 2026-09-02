@@ -636,6 +636,41 @@ class SpeechWorker(QObject):
         self.service.cancel()
 
 
+class ReminderAlarmWorker(QObject):
+    """Repeat a spoken reminder until the user dismisses it."""
+
+    finished = Signal()
+    failed = Signal(str)
+
+    def __init__(
+        self,
+        service: VoiceService,
+        message: str,
+        repeat_interval: float = 6.0,
+    ) -> None:
+        super().__init__()
+        self.service = service
+        self.message = message
+        self.repeat_interval = repeat_interval
+        self.cancel_event = threading.Event()
+
+    @Slot()
+    def run(self) -> None:
+        alert = f"Reminder. It's time to {self.message}."
+        try:
+            while not self.cancel_event.is_set():
+                self.service.speak(alert, self.cancel_event)
+                if self.cancel_event.wait(self.repeat_interval):
+                    break
+            self.finished.emit()
+        except Exception as error:
+            self.failed.emit(str(error))
+
+    def cancel(self) -> None:
+        self.cancel_event.set()
+        self.service.cancel()
+
+
 class SpeechStreamWorker(QObject):
     """Synthesize and play sentence-sized chunks while Ollama is still running."""
 

@@ -17,6 +17,7 @@ from local_ai_assistant.voice import (
     contains_arabic_text,
     conversation_end_requested,
     is_no_speech_error,
+    reminder_stop_requested,
     remove_wake_word,
     find_wake_word,
     speech_text,
@@ -97,6 +98,19 @@ class VoiceServiceTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertTrue(conversation_end_requested(phrase))
         self.assertTrue(conversation_end_requested("Okay, goodbye"))
+
+    def test_reminder_stop_phrases_are_short_and_explicit(self) -> None:
+        for phrase in (
+            "stop",
+            "stop alarm",
+            "stop the alarm",
+            "cancel reminder",
+            "dismiss alarm",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertTrue(reminder_stop_requested(phrase))
+        self.assertFalse(reminder_stop_requested("stop the music"))
+        self.assertFalse(reminder_stop_requested("please remind me tomorrow"))
         self.assertTrue(conversation_end_requested("go to sleep now"))
         self.assertTrue(conversation_end_requested("please stop listening"))
         self.assertTrue(conversation_end_requested("I am done now"))

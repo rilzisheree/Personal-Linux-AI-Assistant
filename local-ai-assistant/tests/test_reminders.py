@@ -55,6 +55,17 @@ class ReminderServiceTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             service.schedule("Drink water", 0)
 
+    def test_due_listener_is_called_and_can_be_removed(self) -> None:
+        listener = Mock()
+        service = ReminderService(start_scheduler=False, on_due=listener)
+        reminder = Reminder("abc", "Drink water", 1234.5)
+
+        service._emit_due(reminder)
+        service.remove_due_listener(listener)
+        service._emit_due(reminder)
+
+        listener.assert_called_once_with(reminder)
+
 
 if __name__ == "__main__":
     unittest.main()

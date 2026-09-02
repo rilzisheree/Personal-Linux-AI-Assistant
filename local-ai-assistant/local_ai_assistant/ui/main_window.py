@@ -38,6 +38,7 @@ from ..profile import UserProfileStore
 from ..ollama import ChatMessage, OllamaClient
 from ..performance import LatencyTrace
 from ..prompting import build_system_prompt
+from ..reminders import Reminder, default_reminder_service
 from ..telegram_bot import (
     TelegramConfig,
     load_telegram_token,
@@ -50,11 +51,13 @@ from ..voice import (
     confirmation_decision,
     conversation_end_requested,
     is_no_speech_error,
+    reminder_stop_requested,
     speech_text,
 )
 from ..workers import (
     ChatWorker,
     ConnectionWorker,
+    ReminderAlarmWorker,
     SpeechWorker,
     SpeechStreamWorker,
     TelegramBotWorker,
@@ -81,12 +84,15 @@ class PendingConfirmation:
 
 
 class MainWindow(QMainWindow):
+    reminder_due = Signal(object)
+
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
         self.config = config
         self.client = self._create_ai_client(config)
         self.service = RoutedAssistantService(self.client)
         self.voice_service = VoiceService(config)
+        self.reminder_service = default_reminder_service()
         self.memory_store = MemoryStore()
         self.profile_store = UserProfileStore()
         self.tool_manager = ToolManager(
@@ -120,6 +126,12 @@ class MainWindow(QMainWindow):
         self.wake_word_worker: WakeWordWorker | None = None
         self.confirmation_speech_thread: QThread | None = None
         self.confirmation_speech_worker: SpeechWorker | None = None
+        self.reminder_alarm_thread: QThread | None = None
+        self.reminder_alarm_worker: ReminderAlarmWorker | None = None
+        self._reminder_alarm_queue: list[Reminder] = []
+        self._reminder_alarm_current: Reminder | None = None
+        self._reminder_alarm_awaiting_command = False
+        self._reminder_alarm_stop_requested = False
         self.speech_thread: QThread | None = None
         self.speech_worker: SpeechStreamWorker | None = None
         self.last_voice_error: str | None = None
@@ -160,6 +172,8 @@ class MainWindow(QMainWindow):
         self._conversation_timeout_timer.timeout.connect(
             self._conversation_timed_out
         )
+        self.reminder_due.connect(self._reminder_due)
+        self.reminder_service.add_due_listener(self._reminder_due_from_scheduler)
 
         self.setWindowTitle("Lura")
         self.resize(1280, 760)
@@ -502,6 +516,14 @@ class MainWindow(QMainWindow):
     def _send_message(self) -> None:
         prompt = self.message_input.text().strip()
         if not prompt:
+            return
+        if (
+            self._reminder_alarm_current is not None
+            or self._reminder_alarm_queue
+        ) and reminder_stop_requested(prompt):
+            self.message_input.clear()
+            self._stop_reminder_alarm()
+            self._set_voice_status("REMINDER ALARM STOPPED")
             return
         if self._pending_confirmation is not None:
             decision = confirmation_decision(prompt)
@@ -856,7 +878,7 @@ class MainWindow(QMainWindow):
         """Listen for a user barge-in while local TTS is playing."""
         if (
             not self.config.voice_input_enabled
-            or self.speech_worker is None
+            or (self.speech_worker is None and self.reminder_alarm_worker is None)
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
             or self.confirmation_speech_worker is not None
@@ -905,6 +927,9 @@ class MainWindow(QMainWindow):
             self.chat_worker.cancel()
         if self.speech_worker is not None:
             self.speech_worker.cancel()
+        if self.reminder_alarm_worker is not None:
+            self._reminder_alarm_awaiting_command = True
+            self.reminder_alarm_worker.cancel()
         self._set_voice_state("listening")
         self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
         self._sync_stop_button()
@@ -1066,6 +1091,17 @@ class MainWindow(QMainWindow):
         self.voice_record_worker = None
         self.voice_record_thread = None
         self._sync_stop_button()
+        if (
+            self._reminder_alarm_current is not None
+            and not self._reminder_alarm_awaiting_command
+            and not self._barge_in_active
+            and self.reminder_alarm_worker is not None
+            and not self._quitting
+        ):
+            self._set_voice_state("speaking")
+            self._set_voice_status("REMINDER ACTIVE // SAY STOP")
+            QTimer.singleShot(250, self._start_interruption_listener)
+            return
         if self.voice_transcription_worker is None:
             self._set_voice_idle()
             if self.last_voice_error:
@@ -1103,6 +1139,23 @@ class MainWindow(QMainWindow):
             self._set_voice_idle()
             self._resolve_pending_confirmation(confirmation_decision(text))
             return
+        if getattr(self, "_reminder_alarm_awaiting_command", False):
+            self._reminder_alarm_awaiting_command = False
+            current = getattr(self, "_reminder_alarm_current", None)
+            if reminder_stop_requested(text):
+                self._stop_reminder_alarm()
+                self._set_voice_status("REMINDER ALARM STOPPED")
+            else:
+                if (
+                    current is not None
+                    and not self._reminder_alarm_stop_requested
+                    and current not in self._reminder_alarm_queue
+                ):
+                    self._reminder_alarm_queue.insert(0, current)
+                self._reminder_alarm_current = None
+                self._set_voice_status("REMINDER ACTIVE // SAY STOP")
+                QTimer.singleShot(0, self._start_next_reminder_alarm)
+            return
         self._set_voice_idle()
         if self._conversation_active and conversation_end_requested(text):
             self._wake_command_recording = False
@@ -1133,6 +1186,21 @@ class MainWindow(QMainWindow):
             self._set_voice_idle()
             self._set_voice_status("ACTION CANCELLED // NO VALID VOICE RESPONSE")
             return
+        if self._reminder_alarm_awaiting_command:
+            current = self._reminder_alarm_current
+            self._reminder_alarm_awaiting_command = False
+            self._reminder_alarm_current = None
+            if (
+                current is not None
+                and not self._reminder_alarm_stop_requested
+                and current not in self._reminder_alarm_queue
+            ):
+                self._reminder_alarm_queue.insert(0, current)
+            self._set_voice_status("REMINDER ACTIVE // SAY STOP")
+            if self.voice_transcription_thread is not None:
+                self.voice_transcription_thread.quit()
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
+            return
         was_in_conversation = self._conversation_active
         if was_in_conversation:
             if is_no_speech_error(message):
@@ -1160,6 +1228,8 @@ class MainWindow(QMainWindow):
         self.voice_transcription_worker = None
         self.voice_transcription_thread = None
         self._sync_stop_button()
+        if self._reminder_alarm_queue and not self._quitting:
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
         if (
             self._wake_restart_pending
             and self.config.wake_word_enabled
@@ -1179,6 +1249,10 @@ class MainWindow(QMainWindow):
         if self._barge_in_active:
             self._set_voice_state("listening")
             self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
+            return
+        if self._reminder_alarm_current is not None:
+            self._set_voice_state("speaking")
+            self._set_voice_status("REMINDER ACTIVE // SAY STOP")
             return
         self.mic_button.setText("MIC")
         self.mic_button.setProperty("recording", False)
@@ -1219,6 +1293,8 @@ class MainWindow(QMainWindow):
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
             or self.chat_worker is not None
+            or self.reminder_alarm_worker is not None
+            or self._reminder_alarm_queue
             or self.speech_worker is not None
             or self._conversation_active
         ):
@@ -1301,7 +1377,9 @@ class MainWindow(QMainWindow):
             self.wake_word_thread.deleteLater()
         self.wake_word_worker = None
         self.wake_word_thread = None
-        if self._wake_restart_pending and not self._quitting:
+        if self._reminder_alarm_queue and not self._quitting:
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
+        elif self._wake_restart_pending and not self._quitting:
             self._wake_restart_pending = False
             QTimer.singleShot(0, self._start_wake_word_listener)
         elif self._manual_recording_pending:
@@ -1348,6 +1426,13 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, lambda: self._start_recording(automatic=True))
 
     def _send_voice_command(self, command: str) -> None:
+        if (
+            self._reminder_alarm_current is not None
+            or self._reminder_alarm_queue
+        ) and reminder_stop_requested(command):
+            self._stop_reminder_alarm()
+            self._set_voice_status("REMINDER ALARM STOPPED")
+            return
         if not command.strip() or self.chat_worker is not None:
             return
         self.message_input.setText(command)
@@ -1449,6 +1534,109 @@ class MainWindow(QMainWindow):
         self._sync_stop_button()
         return self.speech_worker
 
+    def _reminder_due_from_scheduler(self, reminder: Reminder) -> None:
+        """Bridge the scheduler thread to the Qt GUI thread."""
+        self.reminder_due.emit(reminder)
+
+    @Slot(object)
+    def _reminder_due(self, reminder: Reminder) -> None:
+        if self._quitting or not isinstance(reminder, Reminder):
+            return
+        if reminder not in self._reminder_alarm_queue:
+            self._reminder_alarm_queue.append(reminder)
+        self._set_voice_status(f"REMINDER DUE // {reminder.message}")
+        if self.wake_word_worker is not None:
+            self._stop_wake_word_listener()
+        self._start_next_reminder_alarm()
+
+    def _start_next_reminder_alarm(self) -> None:
+        if (
+            self._quitting
+            or self.reminder_alarm_worker is not None
+            or not self._reminder_alarm_queue
+            or self.chat_worker is not None
+            or self.speech_worker is not None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+            or self.confirmation_speech_worker is not None
+        ):
+            return
+        if self.wake_word_worker is not None:
+            self._stop_wake_word_listener()
+            return
+        self._reminder_alarm_current = self._reminder_alarm_queue.pop(0)
+        self._reminder_alarm_stop_requested = False
+        self._reminder_alarm_awaiting_command = False
+        self.reminder_alarm_thread = QThread(self)
+        self.reminder_alarm_worker = ReminderAlarmWorker(
+            self.voice_service,
+            self._reminder_alarm_current.message,
+        )
+        self.reminder_alarm_worker.moveToThread(self.reminder_alarm_thread)
+        self.reminder_alarm_thread.started.connect(self.reminder_alarm_worker.run)
+        self.reminder_alarm_worker.failed.connect(self._reminder_alarm_failed)
+        self.reminder_alarm_worker.finished.connect(self.reminder_alarm_thread.quit)
+        self.reminder_alarm_worker.failed.connect(self.reminder_alarm_thread.quit)
+        self.reminder_alarm_thread.finished.connect(
+            self._reminder_alarm_thread_finished
+        )
+        self.reminder_alarm_thread.start()
+        self._set_voice_state("speaking")
+        self._set_voice_status(
+            f"REMINDER ALARM // {self._reminder_alarm_current.message} // SAY STOP"
+        )
+        self._sync_stop_button()
+        if self.config.voice_input_enabled:
+            QTimer.singleShot(0, self._start_interruption_listener)
+
+    @Slot(str)
+    def _reminder_alarm_failed(self, message: str) -> None:
+        self._reminder_alarm_stop_requested = True
+        self._reminder_alarm_current = None
+        self._reminder_alarm_queue.clear()
+        self._stop_interruption_listener(discard=True)
+        self._set_voice_state("error")
+        self._set_voice_status(f"REMINDER VOICE ERROR // {message[:220]}")
+        self.status_label.setText("Reminder voice unavailable")
+        self.status_label.setToolTip(message)
+
+    def _stop_reminder_alarm(self) -> None:
+        self._reminder_alarm_stop_requested = True
+        self._reminder_alarm_awaiting_command = False
+        self._reminder_alarm_queue.clear()
+        self._reminder_alarm_current = None
+        if self.reminder_alarm_worker is not None:
+            self.reminder_alarm_worker.cancel()
+        if self._interruption_recording:
+            self._discard_interruption_recording = True
+            if self.voice_record_worker is not None:
+                self.voice_record_worker.stop()
+        self._sync_stop_button()
+
+    def _reminder_alarm_thread_finished(self) -> None:
+        if self.reminder_alarm_worker:
+            self.reminder_alarm_worker.deleteLater()
+        if self.reminder_alarm_thread:
+            self.reminder_alarm_thread.deleteLater()
+        self.reminder_alarm_worker = None
+        self.reminder_alarm_thread = None
+        if (
+            not self._reminder_alarm_awaiting_command
+            and self._reminder_alarm_stop_requested
+        ):
+            self._reminder_alarm_current = None
+        self._sync_stop_button()
+        if self._reminder_alarm_queue and not self._quitting:
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
+        elif (
+            self._reminder_alarm_current is None
+            and self.voice_record_worker is None
+            and not self._quitting
+        ):
+            self._set_voice_state("idle")
+            self._set_voice_status("REMINDER ALARM STOPPED")
+            self._start_wake_word_listener()
+
     def _queue_speech_chunk(self, text: str, *, force_voice: bool = False) -> None:
         if self._latency_trace is not None:
             self._latency_trace.mark("first_sentence_available")
@@ -1541,6 +1729,9 @@ class MainWindow(QMainWindow):
         self.speech_worker = None
         self.speech_thread = None
         self._sync_stop_button()
+        if self._reminder_alarm_queue:
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
+            return
         if self._barge_in_active:
             return
         if self.voice_record_worker is not None:
@@ -1593,6 +1784,9 @@ class MainWindow(QMainWindow):
         self.active_assistant_bubble = None
         self.active_response = ""
         self._set_voice_idle()
+        if self._reminder_alarm_queue:
+            QTimer.singleShot(0, self._start_next_reminder_alarm)
+            return
         if self._conversation_active:
             if self.speech_worker is None:
                 self._schedule_next_conversation_turn()
@@ -1620,6 +1814,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _stop_generation(self) -> None:
+        if self._reminder_alarm_current is not None or self._reminder_alarm_queue:
+            self._stop_reminder_alarm()
+            self._set_voice_status("REMINDER ALARM STOPPED")
         if self._pending_confirmation is not None:
             self._resolve_pending_confirmation(None)
         if self.confirmation_speech_worker is not None:
@@ -1653,9 +1850,11 @@ class MainWindow(QMainWindow):
                 self.voice_record_worker,
                 self.wake_word_worker,
                 self.confirmation_speech_worker,
+                self.reminder_alarm_worker,
             )
         )
         active = active or self._conversation_active
+        active = active or bool(self._reminder_alarm_queue)
         self.stop_button.setEnabled(active)
         self.stop_button.setVisible(active)
         if self.chat_worker is not None:
@@ -2095,6 +2294,8 @@ class MainWindow(QMainWindow):
 
         if self.status_notification is not None:
             self.status_notification.hide()
+        self.reminder_service.remove_due_listener(self._reminder_due_from_scheduler)
+        self._stop_reminder_alarm()
         threads = (
             (self.chat_thread, self.chat_worker),
             (self.connection_thread, self.connection_worker),
@@ -2102,6 +2303,7 @@ class MainWindow(QMainWindow):
             (self.voice_transcription_thread, self.voice_transcription_worker),
             (self.wake_word_thread, self.wake_word_worker),
             (self.confirmation_speech_thread, self.confirmation_speech_worker),
+            (self.reminder_alarm_thread, self.reminder_alarm_worker),
             (self.speech_thread, self.speech_worker),
             (self.telegram_thread, self.telegram_worker),
         )

@@ -14,6 +14,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 
 LOGGER = logging.getLogger("lura.reminders")
@@ -130,6 +131,7 @@ class ReminderService:
         *,
         clock=time.time,
         start_scheduler: bool = True,
+        on_due: Callable[[Reminder], None] | None = None,
     ) -> None:
         self.store = store or ReminderStore()
         self._notify_send = (
@@ -138,6 +140,10 @@ class ReminderService:
         self._clock = clock
         self._condition = threading.Condition()
         self._stop_event = threading.Event()
+        self._listener_lock = threading.Lock()
+        self._due_listeners: list[Callable[[Reminder], None]] = []
+        if on_due is not None:
+            self._due_listeners.append(on_due)
         self._thread: threading.Thread | None = None
         if start_scheduler:
             self._thread = threading.Thread(
@@ -187,6 +193,7 @@ class ReminderService:
                 for reminder in due:
                     self.store.remove(reminder.reminder_id)
                     self._notify(reminder)
+                    self._emit_due(reminder)
                 continue
 
             wait_seconds = 60.0
@@ -194,6 +201,30 @@ class ReminderService:
                 wait_seconds = max(0.1, min(reminder.due_at for reminder in reminders) - now)
             with self._condition:
                 self._condition.wait(timeout=wait_seconds)
+
+    def add_due_listener(self, listener: Callable[[Reminder], None]) -> None:
+        """Register a callback invoked when a reminder becomes due."""
+        with self._listener_lock:
+            if listener not in self._due_listeners:
+                self._due_listeners.append(listener)
+
+    def remove_due_listener(self, listener: Callable[[Reminder], None]) -> None:
+        """Remove a previously registered due callback."""
+        with self._listener_lock:
+            self._due_listeners = [
+                registered
+                for registered in self._due_listeners
+                if registered != listener
+            ]
+
+    def _emit_due(self, reminder: Reminder) -> None:
+        with self._listener_lock:
+            listeners = tuple(self._due_listeners)
+        for listener in listeners:
+            try:
+                listener(reminder)
+            except Exception:
+                LOGGER.exception("Reminder due listener failed")
 
     def _notify(self, reminder: Reminder) -> None:
         if not self._notify_send:
