@@ -83,6 +83,11 @@ class RemoteSearchOllamaClient:
         assert "web_search" in tool_names
         assert "search_news" in tool_names
         assert "exec" not in tool_names
+        if messages[-1].role == "tool":
+            assert messages[-1].name == "web_search"
+            yield StreamEvent(content="Here are the latest results.")
+            yield StreamEvent(done=True)
+            return
         if type(self).calls == 0:
             type(self).calls += 1
             yield StreamEvent(
@@ -326,7 +331,7 @@ class ApiTests(unittest.TestCase):
         status, payload, _ = self.request(
             "POST",
             f"/api/conversations/{conversation_id}/messages",
-            {"content": "Search the web for the latest AI news."},
+            {"content": "Search the web for AI announcements."},
             cookie=cookie,
         )
         self.assertEqual(status, 200)
@@ -337,8 +342,7 @@ class ApiTests(unittest.TestCase):
         self.assertIn('"message":"Here are the latest results."', payload)
         execute.assert_called_once_with(
             "web_search",
-            {"query": "latest AI news", "max_results": 3},
-            approved=True,
+            {"query": "AI announcements"},
         )
 
     def test_invalid_password_and_account_registration_are_rejected(self) -> None:
