@@ -7,3 +7,4 @@
 - [Desktop Ollama-only runtime](ollama-only-desktop.md) — The native desktop App must use Ollama only; hosted-provider support is isolated to the separate web/API companion.
 - [Ollama Gemma adapter import](ollama-gemma-adapter.md) — Gemma 3 may run in Ollama while direct LoRA adapter import remains unsupported; merge and export to GGUF.
 - [Workspace pnpm bootstrap](pnpm-bootstrap.md) — This workspace’s pnpm shim may fail with EAGAIN while bootstrapping the package-manager version, independent of app code.
+- [Python lock repair](uv-lock-pyside.md) — An imported uv.lock can omit the root PySide6 package record while retaining its addon records, blocking dependency installs.

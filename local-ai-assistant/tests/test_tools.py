@@ -59,6 +59,16 @@ class ToolManagerTests(unittest.TestCase):
         with self.assertRaises(ToolConfirmationRequired):
             self.manager.execute("exec", {"command": "printf should-not-run"})
 
+    def test_legacy_read_only_commands_are_safe(self) -> None:
+        self.assertEqual(
+            self.manager.permission_for("exec", {"command": "free -h"}),
+            PermissionLevel.SAFE,
+        )
+        self.assertEqual(
+            self.manager.permission_for("exec", {"command": "flatpak list --app"}),
+            PermissionLevel.SAFE,
+        )
+
     def test_destructive_commands_are_classified_as_dangerous(self) -> None:
         self.assertEqual(
             self.manager.permission_for("exec", {"command": "rm -rf ~/Downloads/test"}),

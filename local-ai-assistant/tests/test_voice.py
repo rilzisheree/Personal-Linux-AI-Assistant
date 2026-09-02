@@ -18,6 +18,7 @@ from local_ai_assistant.voice import (
     is_no_speech_error,
     remove_wake_word,
     find_wake_word,
+    speech_text,
     wake_word_matches,
 )
 
@@ -27,6 +28,12 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertTrue(is_no_speech_error("Whisper failed: no speech was detected"))
         self.assertTrue(is_no_speech_error("silence detected"))
         self.assertFalse(is_no_speech_error("model file is missing"))
+
+    def test_speech_text_removes_non_speech_markup(self) -> None:
+        self.assertEqual(
+            speech_text("**GPU** is at 42% 🔥\n`nvidia-smi`"),
+            "GPU is at 42% nvidia-smi",
+        )
 
     def test_speech_chunker_emits_complete_sentences_and_flushes_remainder(self) -> None:
         chunker = SpeechChunker()
@@ -38,14 +45,14 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertTrue(wake_word_matches("hey Laura", "Lura"))
         self.assertTrue(wake_word_matches("Lara", "Lura"))
         self.assertFalse(wake_word_matches("coloration", "Lura"))
-        self.assertEqual(remove_wake_word("Laura, what's up?", "Lura"), "what's up")
+        self.assertEqual(remove_wake_word("Laura, what's up?", "Lura"), "what's up?")
         self.assertEqual(find_wake_word("Luda, what's up?", ("Luna", "Luda")), "Luda")
         self.assertEqual(
             remove_wake_word(
                 "Luda, what's up?",
                 find_wake_word("Luda, what's up?", ("Luna", "Luda")) or "",
             ),
-            "what's up",
+            "what's up?",
         )
 
     def test_conversation_end_phrases_are_conservative(self) -> None:

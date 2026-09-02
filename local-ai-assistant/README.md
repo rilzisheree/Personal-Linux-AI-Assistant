@@ -261,10 +261,16 @@ Settings are stored locally at:
 ~/.config/local-ai-assistant/config.json
 ```
 
-The native desktop App stores only Ollama and voice preferences locally. It has
-no cloud provider settings and never asks for or stores an AI API key. The
-separate Railway/web API companion may use `GEMINI_API_KEY` as documented above;
-that path is independent of the native desktop App.
+The native desktop App stores Ollama, voice, and editable user-profile
+preferences locally. The profile is kept separately at:
+
+```text
+~/.config/local-ai-assistant/user_profile.json
+```
+
+It has no cloud provider settings and never asks for or stores an AI API key.
+The separate Railway/web API companion may use `GEMINI_API_KEY` as documented
+above; that path is independent of the native desktop App.
 Conversation history is stored in SQLite at
 `$XDG_DATA_HOME/local-ai-assistant/conversations.db`, or
 `~/.local/share/local-ai-assistant/conversations.db` when `XDG_DATA_HOME` is

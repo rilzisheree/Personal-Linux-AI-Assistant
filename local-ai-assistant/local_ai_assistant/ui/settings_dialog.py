@@ -29,6 +29,7 @@ from ..config import (
     TTS_ENGINES,
     TTS_VOICE_PRESETS,
 )
+from ..profile import DEFAULT_USER_PROFILE
 from ..voice import VoiceService
 
 
@@ -40,6 +41,7 @@ class SettingsDialog(QDialog):
         config: AppConfig,
         parent=None,
         *,
+        user_profile: dict[str, str] | None = None,
         telegram_token_present: bool = False,
     ) -> None:
         super().__init__(parent)
@@ -47,6 +49,15 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Lura // Settings")
         self.setMinimumSize(680, 540)
         self.resize(780, 700)
+        self._user_profile = dict(DEFAULT_USER_PROFILE)
+        if isinstance(user_profile, dict):
+            self._user_profile.update(
+                {
+                    key: value.strip()
+                    for key, value in user_profile.items()
+                    if key in DEFAULT_USER_PROFILE and isinstance(value, str)
+                }
+            )
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 22)
@@ -195,6 +206,33 @@ class SettingsDialog(QDialog):
         form.addRow("Conversation timeout", self.conversation_timeout)
         form.addRow("Voice transition delay", self.conversation_transition_delay)
         layout.addWidget(group)
+
+        profile_group, profile_form = self._group("USER PROFILE")
+        profile_note = QLabel(
+            "These local facts help Lura address you consistently. They are stored "
+            "separately from live system information."
+        )
+        profile_note.setObjectName("settingsHint")
+        profile_note.setWordWrap(True)
+        profile_form.addRow("", profile_note)
+        self.profile_name_input = QLineEdit(self._user_profile["name"])
+        self.profile_name_input.setPlaceholderText("Your name")
+        self.profile_owner_input = QLineEdit(self._user_profile["owner"])
+        self.profile_owner_input.setPlaceholderText("the current local user")
+        self.profile_address_input = QLineEdit(self._user_profile["preferred_address"])
+        self.profile_address_input.setPlaceholderText("Sir")
+        self.profile_role_input = QLineEdit(self._user_profile["assistant_role"])
+        self.profile_role_input.setPlaceholderText("Lura is my personal AI assistant.")
+        self.profile_install_input = QLineEdit(
+            self._user_profile["application_install_preference"]
+        )
+        self.profile_install_input.setPlaceholderText("Flatpak")
+        profile_form.addRow("Name", self.profile_name_input)
+        profile_form.addRow("Owner", self.profile_owner_input)
+        profile_form.addRow("Address me as", self.profile_address_input)
+        profile_form.addRow("Assistant role", self.profile_role_input)
+        profile_form.addRow("App install preference", self.profile_install_input)
+        layout.addWidget(profile_group)
 
         appearance, appearance_form = self._group("APPEARANCE")
         self.theme_input = QComboBox()
@@ -466,6 +504,15 @@ class SettingsDialog(QDialog):
 
     def telegram_token(self) -> str:
         return self.telegram_token_input.text().strip()
+
+    def user_profile(self) -> dict[str, str]:
+        return {
+            "name": self.profile_name_input.text(),
+            "owner": self.profile_owner_input.text(),
+            "preferred_address": self.profile_address_input.text(),
+            "assistant_role": self.profile_role_input.text(),
+            "application_install_preference": self.profile_install_input.text(),
+        }
 
     def _selected_voice(self) -> str:
         return str(self.tts_voice_input.currentData())

@@ -223,7 +223,9 @@ def remove_wake_word(text: str, wake_word: str, threshold: float = 0.72) -> str 
         score = SequenceMatcher(None, " ".join(expected), " ".join(candidate)).ratio()
         if score >= threshold:
             end = matches[start + width - 1].end()
-            return text[end:].strip(" ,.!?:;-")
+            # Remove only separators before the command. Preserve trailing
+            # punctuation because it can be meaningful to the assistant.
+            return text[end:].lstrip(" ,.!?:;-").strip()
     return None
 
 
@@ -764,7 +766,7 @@ class VoiceService:
     ) -> None:
         if self.config.tts_engine == "disabled":
             return
-        text = text.strip()
+        text = speech_text(text)
         if not text:
             return
         if len(text) > 10_000:

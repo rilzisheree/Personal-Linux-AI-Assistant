@@ -68,6 +68,17 @@ _DANGEROUS_COMMANDS = re.compile(
     r"(\s|$)|\b(rm\s+-rf|rm\s+-fr)\b",
     re.IGNORECASE,
 )
+_READ_ONLY_EXEC_COMMANDS = {
+    "df",
+    "free",
+    "lscpu",
+    "ls",
+    "nvidia-smi",
+    "ps",
+    "uname",
+    "uptime",
+    "cat",
+}
 _WINDOW_ADDRESS = re.compile(r"^0x[0-9a-f]+$", re.IGNORECASE)
 _WORKSPACE_NAME = re.compile(r"^[A-Za-z0-9_:-]+$")
 _MAX_SEARCH_RESULTS = 50
@@ -589,6 +600,8 @@ class ToolManager:
             command = arguments.get("command", "")
             if isinstance(command, str) and _DANGEROUS_COMMANDS.search(command):
                 return PermissionLevel.DANGEROUS
+            if isinstance(command, str) and _is_read_only_exec(command):
+                return PermissionLevel.SAFE
         return definition.permission
 
     def execute(self, name: str, arguments: dict, approved: bool = False) -> ToolCallResult:
@@ -1551,6 +1564,27 @@ def _integer_argument(arguments: dict, name: str, minimum: int, maximum: int) ->
     if isinstance(value, bool) or not isinstance(value, int) or not minimum <= value <= maximum:
         raise ValueError(f"Tool argument '{name}' must be an integer from {minimum} to {maximum}.")
     return value
+
+
+def _is_read_only_exec(command: str) -> bool:
+    """Recognize only the small legacy read-only command allowlist."""
+
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return False
+    if not parts or any(part in {";", "&&", "||", "|", ">", ">>", "<"} for part in parts):
+        return False
+    executable = Path(parts[0]).name
+    if executable in _READ_ONLY_EXEC_COMMANDS:
+        return True
+    if executable != "flatpak":
+        return False
+    # Options may appear before the subcommand, but only `flatpak list` is
+    # read-only. Install, uninstall, run, and other lifecycle commands remain
+    # behind the normal confirmation gate.
+    subcommands = [part for part in parts[1:] if not part.startswith("-")]
+    return bool(subcommands) and subcommands[0] == "list"
 
 
 def _file_path(arguments: dict, name: str) -> Path:

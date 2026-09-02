@@ -468,9 +468,11 @@ class MainWindow(QMainWindow):
         if self._pending_confirmation is not None:
             decision = confirmation_decision(prompt)
             self.message_input.clear()
+            # Any response other than a short, unambiguous yes/no cancels the
+            # exact pending call. It must not become a normal chat message
+            # while the worker is waiting for authorization.
             self._resolve_pending_confirmation(decision)
-            if decision is not None:
-                return
+            return
         if self.chat_worker is not None:
             return
         model = self.model_selector.currentText().strip() or self._configured_model(self.config)
@@ -727,7 +729,10 @@ class MainWindow(QMainWindow):
             or self.voice_record_worker is not None
             or self.voice_transcription_worker is not None
             or (self.wake_word_worker is not None and automatic)
-            or (self._pending_confirmation is not None and not confirmation)
+            or (
+                getattr(self, "_pending_confirmation", None) is not None
+                and not confirmation
+            )
         ):
             self._set_orb_state("idle")
             return
@@ -1022,17 +1027,21 @@ class MainWindow(QMainWindow):
     @Slot()
     def _wake_word_detected(self, command: str = "") -> None:
         if (
-            self._wake_command_pending
-            or self._manual_recording_pending
-            or self.voice_record_worker is not None
-            or self.voice_transcription_worker is not None
-            or self.chat_worker is not None
+            getattr(self, "_wake_command_pending", False)
+            or getattr(self, "_manual_recording_pending", False)
+            or getattr(self, "voice_record_worker", None) is not None
+            or getattr(self, "voice_transcription_worker", None) is not None
+            or getattr(self, "chat_worker", None) is not None
         ):
             return
         LOGGER.info("[WakeWord] Callback fired; starting assistant handoff")
         self._set_voice_status("WAKE WORD DETECTED // LISTENING…")
         self._conversation_active = bool(
-            getattr(self.config, "continuous_conversation_enabled", False)
+            getattr(
+                getattr(self, "config", None),
+                "continuous_conversation_enabled",
+                False,
+            )
         )
         self._wake_command_text = command.strip()
         self._wake_command_pending = True
@@ -1576,6 +1585,7 @@ class MainWindow(QMainWindow):
         dialog = SettingsDialog(
             self.config,
             self,
+            user_profile=self.profile_store.profile(),
             telegram_token_present=bool(load_telegram_token()),
         )
         if dialog.exec() != SettingsDialog.DialogCode.Accepted:
@@ -1595,6 +1605,7 @@ class MainWindow(QMainWindow):
                 save_telegram_token(token)
             set_autostart_enabled(next_config.autostart_enabled)
             next_config.save()
+            self.profile_store.update(dialog.user_profile())
         except (OSError, ValueError, TypeError) as error:
             QMessageBox.warning(
                 self,

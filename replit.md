@@ -29,6 +29,9 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   reuses VAD/STT/TTS, pauses the microphone during TTS, supports explicit
   goodbye phrases and manual Stop, and returns to wake-word listening after
   its timeout.
+- Settings includes an editable User Profile section for the user's name,
+  preferred address, assistant role, owner label, and application-install
+  preference. These values are saved separately from live system status.
 
 ## Stack
 
@@ -108,7 +111,8 @@ or hosted Google Gemini and executes a small set of permission-gated tools.
   cookie-authenticated HTTP/SSE API and intentionally does not expose desktop
   control tools remotely.
 - Arbitrary shell execution is not available to the model. The legacy `exec`
-  seam accepts only a small read-only command allowlist, and the structured
+  seam accepts only a small read-only command allowlist without approval;
+  mutating or unknown commands remain confirmation-gated, and the structured
   tools are the preferred interface.
 - The Gemini provider is text/SSE based. The reference Mark-LI project uses
   Gemini Live for realtime audio, which is a different API and is not used by
