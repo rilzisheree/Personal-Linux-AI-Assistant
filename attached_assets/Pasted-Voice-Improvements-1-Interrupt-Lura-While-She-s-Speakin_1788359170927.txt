@@ -1,0 +1,83 @@
+Voice Improvements
+
+1. Interrupt Lura While She's Speaking
+
+I want to be able to interrupt Lura naturally while she is talking.
+
+For example:
+
+Lura: “The weather today is—”
+
+Me: “Stop.”
+
+As soon as I start speaking, Lura should:
+
+Immediately stop/interrupt her current speech
+Stop the current TTS playback
+Switch back into listening mode
+Process what I said
+Continue the conversation normally
+
+I should NOT have to wait for Lura to finish speaking.
+
+This should feel natural and responsive.
+
+2. Fix Voice Activity Detection (VAD)
+
+There is currently a problem with the microphone/VAD.
+
+Lura seems to detect very tiny sounds or background noise as if I'm speaking.
+
+Because of this, after I finish talking, I sometimes have to manually mute my microphone so Lura doesn't think I'm still talking.
+
+I do NOT want that.
+
+Improve the VAD so that it can distinguish between:
+
+Actual human speech
+Short random noises
+Keyboard/mouse sounds
+Fans/AC
+Background noise
+Very quiet sounds
+Silence
+
+The system should detect when I actually start speaking and when I have actually finished speaking.
+
+VAD requirements
+Add appropriate noise handling/noise calibration.
+Ignore extremely short audio events that are unlikely to be speech.
+Require enough evidence before deciding that speech has started.
+Detect the end of speech using an appropriate silence duration.
+Avoid cutting me off if I briefly pause while speaking.
+Avoid waiting unnecessarily long after I finish speaking.
+Make the thresholds configurable if possible.
+Do NOT simply make the microphone less sensitive, because I still need Lura to recognize quiet speech.
+The system should work continuously without requiring me to manually mute/unmute the microphone.
+3. Natural Conversation Flow
+
+The final voice flow should work approximately like this:
+
+Idle → Wake word → Listening → User speaks → Speech ends → Processing → Lura responds → Speaking
+
+If I start speaking while Lura is responding:
+
+Lura Speaking → User starts speaking → Lura immediately stops → Listening → Processing → Responding
+
+After I finish speaking, Lura should automatically know that I'm done and process my request.
+
+I should not need to manually control the microphone during normal conversations.
+
+IMPORTANT DEVELOPMENT RULES
+
+Before changing anything:
+
+Inspect the existing voice/audio architecture and understand how Lura currently handles the microphone, wake word, VAD, STT, and TTS.
+Identify exactly why the current VAD is triggering on tiny sounds/background noise.
+Reuse the existing architecture where possible.
+Do not unnecessarily rewrite unrelated parts of Lura.
+Do not break the existing wake-word system or speech recognition.
+Keep the system responsive — don't solve false detections by adding huge delays.
+Test the voice system thoroughly after making changes.
+If there are configurable VAD parameters, expose them in a sensible way rather than hardcoding everything.
+Make sure interrupting Lura actually stops the currently playing TTS/audio instead of merely ignoring the rest of the response.

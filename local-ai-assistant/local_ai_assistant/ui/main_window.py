@@ -144,6 +144,9 @@ class MainWindow(QMainWindow):
         self._speech_chunker: SpeechChunker | None = None
         self._latency_trace: LatencyTrace | None = None
         self._conversation_active = False
+        self._interruption_recording = False
+        self._barge_in_active = False
+        self._discard_interruption_recording = False
         self._conversation_transition_timer = QTimer(self)
         self._conversation_transition_timer.setSingleShot(True)
         self._conversation_transition_timer.timeout.connect(
@@ -758,6 +761,7 @@ class MainWindow(QMainWindow):
             self.voice_service,
             destination,
             6 if confirmation else (self.config.active_listening_duration if automatic else None),
+            detect_speech=automatic or confirmation,
         )
         self.voice_record_worker.moveToThread(self.voice_record_thread)
         self.voice_record_thread.started.connect(self.voice_record_worker.run)
@@ -774,6 +778,69 @@ class MainWindow(QMainWindow):
         self.message_input.setEnabled(False)
         self.send_button.setEnabled(False)
         self._sync_stop_button()
+
+    def _start_interruption_listener(self) -> None:
+        """Listen for a user barge-in while local TTS is playing."""
+        if (
+            not self.config.voice_input_enabled
+            or self.speech_worker is None
+            or self.voice_record_worker is not None
+            or self.voice_transcription_worker is not None
+            or self.confirmation_speech_worker is not None
+            or self._interruption_recording
+            or self._quitting
+        ):
+            return
+        destination = self.voice_service.new_recording_path()
+        self._interruption_recording = True
+        self._barge_in_active = False
+        self._discard_interruption_recording = False
+        self.voice_record_thread = QThread(self)
+        self.voice_record_worker = VoiceRecordWorker(
+            self.voice_service,
+            destination,
+            detect_speech=True,
+        )
+        self.voice_record_worker.moveToThread(self.voice_record_thread)
+        self.voice_record_thread.started.connect(self.voice_record_worker.run)
+        self.voice_record_worker.started.connect(self._interruption_listener_started)
+        self.voice_record_worker.speech_started.connect(
+            self._interruption_speech_started
+        )
+        self.voice_record_worker.finished.connect(self._recording_finished)
+        self.voice_record_worker.failed.connect(self._recording_failed)
+        self.voice_record_thread.finished.connect(self._recording_thread_finished)
+        self.voice_record_thread.start()
+
+    @Slot()
+    def _interruption_listener_started(self) -> None:
+        LOGGER.info("[Voice] Barge-in listener active during TTS playback")
+
+    @Slot()
+    def _interruption_speech_started(self) -> None:
+        if not self._interruption_recording or self._barge_in_active:
+            return
+        self._barge_in_active = True
+        LOGGER.info("[Voice] User speech detected; interrupting local TTS")
+        # Cancel generation as well as playback so the interrupted response
+        # cannot continue queueing additional sentence chunks.
+        if self.chat_worker is not None:
+            self.chat_worker.cancel()
+        if self.speech_worker is not None:
+            self.speech_worker.cancel()
+        self._set_orb_state("listening")
+        self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
+        self._sync_stop_button()
+
+    def _stop_interruption_listener(self, *, discard: bool = False) -> None:
+        """Stop the passive barge-in recorder without blocking the UI thread."""
+        if not self._interruption_recording:
+            return
+        if discard:
+            self._discard_interruption_recording = True
+        worker = self.voice_record_worker
+        if worker is not None:
+            worker.stop()
 
     @Slot()
     def _recording_started(self) -> None:
@@ -809,6 +876,48 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_finished(self, audio_path: str) -> None:
+        interruption_recording = self._interruption_recording
+        interruption_worker = self.voice_record_worker
+        if interruption_recording and (
+            self._discard_interruption_recording
+            or interruption_worker is None
+            or not interruption_worker.speech_detected
+        ):
+            self._interruption_recording = False
+            self._barge_in_active = False
+            self._discard_interruption_recording = False
+            self._remove_recording(audio_path)
+            if self.voice_record_thread is not None:
+                self.voice_record_thread.quit()
+            return
+        if (
+            not interruption_recording
+            and interruption_worker is not None
+            and interruption_worker.detect_speech
+            and not interruption_worker.speech_detected
+        ):
+            if self._confirmation_recording:
+                self._confirmation_recording = False
+                self._resolve_pending_confirmation(None)
+                self._set_voice_status("ACTION CANCELLED // NO SPEECH DETECTED")
+            else:
+                self._wake_command_recording = False
+                if self._conversation_active:
+                    self._end_conversation("CONVERSATION ENDED // NO RESPONSE")
+                    self._set_voice_status("CONVERSATION ENDED // NO RESPONSE")
+                else:
+                    self._wake_restart_pending = self.config.wake_word_enabled
+                    self._set_voice_status("NO SPEECH DETECTED // WAKE LISTENING")
+            self._remove_recording(audio_path)
+            if self.voice_record_thread is not None:
+                self.voice_record_thread.quit()
+            return
+        if interruption_recording:
+            self._interruption_recording = False
+            self._discard_interruption_recording = False
+            # The TTS worker may still be unwinding after cancellation, but
+            # this recording now owns the voice flow.
+            self._barge_in_active = False
         self._latency_trace = LatencyTrace()
         self._latency_trace.mark("end_of_user_speech")
         self._latency_trace.mark("stt_started")
@@ -837,6 +946,17 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _recording_failed(self, message: str) -> None:
+        if self._interruption_recording:
+            was_barge_in = self._barge_in_active
+            self._interruption_recording = False
+            self._barge_in_active = False
+            self._discard_interruption_recording = False
+            LOGGER.warning("Barge-in listener failed: %s", message)
+            if was_barge_in:
+                self._set_voice_status(f"VOICE ERROR // {message[:180]}")
+            if self.voice_record_thread is not None:
+                self.voice_record_thread.quit()
+            return
         if self._confirmation_recording:
             self._confirmation_recording = False
             self._resolve_pending_confirmation(None)
@@ -880,6 +1000,19 @@ class MainWindow(QMainWindow):
             ):
                 self._wake_restart_pending = False
                 QTimer.singleShot(250, self._start_wake_word_listener)
+            elif (
+                self.speech_worker is None
+                and self._conversation_active
+                and not self._barge_in_active
+            ):
+                self._schedule_next_conversation_turn()
+            elif (
+                self.speech_worker is None
+                and not self._conversation_active
+                and not self._barge_in_active
+                and self.config.wake_word_enabled
+            ):
+                QTimer.singleShot(0, self._start_wake_word_listener)
 
     @Slot(str, str)
     def _transcription_finished(self, text: str, audio_path: str) -> None:
@@ -966,6 +1099,10 @@ class MainWindow(QMainWindow):
             pass
 
     def _set_voice_idle(self) -> None:
+        if self._barge_in_active:
+            self._set_orb_state("listening")
+            self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
+            return
         self.mic_button.setText("MIC")
         self.mic_button.setProperty("recording", False)
         self.mic_button.style().unpolish(self.mic_button)
@@ -1273,6 +1410,7 @@ class MainWindow(QMainWindow):
         if self._latency_trace is not None:
             self._latency_trace.mark("tts_started")
         self._set_orb_state("speaking")
+        self._start_interruption_listener()
 
     @Slot()
     def _tts_synthesis_started(self) -> None:
@@ -1286,6 +1424,12 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _speech_finished(self) -> None:
+        if self._barge_in_active:
+            self._set_orb_state("listening")
+            self._set_voice_status("LISTENING // SPEAK TO INTERRUPT")
+            self._sync_stop_button()
+            return
+        self._stop_interruption_listener()
         if self._latency_trace is not None:
             self._latency_trace.mark("spoken_response_completed")
             self._latency_trace.finish()
@@ -1297,6 +1441,8 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _speech_failed(self, message: str) -> None:
+        if not self._barge_in_active:
+            self._stop_interruption_listener(discard=True)
         if self._latency_trace is not None:
             self._latency_trace.mark("tts_failed")
             self._latency_trace.finish()
@@ -1316,6 +1462,10 @@ class MainWindow(QMainWindow):
         self.speech_worker = None
         self.speech_thread = None
         self._sync_stop_button()
+        if self._barge_in_active:
+            return
+        if self.voice_record_worker is not None:
+            return
         if self._conversation_active:
             self._schedule_next_conversation_turn()
         else:
@@ -1397,12 +1547,16 @@ class MainWindow(QMainWindow):
             self.confirmation_speech_worker.cancel()
         if self._conversation_active:
             self._end_conversation("CONVERSATION ENDED // MANUAL STOP")
+        if self._interruption_recording:
+            self._discard_interruption_recording = True
         if self.chat_worker:
             self.chat_worker.cancel()
             if self.speech_worker:
                 self.speech_worker.cancel()
         elif self.speech_worker:
             self.speech_worker.cancel()
+        if self._interruption_recording and self.voice_record_worker:
+            self.voice_record_worker.stop()
         elif self.voice_record_worker:
             self.voice_record_worker.stop()
         elif self.wake_word_worker:

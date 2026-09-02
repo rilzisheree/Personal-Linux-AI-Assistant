@@ -97,6 +97,38 @@ class VoiceServiceTests(unittest.TestCase):
         self.assertFalse(detector.should_stop(1.0))
         self.assertTrue(detector.should_stop(1.35))
 
+    def test_vad_ignores_short_impulses_and_requires_continuous_voice(self) -> None:
+        detector = VoiceActivityDetector(
+            threshold=350,
+            silence_duration=0.9,
+            min_speech_duration=0.3,
+        )
+        silence = b"\0\0" * 3200  # 200 ms calibration
+        noise = (500).to_bytes(2, "little", signed=True) * 800  # 50 ms click
+        voice = (900).to_bytes(2, "little", signed=True) * 3200
+
+        self.assertFalse(detector.consume(silence, 0.2))
+        self.assertFalse(detector.consume(noise, 0.25))
+        self.assertFalse(detector.speech_started)
+        self.assertFalse(detector.consume(voice, 0.45))
+        self.assertFalse(detector.speech_started)
+        self.assertFalse(detector.consume(voice, 0.65))
+        self.assertTrue(detector.speech_started)
+
+    def test_vad_does_not_treat_calibration_noise_as_speech(self) -> None:
+        detector = VoiceActivityDetector(
+            threshold=350,
+            silence_duration=0.9,
+            min_speech_duration=0.2,
+        )
+        background = (300).to_bytes(2, "little", signed=True) * 3200
+        voice = (900).to_bytes(2, "little", signed=True) * 3200
+
+        self.assertFalse(detector.consume(background, 0.2))
+        self.assertFalse(detector.speech_started)
+        self.assertFalse(detector.consume(voice, 0.4))
+        self.assertTrue(detector.speech_started)
+
     def test_list_microphones_filters_monitors_and_keeps_source_names(self) -> None:
         pactl_output = json.dumps(
             [

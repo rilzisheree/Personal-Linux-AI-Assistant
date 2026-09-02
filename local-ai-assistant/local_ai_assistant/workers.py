@@ -334,6 +334,7 @@ class VoiceRecordWorker(QObject):
     """Record microphone input without blocking the Qt event loop."""
 
     started = Signal()
+    speech_started = Signal()
     finished = Signal(str)
     failed = Signal(str)
 
@@ -342,11 +343,14 @@ class VoiceRecordWorker(QObject):
         service: VoiceService,
         destination: Path,
         duration_seconds: int | None = None,
+        detect_speech: bool = False,
     ) -> None:
         super().__init__()
         self.service = service
         self.destination = destination
         self.duration_seconds = duration_seconds
+        self.detect_speech = detect_speech
+        self.speech_detected = False
         self._stop_event = threading.Event()
         self._process: subprocess.Popen | None = None
 
@@ -359,7 +363,7 @@ class VoiceRecordWorker(QObject):
             self._process = process
             self.started.emit()
             LOGGER.info("[Voice] Listening for recorded input")
-            if self.duration_seconds is None:
+            if self.duration_seconds is None and not self.detect_speech:
                 while process.poll() is None and not self._stop_event.wait(0.1):
                     pass
             else:
@@ -400,7 +404,11 @@ class VoiceRecordWorker(QObject):
         The duration setting is deliberately a maximum listening window, not
         a command to record dead air for the full duration.
         """
-        deadline = time.monotonic() + float(self.duration_seconds or 1)
+        deadline = (
+            time.monotonic() + float(self.duration_seconds)
+            if self.duration_seconds is not None
+            else None
+        )
         detector = VoiceActivityDetector(
             threshold=self.service.config.voice_vad_threshold,
             silence_duration=self.service.config.voice_silence_duration,
@@ -409,7 +417,7 @@ class VoiceRecordWorker(QObject):
         offset = 44
         while process.poll() is None and not self._stop_event.is_set():
             now = time.monotonic()
-            if now >= deadline:
+            if deadline is not None and now >= deadline:
                 return
             try:
                 with self.destination.open("rb") as audio:
@@ -419,7 +427,12 @@ class VoiceRecordWorker(QObject):
                     samples = samples[:-1]
                 if samples:
                     offset += len(samples)
-                    if detector.consume(samples, now):
+                    was_started = detector.speech_started
+                    should_stop = detector.consume(samples, now)
+                    if detector.speech_started and not was_started:
+                        self.speech_detected = True
+                        self.speech_started.emit()
+                    if should_stop:
                         return
             except OSError:
                 pass

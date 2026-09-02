@@ -88,6 +88,41 @@ class VoiceWorkerTests(unittest.TestCase):
         service.finish_recording.assert_called_once_with(process, audio_path)
         self.assertEqual(finished, [str(audio_path)])
 
+    def test_record_worker_can_report_speech_start_for_barge_in(self) -> None:
+        service = Mock()
+        service.config.voice_vad_threshold = 350
+        service.config.voice_silence_duration = 0.05
+        service.config.voice_min_speech_duration = 0.2
+        process = Mock()
+        process.poll.side_effect = [None, None, None, 0, 0]
+        service.start_recorder.return_value = process
+        service.finish_recording.return_value = None
+        speech_started: list[bool] = []
+        finished: list[str] = []
+
+        with tempfile.TemporaryDirectory() as directory:
+            audio_path = Path(directory) / "recording.wav"
+            # The worker reads after the header offset. Each poll appends a
+            # calibration frame followed by sustained voice and then silence.
+            audio_path.write_bytes(
+                b"RIFF"
+                + b"\0" * 40
+                + b"\0\0" * 3200
+                + (900).to_bytes(2, "little", signed=True) * 6400
+            )
+            worker = VoiceRecordWorker(
+                service,
+                audio_path,
+                detect_speech=True,
+            )
+            worker.speech_started.connect(lambda: speech_started.append(True))
+            worker.finished.connect(finished.append)
+            worker.run()
+
+        self.assertEqual(speech_started, [True])
+        self.assertTrue(worker.speech_detected)
+        self.assertEqual(finished, [str(audio_path)])
+
     def test_transcription_worker_reports_failure_and_path(self) -> None:
         service = Mock()
         service.transcribe.side_effect = VoiceError("Whisper missing")
