@@ -32,6 +32,17 @@ AUTHORITATIVE_CONTEXT = """Identity and local-state rules:
 - When a tool can perform an action such as opening an application, use it
   instead of giving the user a command to run manually."""
 
+CUSTOM_LAUNCHER_CONTEXT = """Application-launch rules:
+- Use open_app for an application or a configured custom launcher; do not use
+  exec just because the launcher has arguments.
+- A custom launcher such as "firefox --new-tab https://youtube.com" is one
+  direct process with multiple arguments, not multiple commands, and is allowed.
+- App-launch permission and terminal-command permission are separate settings.
+  A saved custom app name must be passed as the app argument to open_app.
+- Only shell chaining/operators and shell-wrapper executables are blocked.
+  If a tool reports a launcher failure, explain that exact failure instead of
+  claiming the user lacks permission."""
+
 
 def build_system_prompt(
     memory_context: str = "",
@@ -46,9 +57,13 @@ def build_system_prompt(
         if context and context.strip()
     ]
     if not contexts:
-        return f"{base_prompt}\n\n{AUTHORITATIVE_CONTEXT}"
+        return (
+            f"{base_prompt}\n\n{AUTHORITATIVE_CONTEXT}\n\n"
+            f"{CUSTOM_LAUNCHER_CONTEXT}"
+        )
     return (
         f"{base_prompt}\n\n{AUTHORITATIVE_CONTEXT}\n\n"
+        f"{CUSTOM_LAUNCHER_CONTEXT}\n\n"
         "The following local context is available. Use it only when relevant, "
         "never invent missing values, and do not claim to know anything beyond it:\n"
         f"{chr(10).join(contexts)}"

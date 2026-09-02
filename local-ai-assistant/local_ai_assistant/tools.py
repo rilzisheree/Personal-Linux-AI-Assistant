@@ -192,11 +192,23 @@ class ToolManager:
             for key, value in (custom_app_commands or {}).items()
             if isinstance(key, str) and isinstance(value, str) and key.strip() and value.strip()
         }
+        custom_launcher_names = ", ".join(
+            f'"{alias}"' for alias in self.custom_app_commands
+        )
+        open_app_description = (
+            "Open an installed desktop application by its display name or "
+            "application ID. Resolve it from installed Flatpak or native "
+            "application data; never guess an executable."
+        )
+        if custom_launcher_names:
+            open_app_description += (
+                " The user also configured these exact custom app names: "
+                f"{custom_launcher_names}. Use those names with open_app."
+            )
         self._definitions = {
             "open_app": ToolDefinition(
                 "open_app",
-                "Open an installed desktop application by its display name or application ID. "
-                "Resolve it from installed Flatpak or native application data; never guess an executable.",
+                open_app_description,
                 PermissionLevel.NORMAL,
                 {
                     "type": "object",
@@ -784,11 +796,15 @@ class ToolManager:
         return self.application_registry.resolve(app)
 
     def _custom_application(self, app: str) -> tuple[str, tuple[str, ...]] | None:
+        candidates = [app]
+        for prefix in ("my ", "the ", "a ", "an "):
+            if app.casefold().startswith(prefix):
+                candidates.append(app[len(prefix):].strip())
         configured = next(
             (
                 (alias, command)
                 for alias, command in self.custom_app_commands.items()
-                if alias.casefold() == app.casefold()
+                if any(alias.casefold() == candidate.casefold() for candidate in candidates)
             ),
             None,
         )
@@ -814,7 +830,9 @@ class ToolManager:
             )
         if not shutil.which(parts[0]) and not (Path(parts[0]).is_file() and os.access(parts[0], os.X_OK)):
             raise ValueError(
-                f"Custom launcher for {alias} is unavailable: {parts[0]}"
+                f"Custom launcher for {alias} cannot start because its executable "
+                f"is not available on PATH: {parts[0]}. Arguments are allowed, "
+                "but the first item must be an installed executable."
             )
         return alias, parts
 

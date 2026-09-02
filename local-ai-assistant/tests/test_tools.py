@@ -133,6 +133,33 @@ class ToolManagerTests(unittest.TestCase):
         )
         self.assertEqual(json.loads(result.content)["kind"], "custom")
 
+    @patch("local_ai_assistant.tools.shutil.which", return_value="/usr/bin/firefox")
+    @patch("local_ai_assistant.tools.subprocess.Popen")
+    def test_custom_launcher_accepts_url_arguments_and_articles(
+        self, popen_mock, _which_mock
+    ) -> None:
+        manager = ToolManager(
+            custom_app_commands={
+                "Youtube tab": "firefox --new-tab https://youtube.com"
+            }
+        )
+
+        result = manager.execute("open_app", {"app": "my YouTube tab"})
+
+        self.assertTrue(result.success)
+        self.assertEqual(
+            popen_mock.call_args.args[0],
+            ("firefox", "--new-tab", "https://youtube.com"),
+        )
+
+    def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
+        manager = ToolManager(custom_app_commands={"Youtube tab": "firefox"})
+
+        description = manager.definitions_for_ollama()[0]["function"]["description"]
+
+        self.assertIn('"Youtube tab"', description)
+        self.assertIn("Use those names with open_app", description)
+
     def test_permission_policies_block_or_auto_approve_actions(self) -> None:
         blocked = ToolManager(tool_permissions={"open_app": "blocked"})
         self.assertEqual(
