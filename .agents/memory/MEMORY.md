@@ -13,3 +13,4 @@
 - [Current currency endpoint](current-currency-endpoint.md) — Use the public ExchangeRate-API v6 endpoint for live SAR-compatible conversion; legacy Frankfurter paths may redirect or 404.
 - [Qt reminder bridge](qt-reminder-bridge.md) — Background reminder callbacks must enter the Qt UI through queued signals rather than touching widgets from scheduler threads.
 - [Remote API tool boundary](remote-api-tool-boundary.md) — Safe information tools need explicit API allowlisting; desktop registry exposure alone does not reach web or phone clients.
+- [Reminder accountability safety](reminder-accountability.md) — Accountability mode must remain a bounded app overlay with a hard timeout and emergency escape, never an unbreakable OS lock.

@@ -66,6 +66,34 @@ class ReminderServiceTests(unittest.TestCase):
 
         listener.assert_called_once_with(reminder)
 
+    def test_completion_records_history_and_schedules_repeating_next_occurrence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ReminderStore(Path(directory) / "reminders.json")
+            service = ReminderService(store, notify_send="", start_scheduler=False)
+            due_at = service._clock() + 3600
+            reminder = service.schedule_at(
+                "Study mathematics",
+                due_at,
+                repeat="Daily",
+                priority="High",
+                strict_mode=True,
+            )
+
+            completed = service.complete(reminder.reminder_id)
+            saved = store.list()
+
+        self.assertIsNotNone(completed)
+        self.assertEqual(completed.status, "completed")
+        self.assertEqual(len(saved), 2)
+        self.assertEqual(
+            [item.status for item in saved],
+            ["completed", "upcoming"],
+        )
+        self.assertEqual(saved[1].message, "Study mathematics")
+        self.assertEqual(saved[1].priority, "High")
+        self.assertTrue(saved[1].strict_mode)
+        self.assertAlmostEqual(saved[1].due_at, due_at + 86400, delta=1)
+
 
 if __name__ == "__main__":
     unittest.main()

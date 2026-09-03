@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSizePolicy,
+    QTabWidget,
     QSystemTrayIcon,
     QVBoxLayout,
     QWidget,
@@ -67,6 +68,7 @@ from ..workers import (
 )
 from .chat_view import ChatView, MessageBubble
 from .core_widget import CoreWidget
+from .reminders_view import AccountabilityOverlay, ReminderView
 from .settings_dialog import SettingsDialog
 from .status_notification import StatusNotification
 
@@ -128,6 +130,7 @@ class MainWindow(QMainWindow):
         self.confirmation_speech_worker: SpeechWorker | None = None
         self.reminder_alarm_thread: QThread | None = None
         self.reminder_alarm_worker: ReminderAlarmWorker | None = None
+        self.accountability_overlay: AccountabilityOverlay | None = None
         self._reminder_alarm_queue: list[Reminder] = []
         self._reminder_alarm_current: Reminder | None = None
         self._reminder_alarm_awaiting_command = False
@@ -494,7 +497,12 @@ class MainWindow(QMainWindow):
         stage_layout.addWidget(self.creator_credit)
         stage_layout.addStretch(1)
 
-        root_layout.addWidget(stage, 1)
+        self.main_tabs = QTabWidget()
+        self.main_tabs.setObjectName("mainTabs")
+        self.main_tabs.addTab(stage, "CHAT")
+        self.reminder_view = ReminderView(self.reminder_service)
+        self.main_tabs.addTab(self.reminder_view, "REMINDERS")
+        root_layout.addWidget(self.main_tabs, 1)
 
         self.setCentralWidget(root)
 
@@ -1544,10 +1552,30 @@ class MainWindow(QMainWindow):
             return
         if reminder not in self._reminder_alarm_queue:
             self._reminder_alarm_queue.append(reminder)
+        self.reminder_view.refresh()
         self._set_voice_status(f"REMINDER DUE // {reminder.message}")
+        if reminder.strict_mode and self.accountability_overlay is None:
+            self.accountability_overlay = AccountabilityOverlay(reminder, self)
+            self.accountability_overlay.resolved.connect(self._accountability_resolved)
+            self.accountability_overlay.showFullScreen()
         if self.wake_word_worker is not None:
             self._stop_wake_word_listener()
         self._start_next_reminder_alarm()
+
+    @Slot(str, str)
+    def _accountability_resolved(self, reminder_id: str, status: str) -> None:
+        if status == "completed":
+            self.reminder_service.complete(reminder_id)
+            self._set_voice_status("REMINDER COMPLETED")
+        elif status == "missed":
+            self.reminder_service.miss(reminder_id)
+            self._set_voice_status("REMINDER MISSED")
+        else:
+            self.reminder_service.cancel(reminder_id)
+            self._set_voice_status("REMINDER EMERGENCY EXIT")
+        self._stop_reminder_alarm()
+        self.reminder_view.refresh()
+        self.accountability_overlay = None
 
     def _start_next_reminder_alarm(self) -> None:
         if (

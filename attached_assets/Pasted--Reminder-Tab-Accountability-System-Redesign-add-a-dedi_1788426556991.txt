@@ -1,0 +1,210 @@
+## Reminder Tab — Accountability System
+
+Redesign/add a dedicated **Reminder Tab** to Luna.
+
+The purpose of this tab is to let the user create tasks that Luna will remind them about at a specific future time. However, this should be more than a normal reminder system — it should act as an **accountability system**.
+
+### 1. Creating a Reminder
+
+The user should be able to create a reminder with:
+
+* **Task name** — e.g. `Do 20 push-ups`
+* **Description / instructions** — optional
+* **Date**
+* **Exact time**
+* **Repeat** — None, Daily, Weekly, Custom
+* **Priority** — Low, Normal, High, Critical
+* **Lock duration** — default: 1 minute
+* **Strict mode** — On/Off
+
+Example:
+
+> **Task:** Do my homework
+> **Time:** 7:00 PM
+> **Priority:** High
+> **Strict Mode:** ON
+
+Display upcoming reminders in a clean timeline/list showing:
+
+* Task
+* Scheduled time
+* Countdown
+* Priority
+* Repeat status
+* Completion status
+
+### 2. When the Reminder Triggers
+
+When the scheduled time arrives, Luna should immediately notify the user.
+
+Luna should say something like:
+
+> **"Sir, it's time to do your homework."**
+
+The reminder should also appear as a prominent Luna notification/overlay.
+
+### 3. PC Lock / Accountability Mode
+
+If **Strict Mode is enabled**, triggering the reminder should activate **Accountability Mode**.
+
+The PC should become temporarily inaccessible for **1 minute**.
+
+During this period:
+
+* Block normal interaction with the desktop.
+* Prevent the user from simply dismissing the reminder.
+* Keep the reminder visible.
+* Show the task clearly in the center of the screen.
+* Display a countdown timer.
+* Luna should explain what needs to be done.
+* Do NOT allow the user to bypass the reminder through the normal UI.
+
+Example:
+
+> 🔒 **ACCOUNTABILITY MODE**
+>
+> **Your task:** Do your homework
+>
+> Luna: *"Sir, you scheduled this reminder. Take care of it now."*
+>
+> **Time remaining: 00:47**
+
+### 4. Completion
+
+The user should have a clear **"Done"** action.
+
+Once the user confirms completion:
+
+* Mark the reminder as completed.
+* Record the completion timestamp.
+* Exit Accountability Mode.
+* Return the user to their previous desktop/session.
+* Store the completion in reminder history.
+
+If the 1-minute period expires without completion:
+
+* Do NOT automatically mark the task as completed.
+* Mark it as **Missed** or **Incomplete**.
+* Record that the user did not complete it.
+* Optionally allow Luna to remind them again depending on the reminder's configuration.
+
+### 5. Restrictions
+
+This feature must have strong safeguards.
+
+**The reminder system must NOT:**
+
+* Permanently lock the computer.
+* Make the PC unusable indefinitely.
+* Prevent emergency/system shutdown.
+* Interfere with BIOS/UEFI.
+* Modify system files unnecessarily.
+* Disable the user's ability to recover their session.
+* Create an unbreakable lockout.
+* Lock the PC repeatedly in an infinite loop.
+* Prevent emergency access to the operating system.
+
+The lock should always have a **hard maximum duration**.
+
+The default should be **1 minute**, and there should be a configurable maximum duration.
+
+### 6. Emergency Escape
+
+Even in Strict Mode, provide a hidden but reliable emergency escape mechanism that can terminate Accountability Mode if something goes wrong.
+
+For example:
+
+**Hold `ESC` for 5 seconds**
+
+or another safe system-level emergency shortcut.
+
+This should NOT be prominently displayed during normal use so that the feature still feels strict.
+
+### 7. Reminder History
+
+Add a **History** section showing:
+
+* Completed reminders
+* Missed reminders
+* Cancelled reminders
+* Completion time
+* Original scheduled time
+* Completion rate
+
+Example:
+
+```text
+Reminder History
+
+✓ Homework
+   Scheduled: 7:00 PM
+   Completed: 7:03 PM
+
+✓ Gym
+   Scheduled: 8:00 PM
+   Completed: 8:01 PM
+
+✕ Study Mathematics
+   Scheduled: 9:00 PM
+   Status: Missed
+```
+
+### 8. Luna Integration
+
+Luna should naturally interact with the reminder system.
+
+Examples:
+
+**User:**
+
+> "Remind me to study at 8 PM."
+
+**Luna:**
+
+> "Of course, Sir. I'll remind you at 8:00 PM."
+
+**At 8 PM:**
+
+> "Sir, it's 8:00 PM. Time to study."
+
+The user should also be able to manage reminders through Luna:
+
+* "What are my reminders?"
+* "Cancel my 8 PM reminder."
+* "Move my homework reminder to 9 PM."
+* "What did I miss today?"
+* "Mark my homework as done."
+
+### 9. UI Design
+
+Make the Reminder Tab fit the existing Luna aesthetic.
+
+Use a **dark, futuristic, premium interface** with subtle blue accents and smooth animations.
+
+Main sections:
+
+**Reminders**
+
+* Upcoming
+* Today
+* Tomorrow
+* Completed
+* Missed
+
+Include a prominent:
+
+**`+ Add Reminder`**
+
+button.
+
+Each reminder should look like a compact card with its task, time, priority, countdown, and status.
+
+The overall experience should feel like **Luna is actively keeping the user accountable**, rather than simply displaying calendar notifications.
+
+### 10. Important Implementation Requirement
+
+Build this as a **real functional feature**, not just a visual mockup.
+
+The reminder scheduler, persistence, triggering system, Luna voice/notification integration, countdown, completion tracking, and safe temporary lock mechanism should all work together.
+
+Keep the implementation modular so the Reminder system can later integrate with other Luna features such as Tasks, Calendar, Voice Commands, and Productivity Mode.

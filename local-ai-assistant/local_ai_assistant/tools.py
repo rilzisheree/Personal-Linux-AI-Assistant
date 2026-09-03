@@ -663,6 +663,49 @@ class ToolManager:
                 },
                 self._create_reminder,
             ),
+            "list_reminders": ToolDefinition(
+                "list_reminders",
+                "List the user's upcoming reminders and reminder history.",
+                PermissionLevel.SAFE,
+                {"type": "object", "properties": {}},
+                self._list_reminders,
+            ),
+            "complete_reminder": ToolDefinition(
+                "complete_reminder",
+                "Mark a matching reminder as completed. Use after the user says they finished it.",
+                PermissionLevel.NORMAL,
+                {
+                    "type": "object",
+                    "properties": {"reminder": {"type": "string", "description": "Task name or reminder ID"}},
+                    "required": ["reminder"],
+                },
+                self._complete_reminder,
+            ),
+            "cancel_reminder": ToolDefinition(
+                "cancel_reminder",
+                "Cancel a matching upcoming reminder.",
+                PermissionLevel.NORMAL,
+                {
+                    "type": "object",
+                    "properties": {"reminder": {"type": "string", "description": "Task name or reminder ID"}},
+                    "required": ["reminder"],
+                },
+                self._cancel_reminder,
+            ),
+            "reschedule_reminder": ToolDefinition(
+                "reschedule_reminder",
+                "Move a reminder to a new future time expressed as seconds from now.",
+                PermissionLevel.NORMAL,
+                {
+                    "type": "object",
+                    "properties": {
+                        "reminder": {"type": "string", "description": "Task name or reminder ID"},
+                        "delay_seconds": {"type": "number", "minimum": 1, "maximum": 31536000},
+                    },
+                    "required": ["reminder", "delay_seconds"],
+                },
+                self._reschedule_reminder,
+            ),
             "remember": ToolDefinition(
                 "remember",
                 "Save one user-approved fact or preference for future conversations.",
@@ -944,6 +987,45 @@ class ToolManager:
                     else "web_search"
                 )
                 return search_tool, {"query": query}
+
+        if re.search(r"\b(?:what are|show|list)\s+(?:my\s+)?reminders\b", folded):
+            return "list_reminders", {}
+        completion_match = re.search(
+            r"\b(?:mark|set)\s+(?P<reminder>.+?)\s+(?:as\s+)?(?:done|complete|completed)\b",
+            text,
+            re.IGNORECASE,
+        )
+        if completion_match:
+            return "complete_reminder", {"reminder": completion_match.group("reminder").strip()}
+        cancellation_match = re.search(
+            r"\b(?:cancel|delete|remove)\s+(?:my\s+)?(?P<reminder>.+?)\s+reminder\b",
+            text,
+            re.IGNORECASE,
+        )
+        if cancellation_match:
+            return "cancel_reminder", {"reminder": cancellation_match.group("reminder").strip()}
+        move_match = re.search(
+            r"\b(?:move|reschedule| postpone)\s+(?:my\s+)?(?P<reminder>.+?)\s+reminder\b"
+            r".*?\b(?P<amount>\d+(?:\.\d+)?)\s*(?P<unit>seconds?|minutes?|hours?|days?)\b",
+            text,
+            re.IGNORECASE,
+        )
+        if move_match:
+            unit_seconds = {
+                "second": 1,
+                "seconds": 1,
+                "minute": 60,
+                "minutes": 60,
+                "hour": 3600,
+                "hours": 3600,
+                "day": 86400,
+                "days": 86400,
+            }
+            unit = move_match.group("unit").casefold()
+            return "reschedule_reminder", {
+                "reminder": move_match.group("reminder").strip(),
+                "delay_seconds": float(move_match.group("amount")) * unit_seconds[unit],
+            }
 
         search_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
@@ -1300,6 +1382,69 @@ class ToolManager:
             True,
             f"Reminder scheduled for {format_due_time(reminder.due_at)}: {reminder.message}",
         )
+
+    def _list_reminders(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        reminders = self.reminder_service.store.list()
+        if not reminders:
+            return ToolCallResult(True, "No reminders are scheduled.")
+        active = [reminder for reminder in reminders if reminder.status in {"upcoming", "triggered"}]
+        history = [reminder for reminder in reminders if reminder.status in {"completed", "missed", "cancelled"}]
+        lines = [
+            f"- {reminder.message} — {format_due_time(reminder.due_at)} "
+            f"({reminder.priority}, {reminder.status})"
+            for reminder in sorted(active, key=lambda item: item.due_at)
+        ]
+        if history:
+            lines.append("History:")
+            lines.extend(
+                f"- {reminder.message} — {reminder.status} "
+                f"({format_due_time(reminder.completed_at or reminder.due_at)})"
+                for reminder in sorted(
+                    history,
+                    key=lambda item: item.completed_at or item.due_at,
+                    reverse=True,
+                )[:10]
+            )
+        return ToolCallResult(True, "\n".join(lines) or "No upcoming reminders.")
+
+    def _matching_reminder(self, value: str):
+        reminders = self.reminder_service.store.list()
+        needle = value.strip().casefold()
+        return next(
+            (
+                reminder
+                for reminder in reminders
+                if reminder.reminder_id == value.strip()
+                or needle in reminder.message.casefold()
+            ),
+            None,
+        )
+
+    def _complete_reminder(self, arguments: dict) -> ToolCallResult:
+        value = _string_argument(arguments, "reminder")
+        reminder = self._matching_reminder(value)
+        if reminder is None:
+            return ToolCallResult(False, f"Reminder not found: {value}")
+        updated = self.reminder_service.complete(reminder.reminder_id)
+        return ToolCallResult(True, f"Completed reminder: {updated.message}")
+
+    def _cancel_reminder(self, arguments: dict) -> ToolCallResult:
+        value = _string_argument(arguments, "reminder")
+        reminder = self._matching_reminder(value)
+        if reminder is None:
+            return ToolCallResult(False, f"Reminder not found: {value}")
+        updated = self.reminder_service.cancel(reminder.reminder_id)
+        return ToolCallResult(True, f"Cancelled reminder: {updated.message}")
+
+    def _reschedule_reminder(self, arguments: dict) -> ToolCallResult:
+        value = _string_argument(arguments, "reminder")
+        delay_seconds = arguments.get("delay_seconds")
+        reminder = self._matching_reminder(value)
+        if reminder is None:
+            return ToolCallResult(False, f"Reminder not found: {value}")
+        updated = self.reminder_service.reschedule(reminder.reminder_id, delay_seconds)
+        return ToolCallResult(True, f"Rescheduled {updated.message} for {format_due_time(updated.due_at)}.")
 
     def _remember(self, arguments: dict) -> ToolCallResult:
         fact = _string_argument(arguments, "fact")

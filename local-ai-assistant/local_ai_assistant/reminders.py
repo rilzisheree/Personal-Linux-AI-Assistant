@@ -11,7 +11,7 @@ import tempfile
 import threading
 import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
@@ -19,6 +19,10 @@ from typing import Callable
 
 LOGGER = logging.getLogger("lura.reminders")
 MAX_DELAY_SECONDS = 365 * 24 * 60 * 60
+MAX_LOCK_DURATION_SECONDS = 10 * 60
+REPEAT_VALUES = {"None", "Daily", "Weekly", "Custom"}
+PRIORITY_VALUES = {"Low", "Normal", "High", "Critical"}
+STATUS_VALUES = {"upcoming", "triggered", "completed", "missed", "cancelled"}
 
 
 @dataclass(frozen=True)
@@ -26,12 +30,46 @@ class Reminder:
     reminder_id: str
     message: str
     due_at: float
+    description: str = ""
+    repeat: str = "None"
+    priority: str = "Normal"
+    lock_duration_seconds: int = 60
+    strict_mode: bool = False
+    custom_repeat_days: int = 1
+    status: str = "upcoming"
+    created_at: float = 0.0
+    completed_at: float | None = None
+    original_due_at: float | None = None
 
-    def as_dict(self) -> dict[str, str | float]:
+    def __post_init__(self) -> None:
+        if self.repeat not in REPEAT_VALUES:
+            raise ValueError(f"Unsupported repeat value: {self.repeat}")
+        if self.priority not in PRIORITY_VALUES:
+            raise ValueError(f"Unsupported priority value: {self.priority}")
+        if self.status not in STATUS_VALUES:
+            raise ValueError(f"Unsupported reminder status: {self.status}")
+        if not 1 <= int(self.lock_duration_seconds) <= MAX_LOCK_DURATION_SECONDS:
+            raise ValueError("Lock duration must be between 1 and 600 seconds.")
+
+    @property
+    def task_name(self) -> str:
+        return self.message
+
+    def as_dict(self) -> dict[str, str | float | int | bool | None]:
         return {
             "id": self.reminder_id,
             "message": self.message,
             "due_at": self.due_at,
+            "description": self.description,
+            "repeat": self.repeat,
+            "priority": self.priority,
+            "lock_duration_seconds": self.lock_duration_seconds,
+            "strict_mode": self.strict_mode,
+            "custom_repeat_days": self.custom_repeat_days,
+            "status": self.status,
+            "created_at": self.created_at,
+            "completed_at": self.completed_at,
+            "original_due_at": self.original_due_at,
         }
 
     @classmethod
@@ -51,7 +89,49 @@ class Reminder:
             or due_at <= 0
         ):
             return None
-        return cls(reminder_id.strip(), message.strip(), float(due_at))
+        def number(name: str, default: float) -> float:
+            value = payload.get(name, default)
+            return default if isinstance(value, bool) or not isinstance(value, (int, float)) else float(value)
+
+        repeat = payload.get("repeat", "None")
+        priority = payload.get("priority", "Normal")
+        status = payload.get("status", "upcoming")
+        if repeat not in REPEAT_VALUES:
+            repeat = "None"
+        if priority not in PRIORITY_VALUES:
+            priority = "Normal"
+        if status not in STATUS_VALUES:
+            status = "upcoming"
+        lock_duration = int(number("lock_duration_seconds", 60))
+        lock_duration = max(1, min(MAX_LOCK_DURATION_SECONDS, lock_duration))
+        custom_days = int(number("custom_repeat_days", 1))
+        custom_days = max(1, min(365, custom_days))
+        description = payload.get("description", "")
+        created_at = number("created_at", float(due_at))
+        original_due_at = payload.get("original_due_at")
+        if original_due_at is not None and (
+            isinstance(original_due_at, bool)
+            or not isinstance(original_due_at, (int, float))
+        ):
+            original_due_at = None
+        completed_at = payload.get("completed_at")
+        if isinstance(completed_at, bool) or not isinstance(completed_at, (int, float)):
+            completed_at = None
+        return cls(
+            reminder_id.strip(),
+            message.strip(),
+            float(due_at),
+            description.strip() if isinstance(description, str) else "",
+            repeat,
+            priority,
+            lock_duration,
+            bool(payload.get("strict_mode", False)),
+            custom_days,
+            status,
+            created_at,
+            float(completed_at) if completed_at is not None else None,
+            float(original_due_at) if original_due_at is not None else None,
+        )
 
 
 class ReminderStore:
@@ -84,6 +164,23 @@ class ReminderStore:
                 return False
             self._save(remaining)
             return True
+
+    def update(self, reminder: Reminder) -> bool:
+        with self._lock:
+            reminders = self._read()
+            for index, current in enumerate(reminders):
+                if current.reminder_id == reminder.reminder_id:
+                    reminders[index] = reminder
+                    self._save(reminders)
+                    return True
+            return False
+
+    def get(self, reminder_id: str) -> Reminder | None:
+        with self._lock:
+            return next(
+                (reminder for reminder in self._read() if reminder.reminder_id == reminder_id),
+                None,
+            )
 
     def _read(self) -> list[Reminder]:
         try:
@@ -167,15 +264,119 @@ class ReminderService:
                 f"Reminder delay must be greater than 0 and no more than "
                 f"{MAX_DELAY_SECONDS} seconds."
             )
+        reminder = self.schedule_at(cleaned_message, self._clock() + float(delay_seconds))
+        return reminder
+
+    def schedule_at(
+        self,
+        message: str,
+        due_at: float,
+        *,
+        description: str = "",
+        repeat: str = "None",
+        priority: str = "Normal",
+        lock_duration_seconds: int = 60,
+        strict_mode: bool = False,
+        custom_repeat_days: int = 1,
+    ) -> Reminder:
+        cleaned_message = message.strip()
+        if not cleaned_message:
+            raise ValueError("Reminder task name cannot be empty.")
+        if repeat not in REPEAT_VALUES:
+            raise ValueError("Repeat must be None, Daily, Weekly, or Custom.")
+        if priority not in PRIORITY_VALUES:
+            raise ValueError("Unsupported reminder priority.")
+        if due_at <= self._clock():
+            raise ValueError("Reminder time must be in the future.")
+        if not 1 <= int(lock_duration_seconds) <= MAX_LOCK_DURATION_SECONDS:
+            raise ValueError("Lock duration must be between 1 and 600 seconds.")
         reminder = Reminder(
             uuid.uuid4().hex,
             cleaned_message,
-            self._clock() + float(delay_seconds),
+            float(due_at),
+            description.strip(),
+            repeat,
+            priority,
+            int(lock_duration_seconds),
+            bool(strict_mode),
+            max(1, min(365, int(custom_repeat_days))),
+            "upcoming",
+            self._clock(),
+            None,
+            float(due_at),
         )
         self.store.add(reminder)
         with self._condition:
             self._condition.notify_all()
         return reminder
+
+    def complete(self, reminder_id: str, completed_at: float | None = None) -> Reminder | None:
+        return self._finish(reminder_id, "completed", completed_at or self._clock())
+
+    def miss(self, reminder_id: str, missed_at: float | None = None) -> Reminder | None:
+        return self._finish(reminder_id, "missed", missed_at or self._clock())
+
+    def cancel(self, reminder_id: str, cancelled_at: float | None = None) -> Reminder | None:
+        return self._finish(reminder_id, "cancelled", cancelled_at or self._clock(), schedule_next=False)
+
+    def reschedule(self, reminder_id: str, delay_seconds: float) -> Reminder | None:
+        if (
+            isinstance(delay_seconds, bool)
+            or not isinstance(delay_seconds, (int, float))
+            or delay_seconds <= 0
+            or delay_seconds > MAX_DELAY_SECONDS
+        ):
+            raise ValueError("Reminder delay must be greater than 0 and no more than one year.")
+        reminder = self.store.get(reminder_id)
+        if reminder is None or reminder.status in {"completed", "missed", "cancelled"}:
+            return reminder
+        updated = replace(
+            reminder,
+            due_at=self._clock() + float(delay_seconds),
+            status="upcoming",
+            completed_at=None,
+        )
+        self.store.update(updated)
+        with self._condition:
+            self._condition.notify_all()
+        return updated
+
+    def _finish(
+        self,
+        reminder_id: str,
+        status: str,
+        finished_at: float,
+        *,
+        schedule_next: bool = True,
+    ) -> Reminder | None:
+        reminder = self.store.get(reminder_id)
+        if reminder is None or reminder.status in {"completed", "missed", "cancelled"}:
+            return reminder
+        updated = replace(reminder, status=status, completed_at=finished_at)
+        self.store.update(updated)
+        if schedule_next and reminder.repeat != "None":
+            interval_days = {
+                "Daily": 1,
+                "Weekly": 7,
+                "Custom": reminder.custom_repeat_days,
+            }[reminder.repeat]
+            next_due = reminder.due_at + interval_days * 86400
+            while next_due <= self._clock():
+                next_due += interval_days * 86400
+            self.store.add(
+                replace(
+                    reminder,
+                    reminder_id=uuid.uuid4().hex,
+                    due_at=next_due,
+                    original_due_at=next_due,
+                    status="upcoming",
+                    created_at=self._clock(),
+                    completed_at=None,
+                )
+            )
+        with self._condition:
+            self._condition.notify_all()
+        return updated
 
     def stop(self) -> None:
         self._stop_event.set()
@@ -188,10 +389,14 @@ class ReminderService:
         while not self._stop_event.is_set():
             reminders = self.store.list()
             now = self._clock()
-            due = [reminder for reminder in reminders if reminder.due_at <= now]
+            due = [
+                reminder
+                for reminder in reminders
+                if reminder.status == "upcoming" and reminder.due_at <= now
+            ]
             if due:
                 for reminder in due:
-                    self.store.remove(reminder.reminder_id)
+                    self.store.update(replace(reminder, status="triggered"))
                     self._notify(reminder)
                     self._emit_due(reminder)
                 continue

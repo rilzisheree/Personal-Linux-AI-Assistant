@@ -241,6 +241,15 @@ class ToolManagerTests(unittest.TestCase):
             ),
             ("search_news", {"query": "today's AI news"}),
         )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Move my homework reminder to 9 hours from now."
+            ),
+            (
+                "reschedule_reminder",
+                {"reminder": "homework", "delay_seconds": 32400.0},
+            ),
+        )
 
     def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
         manager = ToolManager(custom_app_commands={"Youtube tab": "firefox"})

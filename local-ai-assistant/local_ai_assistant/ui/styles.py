@@ -477,4 +477,148 @@ QToolTip {
     color: #d2e9f8;
     padding: 5px;
 }
+
+QTabWidget#mainTabs::pane {
+    border: 0;
+    background: #03070d;
+}
+
+QTabBar::tab {
+    background: #050b13;
+    color: #55718a;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+QTabBar::tab:selected {
+    color: #b9e2fb;
+    border-bottom-color: #3c8bc0;
+}
+
+QFrame#reminderComposer, QFrame#reminderCard {
+    background: #06111c;
+    border: 1px solid #142c40;
+    border-radius: 10px;
+}
+
+QLabel#reminderTitle {
+    color: #d8efff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+}
+
+QLabel#reminderSubtitle, QLabel#reminderSectionLabel {
+    color: #5d8caf;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+
+QFrame#reminderComposer QLabel {
+    color: #5d829c;
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+QPushButton#primaryReminderButton {
+    background: #0a2942;
+    border-color: #2b6895;
+    color: #c9e8fb;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 10px 14px;
+}
+
+QLabel#reminderTask {
+    color: #d2eaff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QLabel#reminderMeta, QLabel#reminderDescription, QLabel#reminderEmpty {
+    color: #6288a2;
+    font-size: 10px;
+}
+
+QLabel#reminderCountdown {
+    color: #8bc6e8;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+QLabel#priorityLow, QLabel#priorityNormal, QLabel#priorityHigh, QLabel#priorityCritical {
+    color: #6995b2;
+    font-size: 8px;
+    letter-spacing: 1px;
+}
+
+QLabel#priorityHigh {
+    color: #d7b36d;
+}
+
+QLabel#priorityCritical {
+    color: #e58b9a;
+}
+
+QScrollArea#reminderScroll {
+    border: 0;
+    background: transparent;
+}
+
+QDialog#accountabilityOverlay {
+    background: #02060d;
+}
+
+QLabel#accountabilityMark {
+    color: #6db9e5;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+QLabel#accountabilityTitle {
+    color: #e3f4ff;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 2px;
+}
+
+QLabel#accountabilityTask {
+    color: #a9dcf8;
+    font-size: 34px;
+    font-weight: 600;
+    padding: 20px;
+}
+
+QLabel#accountabilityDescription, QLabel#accountabilityHint {
+    color: #7094ab;
+    font-size: 12px;
+}
+
+QLabel#accountabilityCountdown {
+    color: #6fc7f5;
+    font-size: 58px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    padding: 12px;
+}
+
+QPushButton#accountabilityDone {
+    background: #0b3551;
+    border: 1px solid #3b8bbd;
+    border-radius: 10px;
+    color: #d8f1ff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 13px 46px;
+}
+
+QLabel#accountabilityEmergencyHint {
+    color: #476476;
+    font-size: 9px;
+}
 """
