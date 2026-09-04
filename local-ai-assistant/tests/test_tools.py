@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 import json
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -74,6 +75,62 @@ class ToolManagerTests(unittest.TestCase):
         result = self.manager.execute("get_disk_usage", {})
         self.assertIsInstance(result.success, bool)
         self.assertTrue(result.content)
+
+    def test_gpu_tool_returns_structured_complete_metrics(self) -> None:
+        completed = subprocess.CompletedProcess(
+            args=["nvidia-smi"],
+            returncode=0,
+            stdout="NVIDIA GeForce RTX 4060, 89, 55, 1024, 8188\n",
+            stderr="",
+        )
+        with patch("local_ai_assistant.tools.subprocess.run", return_value=completed):
+            result = self.manager.execute("get_gpu_info", {})
+
+        self.assertTrue(result.success)
+        payload = json.loads(result.content)
+        self.assertTrue(payload["available"])
+        self.assertEqual(payload["model"], "NVIDIA GeForce RTX 4060")
+        self.assertEqual(payload["vram_total_mb"], 8188.0)
+        self.assertEqual(payload["temperature_c"], 55.0)
+        self.assertEqual(payload["utilization_percent"], 89.0)
+        self.assertEqual(len(payload["gpus"]), 1)
+
+    def test_gpu_tool_rejects_malformed_rows_instead_of_skipping_them(self) -> None:
+        completed = subprocess.CompletedProcess(
+            args=["nvidia-smi"],
+            returncode=0,
+            stdout=(
+                "NVIDIA GeForce RTX 4060, 89, 55, 1024, 8188\n"
+                "NVIDIA GeForce RTX 3060, 70, 60, unavailable, 12288\n"
+            ),
+            stderr="",
+        )
+        with patch("local_ai_assistant.tools.subprocess.run", return_value=completed):
+            result = self.manager.execute("get_gpu_info", {})
+
+        self.assertFalse(result.success)
+        payload = json.loads(result.content)
+        self.assertFalse(payload["available"])
+        self.assertEqual(payload["model"], None)
+        self.assertEqual(payload["gpus"], [])
+        self.assertEqual(payload["error"], "NVIDIA GPU data was malformed.")
+        self.assertEqual(len(payload["error_details"]), 1)
+
+    def test_gpu_tool_reports_command_failure_without_inventing_values(self) -> None:
+        completed = subprocess.CompletedProcess(
+            args=["nvidia-smi"],
+            returncode=1,
+            stdout="",
+            stderr="NVIDIA-SMI has failed.",
+        )
+        with patch("local_ai_assistant.tools.subprocess.run", return_value=completed):
+            result = self.manager.execute("get_gpu_status", {})
+
+        self.assertFalse(result.success)
+        payload = json.loads(result.content)
+        self.assertFalse(payload["available"])
+        self.assertIsNone(payload["model"])
+        self.assertIn("unavailable", payload["error"])
 
     def test_direct_dispatch_maps_identity_and_authoritative_facts(self) -> None:
         self.assertEqual(

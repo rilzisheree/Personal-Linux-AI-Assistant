@@ -1,0 +1,363 @@
+# Fix: GPU Tool Causes Response Truncation
+
+We have narrowed down the response-cutoff bug.
+
+### Confirmed behavior
+
+Individual system-status queries behave like this:
+
+* CPU information → WORKS
+* RAM information → WORKS
+* Disk information → WORKS
+* Uptime information → WORKS
+* GPU information → **FAILS / response gets cut off**
+* Full system status → **FAILS / response gets cut off**
+
+The GPU information itself is correct. For example, Lura correctly identifies the GPU as:
+
+`NVIDIA GeForce RTX 4060`
+
+However, responses involving GPU information repeatedly terminate unexpectedly mid-response, e.g.:
+
+`Your NVIDIA GeForce RTX 4060 GPU shows approximately 8...`
+
+This strongly suggests that the GPU-specific tool/data pipeline is contributing to the truncation.
+
+## IMPORTANT
+
+Do NOT blindly modify the global streaming system.
+
+Do NOT increase token limits as a first solution.
+
+Do NOT remove GPU functionality.
+
+Do NOT replace working system-status functionality.
+
+First inspect and identify the exact failure.
+
+---
+
+## 1. Trace the GPU request end-to-end
+
+Follow the complete path:
+
+USER REQUEST
+→ ROUTER
+→ GPU TOOL SELECTION
+→ GPU TOOL EXECUTION
+→ RAW GPU RESULT
+→ GPU RESULT PARSER/FORMATTER
+→ RESULT INSERTED INTO MODEL CONTEXT
+→ OLLAMA REQUEST
+→ OLLAMA STREAM
+→ BACKEND
+→ FRONTEND
+→ DISPLAYED RESPONSE
+
+Add temporary/debug logging where necessary.
+
+For a GPU request, log:
+
+* tool selected
+* exact tool arguments
+* raw GPU command executed
+* raw stdout length
+* raw stderr length
+* parsed GPU result
+* serialized GPU result length
+* exact structure/type of the result
+* Ollama prompt/context size if available
+* `num_ctx`
+* `num_predict`
+* `stop`
+* Ollama completion/termination reason
+* number of streamed chunks
+* total streamed characters/tokens if available
+* whether the stream ends normally
+* whether an exception occurs
+* whether the frontend receives the complete stream
+
+Do NOT log secrets or credentials.
+
+---
+
+## 2. Inspect the actual GPU tool
+
+Find the implementation responsible for GPU information.
+
+Determine whether it calls something such as:
+
+`nvidia-smi`
+
+or another NVIDIA/system command.
+
+Inspect exactly what it returns.
+
+Do NOT assume the displayed GPU name is the complete tool result.
+
+Measure:
+
+* character count
+* line count
+* byte count
+* fields returned
+* whether raw `nvidia-smi` output is being passed directly to Qwen
+
+If the tool returns significantly more information than necessary, determine whether that excessive output contributes to the failure.
+
+---
+
+## 3. Test the GPU tool WITHOUT Qwen
+
+Execute the GPU tool directly through its normal backend/tool interface.
+
+Verify:
+
+1. Does the tool execute successfully?
+2. Does it return valid structured data?
+3. Is the returned data complete?
+4. Is there malformed text?
+5. Is there unexpected ANSI/control-character data?
+6. Are there XML-like characters?
+7. Are there enormous strings?
+8. Are there duplicated fields?
+9. Does the tool itself truncate?
+
+The raw tool result must be clearly separated from the model's natural-language response.
+
+---
+
+## 4. Compare GPU queries
+
+Test all of these:
+
+`What GPU am I using?`
+
+`What NVIDIA GPU do I have?`
+
+`What is my GPU model?`
+
+`How much VRAM does my GPU have?`
+
+`What is my GPU temperature?`
+
+`What is my GPU utilization?`
+
+`Give me my GPU status.`
+
+Record exactly which ones fail.
+
+This is important because it will tell us whether:
+
+* the entire GPU tool fails,
+* only certain GPU fields fail,
+* or the problem happens when several GPU fields are combined.
+
+---
+
+## 5. Compare raw GPU data with a minimal GPU response
+
+Create a controlled diagnostic test where the GPU tool returns only:
+
+```text
+GPU: NVIDIA GeForce RTX 4060
+VRAM: 8188 MiB
+Temperature: approximately 55°C
+Utilization: approximately 89%
+```
+
+Do not pass the entire raw `nvidia-smi` output to the model.
+
+Then test:
+
+`Give me my GPU status.`
+
+If this works reliably, compare it against the current implementation.
+
+Do NOT permanently simplify the tool until the root cause is confirmed.
+
+---
+
+## 6. Investigate special characters and serialization
+
+Specifically inspect whether GPU output contains:
+
+* `%`
+* `°`
+* `/`
+* `:`
+* `|`
+* `<`
+* `>`
+* quotes
+* newlines
+* ANSI escape codes
+* Unicode characters
+* shell formatting
+* XML-like content
+
+Determine whether any of these are being inserted into:
+
+* XML tool calls
+* JSON
+* system prompts
+* tool-result messages
+* SSE data
+* frontend state
+
+If serialization is involved, verify that the GPU result is properly escaped/encoded.
+
+---
+
+## 7. Test GPU data with streaming disabled
+
+For diagnosis only, make one request using:
+
+`stream=false`
+
+and another using:
+
+`stream=true`
+
+using the exact same GPU request.
+
+If `stream=false` produces the complete answer while `stream=true` cuts off, investigate the streaming layer.
+
+If BOTH cut off, the problem is likely upstream of streaming.
+
+Do not leave streaming disabled as the final fix.
+
+---
+
+## 8. Inspect Ollama termination
+
+For the failing GPU request, capture the actual Ollama response metadata.
+
+Determine whether the model:
+
+* finishes normally,
+* reaches `num_predict`,
+* encounters a stop sequence,
+* encounters an error,
+* gets cancelled,
+* loses its connection,
+* or receives malformed context.
+
+This is critical.
+
+Do NOT assume the model is simply "running out of tokens."
+
+---
+
+## 9. Test GPU data outside the full system-status command
+
+Run:
+
+`Tell me a very detailed explanation of my NVIDIA GeForce RTX 4060 without using any tools.`
+
+Then separately:
+
+`Use the GPU tool and tell me my GPU model, VRAM, temperature, and utilization.`
+
+Compare the two.
+
+If the first works and the second cuts off, that strongly isolates the issue to the GPU tool/context path.
+
+---
+
+## 10. Check for prompt injection / accidental instruction content
+
+Inspect whether the raw GPU result is accidentally being interpreted as model instructions.
+
+The GPU tool result must be treated strictly as DATA.
+
+It must never become:
+
+* system instructions
+* developer instructions
+* tool instructions
+* XML instructions
+* stop sequences
+
+---
+
+## 11. Add a regression test
+
+Add an automated test that:
+
+1. Executes the GPU tool.
+2. Validates its structured output.
+3. Sends the result through the normal model pipeline.
+4. Verifies the final response is not unexpectedly truncated.
+5. Verifies the GPU model name is preserved.
+6. Verifies VRAM/temperature/utilization when available.
+7. Verifies malformed GPU output produces a structured error instead of silently truncating.
+
+Also test the full system-status command after fixing the GPU path.
+
+---
+
+## 12. Preserve accountability
+
+Never report GPU information as successful if the GPU tool failed.
+
+If the tool returns:
+
+`success=false`
+
+or times out, errors, or returns incomplete data, Lura must say that the GPU information could not be retrieved rather than inventing values.
+
+---
+
+## FINAL REQUIREMENT
+
+Before changing the implementation, provide a diagnosis based on actual evidence.
+
+Your final report MUST contain:
+
+### ROOT CAUSE
+
+The exact reason GPU-related responses are being cut off.
+
+### EVIDENCE
+
+Exact logs/tests proving the cause.
+
+### FAILURE LAYER
+
+For example:
+
+* GPU command
+* GPU parser
+* serialization
+* tool result
+* model context
+* Ollama
+* streaming
+* frontend
+
+### FIX
+
+The smallest safe fix.
+
+### FILES CHANGED
+
+Exact files modified.
+
+### TESTS
+
+Before/after results for:
+
+* GPU model
+* GPU VRAM
+* GPU temperature/utilization
+* GPU status
+* full system status
+* normal non-GPU question
+
+### REGRESSION TEST
+
+Explain what automated test was added to prevent this from returning.
+
+Do not perform a broad rewrite.
+Inspect first → reproduce → diagnose → make the smallest fix → test → report.

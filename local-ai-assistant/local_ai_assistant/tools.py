@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import csv
 import glob
 import json
+import logging
+import math
 import os
 import platform
 import re
@@ -36,6 +39,10 @@ from .information_tools import (
 from .memory import MemoryStore
 from .profile import UserProfileStore, collect_system_profile
 from .reminders import default_reminder_service, format_due_time
+
+
+LOGGER = logging.getLogger("lura.tools")
+
 
 class PermissionLevel(str, Enum):
     SAFE = "safe"
@@ -108,6 +115,12 @@ _WORKSPACE_NAME = re.compile(r"^[A-Za-z0-9_:-]+$")
 _MAX_SEARCH_RESULTS = 50
 _MAX_SEARCH_DIRECTORIES = 10_000
 _MAX_SCREENSHOTS = 20
+_GPU_TOOL_NAMES = frozenset({"get_gpu_info", "get_gpu_status", "get_gpu_usage"})
+_GPU_QUERY = [
+    "nvidia-smi",
+    "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total",
+    "--format=csv,noheader,nounits",
+]
 
 
 class _DuckDuckGoParser(HTMLParser):
@@ -190,6 +203,73 @@ def _failed(error: Exception) -> ToolCallResult:
 
 def _information_result(result: InformationResult) -> ToolCallResult:
     return ToolCallResult(result.success, result.content)
+
+
+def _tool_debug_enabled() -> bool:
+    return os.environ.get("LURA_STREAM_DEBUG", "").casefold() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _gpu_failure(error: str, details: list[str] | None = None) -> ToolCallResult:
+    payload: dict[str, object] = {
+        "available": False,
+        "vendor": "NVIDIA",
+        "model": None,
+        "vram_total_mb": None,
+        "vram_used_mb": None,
+        "utilization_percent": None,
+        "temperature_c": None,
+        "gpus": [],
+        "error": error,
+    }
+    if details:
+        payload["error_details"] = details
+    return ToolCallResult(
+        False,
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+    )
+
+
+def _parse_gpu_rows(stdout: str) -> tuple[list[dict[str, object]], list[str]]:
+    gpus: list[dict[str, object]] = []
+    errors: list[str] = []
+    try:
+        rows = csv.reader(stdout.splitlines(), strict=True)
+        for row_number, fields in enumerate(rows, start=1):
+            if not fields or not any(field.strip() for field in fields):
+                continue
+            if len(fields) != 5:
+                errors.append(
+                    f"row {row_number}: expected 5 fields, received {len(fields)}"
+                )
+                continue
+            name, utilization, temperature, memory_used, memory_total = (
+                field.strip() for field in fields
+            )
+            if not name:
+                errors.append(f"row {row_number}: GPU name is empty")
+                continue
+            try:
+                numeric_values = {
+                    "utilization_percent": float(utilization),
+                    "temperature_c": float(temperature),
+                    "vram_used_mb": float(memory_used),
+                    "vram_total_mb": float(memory_total),
+                }
+            except ValueError:
+                errors.append(f"row {row_number}: GPU metrics are not numeric")
+                continue
+            if not all(math.isfinite(value) for value in numeric_values.values()):
+                errors.append(f"row {row_number}: GPU metrics are not finite")
+                continue
+            gpus.append({"name": name, **numeric_values})
+    except csv.Error as error:
+        errors.append(f"CSV parsing failed: {error}")
+    return gpus, errors
 
 
 class ToolManager:
@@ -1186,6 +1266,8 @@ class ToolManager:
         definition = self._definitions.get(name)
         if definition is None:
             return ToolCallResult(False, f"Unknown tool: {name}")
+        if _tool_debug_enabled() and name in _GPU_TOOL_NAMES:
+            LOGGER.info("[GPU TOOL] selected=%s arguments=%s", name, arguments)
         permission = self.permission_for(name, arguments)
         if permission == PermissionLevel.BLOCKED:
             return ToolCallResult(False, f"Permission blocked for {name}.")
@@ -1592,62 +1674,81 @@ class ToolManager:
     @staticmethod
     def _get_gpu_status(arguments: dict) -> ToolCallResult:
         del arguments
+        if _tool_debug_enabled():
+            LOGGER.info("[GPU TOOL] command=%s", shlex.join(_GPU_QUERY))
         try:
             result = subprocess.run(
-                [
-                    "nvidia-smi",
-                    "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total",
-                    "--format=csv,noheader,nounits",
-                ],
+                _GPU_QUERY,
                 capture_output=True,
                 text=True,
                 timeout=5,
                 check=False,
             )
         except (OSError, subprocess.SubprocessError) as error:
-            return ToolCallResult(False, json.dumps({"available": False, "error": str(error)}))
+            if _tool_debug_enabled():
+                LOGGER.info(
+                    "[GPU TOOL] execution_failed error_type=%s raw_stdout_chars=0 "
+                    "raw_stderr_chars=0",
+                    type(error).__name__,
+                )
+            return _gpu_failure(f"NVIDIA GPU query failed: {error}")
+        stdout = result.stdout or ""
+        stderr = result.stderr or ""
+        if _tool_debug_enabled():
+            LOGGER.info(
+                "[GPU TOOL] return_code=%d raw_stdout_chars=%d raw_stdout_lines=%d "
+                "raw_stderr_chars=%d",
+                result.returncode,
+                len(stdout),
+                len(stdout.splitlines()),
+                len(stderr),
+            )
         if result.returncode:
-            return ToolCallResult(
-                False,
-                json.dumps({"available": False, "error": "NVIDIA GPU is unavailable."}),
+            return _gpu_failure(
+                "NVIDIA GPU is unavailable.",
+                [f"nvidia-smi exited with status {result.returncode}"],
             )
-        gpus: list[dict[str, object]] = []
-        for line in result.stdout.splitlines():
-            fields = [field.strip() for field in line.split(",")]
-            if len(fields) < 5:
-                continue
-            name, utilization, temperature, memory_used, memory_total = fields[:5]
-            try:
-                gpu = {
-                    "name": name,
-                    "utilization_percent": float(utilization),
-                    "temperature_c": float(temperature),
-                    "vram_used_mb": float(memory_used),
-                    "vram_total_mb": float(memory_total),
-                }
-            except ValueError:
-                continue
-            gpus.append(gpu)
+        gpus, parse_errors = _parse_gpu_rows(stdout)
+        if parse_errors:
+            if _tool_debug_enabled():
+                LOGGER.info(
+                    "[GPU TOOL] parsed_type=dict gpu_rows=%d parse_errors=%d "
+                    "serialized_result_chars=0",
+                    len(gpus),
+                    len(parse_errors),
+                )
+            return _gpu_failure("NVIDIA GPU data was malformed.", parse_errors)
         if not gpus:
-            return ToolCallResult(
-                False,
-                json.dumps({"available": False, "error": "NVIDIA GPU data is unavailable."}),
-            )
+            if _tool_debug_enabled():
+                LOGGER.info(
+                    "[GPU TOOL] parsed_type=dict gpu_rows=0 parse_errors=0 "
+                    "serialized_result_chars=0"
+                )
+            return _gpu_failure("NVIDIA GPU data is unavailable.")
         first_gpu = gpus[0]
+        payload = {
+            "available": True,
+            "vendor": "NVIDIA",
+            "model": first_gpu["name"],
+            "vram_total_mb": first_gpu["vram_total_mb"],
+            "vram_used_mb": first_gpu["vram_used_mb"],
+            "utilization_percent": first_gpu["utilization_percent"],
+            "temperature_c": first_gpu["temperature_c"],
+            "gpus": gpus,
+        }
+        serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if _tool_debug_enabled():
+            LOGGER.info(
+                "[GPU TOOL] parsed_type=dict gpu_rows=%d parsed_fields=%s "
+                "first_model_chars=%d serialized_result_chars=%d",
+                len(gpus),
+                ",".join(payload),
+                len(str(first_gpu["name"])),
+                len(serialized),
+            )
         return ToolCallResult(
             True,
-            json.dumps(
-                {
-                    "available": True,
-                    "vendor": "NVIDIA",
-                    "model": first_gpu["name"],
-                    "vram_total_mb": first_gpu["vram_total_mb"],
-                    "vram_used_mb": first_gpu["vram_used_mb"],
-                    "utilization_percent": first_gpu["utilization_percent"],
-                    "temperature_c": first_gpu["temperature_c"],
-                    "gpus": gpus,
-                }
-            ),
+            serialized,
         )
 
     @staticmethod
