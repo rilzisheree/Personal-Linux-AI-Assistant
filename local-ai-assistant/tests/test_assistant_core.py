@@ -157,6 +157,30 @@ class RoutedAssistantServiceTests(unittest.TestCase):
             )
         )
 
+    def test_stream_reply_accumulates_deterministic_chunks_without_replacement(self) -> None:
+        backend = FakeBackend("")
+        backend.stream_chat = lambda *args, **kwargs: iter(
+            (
+                StreamEvent("Hello"),
+                StreamEvent(" world"),
+                StreamEvent(" this"),
+                StreamEvent(" is"),
+                StreamEvent(" a"),
+                StreamEvent(" test.", True),
+            )
+        )
+        service = RoutedAssistantService(backend)
+
+        events = list(
+            service.stream_reply(
+                [ChatMessage("user", "deterministic stream test")],
+                "qwen3.5:4b",
+            )
+        )
+
+        self.assertEqual("".join(event.content for event in events), "Hello world this is a test.")
+        self.assertTrue(events[-1].done)
+
 
 if __name__ == "__main__":
     unittest.main()

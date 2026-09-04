@@ -55,6 +55,27 @@ these environment variables when needed:
 - `LURA_API_AUTOSTART` — set to `0` to prevent desktop API autostart
 - `LURA_API_PORT` — desktop autostart port, defaulting to `8000`
 
+### Stream truncation diagnostics
+
+Set `LURA_STREAM_DEBUG=1` to enable count-only diagnostics for the Ollama,
+backend, SSE, and native Qt display boundaries. Logs include chunk counts,
+character counts, generated-token metrics when Ollama supplies them, the
+completion reason, and the actual `num_predict`, `num_ctx`, `temperature`, and
+`stop` request options. They never log prompt or response contents.
+
+For a controlled no-tool comparison using the same prompt, run:
+
+```bash
+cd local-ai-assistant
+python3 -m local_ai_assistant.diagnose_stream --debug
+```
+
+The command compares `stream=true` with a diagnostic-only `stream=false`
+request and prints counts and termination metadata as JSON. It does not change
+the application's normal streaming behavior. Run it on the Linux machine that
+hosts Ollama; a Replit API process cannot reach an Ollama service bound only to
+that machine's localhost.
+
 The desktop Settings dialog includes a **Permissions** tab. Use it to choose
 whether supported local actions use their default safety level, always run when
 safe, ask for approval every time, or stay blocked. Dangerous actions continue

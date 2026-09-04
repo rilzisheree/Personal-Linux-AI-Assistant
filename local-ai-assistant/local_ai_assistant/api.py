@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 from http import HTTPStatus
@@ -46,6 +47,7 @@ REMOTE_TOOL_NAMES = frozenset(
     }
 )
 DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
+LOGGER = logging.getLogger("lura.api")
 
 
 class ApiHttpError(Exception):
@@ -275,6 +277,13 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
 
         cancel_event = threading.Event()
         response_parts: list[str] = []
+        sse_events_sent = 0
+        sse_chars_sent = 0
+        completion_event_sent = False
+        backend_done_reason = ""
+        backend_generated_tokens: int | float | None = None
+        backend_total_chunks = 0
+        backend_total_chars = 0
         client = self._ai_client()
         server = self._api_server()
         tool_manager = ToolManager(
@@ -290,7 +299,25 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                 if schema.get("function", {}).get("name") in REMOTE_TOOL_NAMES
             ]
         messages = list(conversation.messages)
-        self._write_sse("started", {"conversation_id": conversation_id})
+
+        def write_sse(event: str, event_payload: dict) -> None:
+            nonlocal sse_events_sent, sse_chars_sent, completion_event_sent
+            sse_events_sent += 1
+            if event == "token":
+                token_content = event_payload.get("content", "")
+                if isinstance(token_content, str):
+                    sse_chars_sent += len(token_content)
+            if event == "done":
+                completion_event_sent = True
+            self._write_sse(event, event_payload)
+
+        LOGGER.info(
+            "[SSE] stream_start conversation_id=%s input_messages=%d input_chars=%d",
+            conversation_id,
+            len(messages),
+            sum(len(message.content) for message in messages),
+        )
+        write_sse("started", {"conversation_id": conversation_id})
         direct_call = tool_manager.direct_tool_call_for_request(content.strip())
         if direct_call is not None and direct_call[0] in REMOTE_TOOL_NAMES:
             tool_name, arguments = direct_call
@@ -299,7 +326,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                 result = tool_manager.execute(tool_name, arguments)
             except Exception as error:
                 result = ToolCallResult(False, str(error))
-            self._write_sse(
+            write_sse(
                 "tool",
                 {"name": tool_name, "success": result.success, "message": result.content},
             )
@@ -318,6 +345,8 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                 cycle_response: list[str] = []
                 tool_calls = []
                 stream_complete = False
+                backend_chunks = 0
+                backend_chars = 0
                 for event in client.stream_chat(
                     messages,
                     model.strip(),
@@ -325,10 +354,19 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                     tools=remote_tools,
                     context_size=self._api_server().context_size,
                 ):
+                    backend_chunks += 1
+                    backend_chars += len(event.content)
+                    backend_total_chunks += 1
+                    backend_total_chars += len(event.content)
+                    if event.done:
+                        backend_done_reason = event.done_reason
+                        raw_eval_count = (event.metrics or {}).get("eval_count")
+                        if isinstance(raw_eval_count, (int, float)):
+                            backend_generated_tokens = raw_eval_count
                     if event.content:
                         cycle_response.append(event.content)
                         response_parts.append(event.content)
-                        self._write_sse("token", {"content": event.content})
+                        write_sse("token", {"content": event.content})
                     tool_calls.extend(event.tool_calls)
                     if event.done:
                         stream_complete = True
@@ -338,6 +376,16 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                     raise OllamaProtocolError(
                         "The AI stream ended before sending a completion event."
                     )
+                LOGGER.info(
+                    "[BACKEND] conversation_id=%s chunks_received=%d "
+                    "chars_received=%d stream_finished=true done_reason=%s "
+                    "generated_tokens=%s",
+                    conversation_id,
+                    backend_total_chunks,
+                    backend_total_chars,
+                    backend_done_reason or "unspecified",
+                    backend_generated_tokens if backend_generated_tokens is not None else "unknown",
+                )
                 if cancel_event.is_set():
                     return
                 if not tool_calls:
@@ -348,7 +396,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                             conversation_id,
                             ChatMessage("assistant", response),
                         )
-                    self._write_sse(
+                    write_sse(
                         "done",
                         {
                             "conversation_id": conversation_id,
@@ -386,7 +434,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                         result = tool_manager.execute(
                             tool_call.name, tool_call.arguments, approved=True
                         )
-                    self._write_sse(
+                    write_sse(
                         "tool",
                         {
                             "name": tool_call.name,
@@ -404,12 +452,20 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             cancel_event.set()
         except Exception as error:
+            LOGGER.error(
+                "[BACKEND] conversation_id=%s chunks_received=%d "
+                "chars_received=%d stream_finished=false exception=%s",
+                conversation_id,
+                backend_total_chunks,
+                backend_total_chars,
+                type(error).__name__,
+            )
             try:
                 error_message = format_backend_error(
                     error,
                     getattr(client, "display_name", "AI backend"),
                 )
-                self._write_sse(
+                write_sse(
                     "error",
                     {
                         "status": "error",
@@ -423,6 +479,17 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                 )
             except (BrokenPipeError, ConnectionResetError, OSError):
                 pass
+        finally:
+            LOGGER.info(
+                "[SSE] events_sent=%d chars_sent=%d completion_event_sent=%s "
+                "final_message_chars=%d done_reason=%s generated_tokens=%s",
+                sse_events_sent,
+                sse_chars_sent,
+                str(completion_event_sent).lower(),
+                len("".join(response_parts)),
+                backend_done_reason or "unspecified",
+                backend_generated_tokens if backend_generated_tokens is not None else "unknown",
+            )
 
     def _require_user(self) -> dict:
         user = self._api_server().store.user_for_session(self._session_token())
@@ -570,6 +637,10 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
 def main() -> int:
     """Run the API service using environment-based deployment configuration."""
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
     try:
         port = int(os.environ.get("PORT", "8000"))
     except ValueError as error:

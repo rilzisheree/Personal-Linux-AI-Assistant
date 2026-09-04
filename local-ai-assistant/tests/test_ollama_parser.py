@@ -171,6 +171,33 @@ class OllamaParserTests(unittest.TestCase):
         self.assertIn("completion_reason=MODEL_REACHED_TOKEN_LIMIT", output)
         self.assertNotIn("[STREAM] ERROR", output)
 
+    def test_chat_once_uses_stream_false_and_preserves_completion_metadata(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.read.return_value = (
+                b'{"message":{"content":"complete answer"},'
+                b'"done":true,"done_reason":"stop","eval_count":23}'
+            )
+            urlopen.return_value = response
+
+            event = client.chat_once(
+                [ChatMessage("user", "Explain Linux in detail.")],
+                "qwen3.5:4b",
+                context_size=8192,
+                options={"temperature": 0.2},
+            )
+
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertFalse(payload["stream"])
+        self.assertEqual(payload["options"], {"num_ctx": 8192, "temperature": 0.2})
+        self.assertEqual(event.content, "complete answer")
+        self.assertTrue(event.done)
+        self.assertEqual(event.done_reason, "stop")
+        self.assertEqual(event.metrics, {"eval_count": 23})
+
     def test_stream_chat_rejects_eof_before_done_and_logs_stream_error(self) -> None:
         client = OllamaClient("http://localhost:11434")
         with patch("local_ai_assistant.ollama.urlopen") as urlopen:

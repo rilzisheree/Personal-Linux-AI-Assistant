@@ -81,6 +81,11 @@ class ChatWorker(QObject):
         complete_response: list[str] = []
         cycle_response: list[str] = []
         tool_rounds = 0
+        stream_chunks = 0
+        stream_characters = 0
+        stream_completion_received = False
+        stream_done_reason = ""
+        stream_generated_tokens: int | float | None = None
         try:
             self.ollama_started.emit()
             current_request = next(
@@ -135,6 +140,8 @@ class ChatWorker(QObject):
                 cycle_response = []
                 tool_calls: list[ToolCall] = []
                 stream_complete = False
+                cycle_chunks = 0
+                cycle_characters = 0
                 self.ollama_started.emit()
                 for event in self.service.stream_reply(
                     messages,
@@ -143,6 +150,10 @@ class ChatWorker(QObject):
                     route_tools,
                     self.context_size,
                 ):
+                    cycle_chunks += 1
+                    cycle_characters += len(event.content)
+                    stream_chunks += 1
+                    stream_characters += len(event.content)
                     if event.content:
                         cycle_response.append(event.content)
                         complete_response.append(event.content)
@@ -150,7 +161,24 @@ class ChatWorker(QObject):
                     tool_calls.extend(event.tool_calls)
                     if event.done:
                         stream_complete = True
+                        stream_completion_received = True
+                        stream_done_reason = event.done_reason
+                        raw_eval_count = (event.metrics or {}).get("eval_count")
+                        if isinstance(raw_eval_count, (int, float)):
+                            stream_generated_tokens = raw_eval_count
                         break
+                LOGGER.info(
+                    "[BACKEND] worker_cycle_chunks=%d worker_cycle_chars=%d "
+                    "worker_stream_chunks=%d worker_stream_chars=%d "
+                    "stream_finished=%s done_reason=%s generated_tokens=%s",
+                    cycle_chunks,
+                    cycle_characters,
+                    stream_chunks,
+                    stream_characters,
+                    str(stream_complete).lower(),
+                    stream_done_reason or "unspecified",
+                    stream_generated_tokens if stream_generated_tokens is not None else "unknown",
+                )
                 if not stream_complete:
                     raise OllamaProtocolError(
                         "The AI stream ended before sending a completion event."
@@ -166,6 +194,14 @@ class ChatWorker(QObject):
                     visible_messages.append(assistant_message)
                     self.conversation_ready.emit(visible_messages)
                     self.finished.emit("".join(complete_response))
+                    LOGGER.info(
+                        "[BACKEND] worker_complete chunks_received=%d "
+                        "chars_received=%d stream_finished=%s final_message_chars=%d",
+                        stream_chunks,
+                        stream_characters,
+                        str(stream_completion_received).lower(),
+                        len("".join(complete_response)),
+                    )
                     return
 
                 tool_rounds += 1
@@ -215,10 +251,25 @@ class ChatWorker(QObject):
                     visible_messages.append(tool_message)
             self.failed.emit("Generation stopped.", "cancelled")
         except (OllamaCancelledError, AssistantCancelledError):
+            LOGGER.info(
+                "[BACKEND] worker_cancelled chunks_received=%d chars_received=%d "
+                "stream_finished=%s",
+                stream_chunks,
+                stream_characters,
+                str(stream_completion_received).lower(),
+            )
             self._preserve_partial_response(visible_messages, cycle_response)
             self.conversation_ready.emit(visible_messages)
             self.failed.emit("Generation stopped.", "cancelled")
         except Exception as error:
+            LOGGER.error(
+                "[BACKEND] worker_error chunks_received=%d chars_received=%d "
+                "stream_finished=%s exception=%s",
+                stream_chunks,
+                stream_characters,
+                str(stream_completion_received).lower(),
+                type(error).__name__,
+            )
             self._preserve_partial_response(visible_messages, cycle_response)
             self.conversation_ready.emit(visible_messages)
             self.failed.emit(

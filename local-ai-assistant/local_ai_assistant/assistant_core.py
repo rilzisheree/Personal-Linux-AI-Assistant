@@ -127,9 +127,38 @@ class AssistantService:
         tools: list[dict] | None = None,
         context_size: int | None = None,
     ) -> Iterator[StreamEvent]:
-        return self.backend.stream_chat(
-            messages, model, cancel_event, tools, context_size
-        )
+        def stream() -> Iterator[StreamEvent]:
+            chunks = 0
+            characters = 0
+            completed = False
+            try:
+                for event in self.backend.stream_chat(
+                    messages, model, cancel_event, tools, context_size
+                ):
+                    chunks += 1
+                    characters += len(event.content)
+                    if event.done:
+                        completed = True
+                    yield event
+            except Exception as error:
+                LOGGER.error(
+                    "[BACKEND] stream_finished=false chunks_received=%d "
+                    "chars_received=%d exception=%s",
+                    chunks,
+                    characters,
+                    type(error).__name__,
+                )
+                raise
+            finally:
+                LOGGER.info(
+                    "[BACKEND] chunks_received=%d chars_received=%d "
+                    "stream_finished=%s",
+                    chunks,
+                    characters,
+                    str(completed).lower(),
+                )
+
+        return stream()
 
     def list_models(self) -> list[str]:
         return self.backend.list_models()

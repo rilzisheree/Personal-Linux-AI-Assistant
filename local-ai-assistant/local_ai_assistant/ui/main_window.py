@@ -140,6 +140,9 @@ class MainWindow(QMainWindow):
         self.last_voice_error: str | None = None
         self.active_assistant_bubble: MessageBubble | None = None
         self.active_response = ""
+        self._stream_events_received = 0
+        self._stream_characters_received = 0
+        self._stream_completion_received = False
         self.active_tool_bubbles: dict[str, MessageBubble] = {}
         self.available_models: list[str] = []
         self._quitting = False
@@ -549,6 +552,9 @@ class MainWindow(QMainWindow):
         self.chat_view.add_message("user", prompt)
         self.message_input.clear()
         self.active_response = ""
+        self._stream_events_received = 0
+        self._stream_characters_received = 0
+        self._stream_completion_received = False
         self._speech_chunker = (
             SpeechChunker()
             if self.config.voice_responses_enabled
@@ -601,6 +607,8 @@ class MainWindow(QMainWindow):
         if self._latency_trace is not None:
             self._latency_trace.mark("ollama_first_token")
         self.active_response += chunk
+        self._stream_events_received += 1
+        self._stream_characters_received += len(chunk)
         if self.active_assistant_bubble:
             self.active_assistant_bubble.set_content(self.active_response)
             self.chat_view.verticalScrollBar().setValue(self.chat_view.verticalScrollBar().maximum())
@@ -1775,6 +1783,15 @@ class MainWindow(QMainWindow):
             self._latency_trace.mark("ollama_completed")
         self.status_label.setText(f"Connected · {self.model_selector.currentText()}")
         self._set_generating(False)
+        self._stream_completion_received = True
+        LOGGER.info(
+            "[FRONTEND] events_received=%d chars_received=%d final_message_chars=%d "
+            "completion_received=%s",
+            self._stream_events_received,
+            self._stream_characters_received,
+            len(response),
+            str(self._stream_completion_received).lower(),
+        )
         self._finish_speech_stream(response)
 
     @Slot(str, str)
@@ -1787,6 +1804,16 @@ class MainWindow(QMainWindow):
             self._latency_trace.finish()
             self._latency_trace = None
         self._set_voice_state("idle" if kind == "cancelled" else "error")
+        LOGGER.info(
+            "[FRONTEND] events_received=%d chars_received=%d final_message_chars=%d "
+            "completion_received=%s kind=%s",
+            self._stream_events_received,
+            self._stream_characters_received,
+            len(self.active_response),
+            str(self._stream_completion_received).lower(),
+            kind,
+        )
+        self._stream_completion_received = False
         if kind == "cancelled":
             if self.active_assistant_bubble and self.active_response:
                 self.active_assistant_bubble.set_content(self.active_response + "\n\n*Generation stopped.*")

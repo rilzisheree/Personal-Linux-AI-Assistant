@@ -1,0 +1,627 @@
+## FIX #2B — RESPONSE CUT-OFF STILL EXISTS: FIND THE EXACT TERMINATION POINT
+
+You are continuing to debug Lura.
+
+Project:
+
+```text
+~/Personal-Linux-AI-Assistant
+```
+
+The previous streaming fix improved the situation, but **responses are still being cut off mid-sentence**.
+
+This is now an evidence-based debugging task.
+
+### Observed results after the previous fix
+
+A normal response produced:
+
+```text
+The primary operating system on a modern laptop like yours is Linux, which powers servers worldwide (including cloud infrastructure), and many users find it ideal for security, efficiency, and customization needs—making
+```
+
+It stopped at `making`.
+
+A GPU explanation produced:
+
+```text
+On an NVIDIA RTX
+```
+
+and stopped.
+
+A full system status produced:
+
+```text
+Your system has been up for roughly **223
+```
+
+and stopped.
+
+Another response ended at:
+
+```text
+with approximately 8GB of VRAM (currently used at ~11%) and a reasonable temperature of 50°C. Your system has 15.8 GB of total RAM available, though currently used at 53% (8.4 GB out of 15.8 GB), indicating it's in an idle-to-low-load state. Storage shows 236 GB used out of 500 GB, with plenty of space remaining for future work. Your CPU is a GenuineIntel i5-12400F (6-core, 12-thread) with 0% current utilization, and your system has been up for roughly **223
+```
+
+### Critical observation
+
+These are NOT natural completions.
+
+The model is clearly being interrupted while generating.
+
+Do NOT assume this is simply the model deciding to stop.
+
+---
+
+# YOUR TASK
+
+Do NOT make another blind change.
+
+First instrument the entire pipeline so we can determine **exactly where the response disappears**.
+
+Trace:
+
+```text
+USER
+↓
+ROUTER
+↓
+TOOL(S)
+↓
+OLLAMA REQUEST
+↓
+OLLAMA STREAM
+↓
+BACKEND
+↓
+SSE/HTTP
+↓
+FRONTEND
+↓
+DISPLAYED MESSAGE
+```
+
+For ONE request, I need to know exactly how many characters/tokens/chunks exist at each stage.
+
+---
+
+# 1. Add precise stream diagnostics
+
+In debug mode, log:
+
+```text
+[STREAM START]
+[OLLAMA] model=...
+[OLLAMA] request_id=...
+[OLLAMA] stream_started
+
+[OLLAMA] chunk=1 chars=...
+[OLLAMA] chunk=2 chars=...
+...
+
+[OLLAMA] stream_finished
+[OLLAMA] total_chunks=...
+[OLLAMA] total_chars=...
+[OLLAMA] done_reason=...
+```
+
+Then backend:
+
+```text
+[BACKEND] chunks_received=...
+[BACKEND] chars_received=...
+[BACKEND] stream_finished=true/false
+[BACKEND] exception=...
+```
+
+Then SSE:
+
+```text
+[SSE] events_sent=...
+[SSE] chars_sent=...
+[SSE] completion_event_sent=true/false
+```
+
+Then frontend:
+
+```text
+[FRONTEND] events_received=...
+[FRONTEND] chars_received=...
+[FRONTEND] final_message_chars=...
+[FRONTEND] completion_received=true/false
+```
+
+Do NOT log message contents, passwords, tokens, API keys, or other secrets unnecessarily.
+
+Character/chunk/token counts are sufficient.
+
+---
+
+# 2. Determine whether Ollama itself finishes
+
+This is the most important test.
+
+Run a controlled long response through the same Ollama model.
+
+Determine whether Ollama returns:
+
+```text
+done=true
+```
+
+and what its actual termination reason is.
+
+Record:
+
+```text
+model
+done
+done_reason
+total_chunks
+total_characters
+```
+
+If Ollama itself stops at the exact same point, the problem is likely:
+
+* `num_predict`
+* model/context limit
+* stop sequence
+* Ollama request configuration
+* generation configuration
+
+If Ollama continues generating but Lura stops receiving data, the problem is downstream.
+
+---
+
+# 3. Inspect `num_predict`
+
+Find the ACTUAL generation parameters sent to Ollama.
+
+Do not assume the configured value.
+
+Print/debug the real request configuration.
+
+Specifically inspect:
+
+```text
+num_predict
+num_ctx
+temperature
+stop
+```
+
+and any other generation parameters.
+
+Determine whether `num_predict` is low enough to explain these cutoffs.
+
+IMPORTANT:
+
+Do not simply increase `num_predict`.
+
+First prove whether the model is reaching the output-token limit.
+
+If the model is hitting the limit, show evidence such as:
+
+```text
+[OLLAMA] generated_tokens=...
+[OLLAMA] num_predict=...
+[OLLAMA] done_reason=length
+```
+
+If it is NOT hitting the limit, investigate the next layer.
+
+---
+
+# 4. Inspect stop sequences
+
+Print the exact stop sequences being sent to Ollama.
+
+Look for accidental values such as:
+
+```text
+</tool>
+</function>
+<tool>
+[END]
+[DONE]
+```
+
+or other separators.
+
+Determine whether a normal response can accidentally contain one of the configured stop strings.
+
+Do not remove tool-call stop sequences blindly.
+
+If stop sequences are responsible, fix them without breaking tool calling.
+
+---
+
+# 5. Inspect the frontend
+
+This is especially important.
+
+Determine whether the backend is actually receiving more text than the user sees.
+
+For example:
+
+```text
+OLLAMA: 1800 chars
+BACKEND: 1800 chars
+SSE: 1800 chars
+FRONTEND: 812 chars
+DISPLAY: 812 chars
+```
+
+If so, the frontend is definitely truncating the response.
+
+Inspect for:
+
+* maximum message length
+* CSS clipping that only LOOKS like truncation
+* string slicing
+* `.substring()`
+* `.slice()`
+* regex extraction
+* Markdown parsing
+* incomplete Markdown state
+* state replacement instead of accumulation
+* React state race conditions
+* stale state closures
+* streaming cancellation
+* `AbortController`
+* request timeout
+* SSE reader termination
+* `[DONE]` detection
+* empty-event handling
+* JSON parsing errors
+
+Pay particular attention to code that handles streamed chunks.
+
+---
+
+# 6. Verify accumulation logic
+
+The frontend/backend must conceptually do:
+
+```text
+existing_response + incoming_chunk
+```
+
+not:
+
+```text
+incoming_chunk → replace existing_response
+```
+
+and not:
+
+```text
+incoming_chunk → parser → terminate
+```
+
+Test with deterministic chunks:
+
+```text
+Hello
+ world
+ this
+ is
+ a
+ test.
+```
+
+The final response MUST be:
+
+```text
+Hello world this is a test.
+```
+
+---
+
+# 7. Inspect cancellation
+
+Search the entire project for:
+
+```text
+abort
+AbortController
+cancel
+cancelled
+CancelledError
+timeout
+disconnect
+close
+return
+break
+```
+
+Find every location that can terminate generation.
+
+Determine which one is actually firing during a cutoff.
+
+Do not suppress cancellation errors.
+
+If a request is being accidentally cancelled, fix the cause.
+
+---
+
+# 8. Inspect async task lifecycle
+
+Check whether:
+
+```text
+background task
+stream task
+frontend request
+SSE generator
+Ollama request
+```
+
+have different lifetimes.
+
+Look for cases where the parent task finishes and kills the Ollama streaming task.
+
+Also inspect:
+
+```text
+asyncio.create_task
+asyncio.wait_for
+asyncio.timeout
+asyncio.gather
+asyncio.shield
+```
+
+and equivalent concurrency mechanisms.
+
+---
+
+# 9. Check response timeouts
+
+Determine the actual timeout values at every layer:
+
+```text
+Ollama client timeout
+HTTP client timeout
+backend request timeout
+SSE timeout
+frontend timeout
+reverse proxy timeout
+```
+
+A long response must not be killed merely because generation takes time.
+
+However, do not just set everything to infinite.
+
+Use sensible timeouts and make genuine timeout failures explicit.
+
+---
+
+# 10. IMPORTANT: Test the full-system-status case
+
+This case is particularly valuable because it involves tool results.
+
+Run:
+
+```text
+Give me my full system status.
+```
+
+Record:
+
+```text
+tool execution complete?
+tool result character count?
+model input character count?
+model output character count?
+Ollama chunks?
+backend chunks?
+SSE chunks?
+frontend chunks?
+final displayed characters?
+```
+
+Determine whether the cutoff happens:
+
+```text
+before Qwen
+during Qwen
+after Qwen
+during SSE
+during frontend rendering
+```
+
+---
+
+# 11. Test WITHOUT tools
+
+Run:
+
+```text
+Explain Linux in detail.
+```
+
+If this truncates, the problem is probably in the general generation/streaming path.
+
+Then run:
+
+```text
+What GPU do I have?
+```
+
+If tool responses truncate but ordinary responses don't, investigate the tool-result → model context → streaming path.
+
+Then run:
+
+```text
+Give me my full system status.
+```
+
+This lets us distinguish:
+
+```text
+normal generation bug
+vs
+tool-result generation bug
+vs
+aggregation bug
+```
+
+---
+
+# 12. Test with streaming disabled
+
+If the architecture allows it, temporarily perform the SAME model request with streaming disabled.
+
+For example:
+
+```text
+stream=false
+```
+
+Do not permanently change the application behavior.
+
+This is a diagnostic test.
+
+Compare:
+
+```text
+stream=true
+```
+
+against:
+
+```text
+stream=false
+```
+
+If `stream=false` returns the complete response while `stream=true` cuts it off, we have strong evidence that the streaming pipeline is responsible.
+
+If BOTH are truncated at the same point, investigate generation parameters/model behavior instead.
+
+---
+
+# 13. Check XML interaction
+
+Do NOT fix XML yet unless it is proven to be involved.
+
+However, determine whether the current streaming parser is seeing ordinary text as an XML/tool call.
+
+For example:
+
+```text
+normal model output
+↓
+XML detector
+↓
+incorrectly assumes tool call
+↓
+terminates stream
+```
+
+If this occurs, record it clearly.
+
+Especially test ordinary text containing:
+
+```text
+<something>
+```
+
+or Markdown/code-like content.
+
+---
+
+# 14. Do NOT declare success from one good response
+
+The previous fix improved things, but the bug remains intermittent.
+
+Run at least:
+
+```text
+10 normal responses
+5 long responses
+5 tool responses
+3 full system status requests
+3 multi-turn conversations
+```
+
+Record whether any terminate unexpectedly.
+
+---
+
+# 15. Add a regression test
+
+Once the actual cause is found, add a test specifically reproducing it.
+
+The test must fail before the fix and pass afterward.
+
+Do not create a test that merely checks:
+
+```text
+response exists
+```
+
+It should verify that the complete expected stream is preserved.
+
+---
+
+# 16. Do NOT make unrelated changes
+
+For this task, only modify code necessary to diagnose and fix the remaining response truncation.
+
+Do NOT start fixing:
+
+* weather
+* currency
+* places
+* directions
+* desktop automation
+* reminders
+* memory
+* security
+* Gemma LoRA
+
+unless the investigation proves one of those is directly causing this bug.
+
+---
+
+# FINAL REPORT
+
+After testing, return:
+
+```text
+ROOT CAUSE
+- Exact component responsible
+- Exact mechanism causing truncation
+
+EVIDENCE
+- Ollama chars/tokens:
+- Backend chars:
+- SSE chars:
+- Frontend chars:
+- Completion reason:
+- Relevant error/cancellation:
+
+FIX APPLIED
+- ...
+
+FILES CHANGED
+- ...
+
+TEST RESULTS
+- Normal: X/Y
+- Long: X/Y
+- Tool: X/Y
+- Full system: X/Y
+- Multi-turn: X/Y
+
+STILL BROKEN
+- ...
+
+REMAINING RISKS
+- ...
+```
+
+Do not say "fixed" unless the actual cause was identified and the regression tests pass.
+
+**This time, evidence first. Do not blindly modify another layer.**

@@ -5,10 +5,12 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import os
 import re
 import socket
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from http.client import HTTPResponse
 from pathlib import Path
@@ -26,6 +28,17 @@ from .errors import (
 )
 
 LOGGER = logging.getLogger("lura.ollama")
+
+
+def _stream_debug_enabled() -> bool:
+    """Enable detailed stream diagnostics without logging response contents."""
+
+    return os.environ.get("LURA_STREAM_DEBUG", "").casefold() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 @dataclass(frozen=True)
@@ -233,6 +246,7 @@ class OllamaClient:
         options: dict[str, int | float | str | bool] | None = None,
         response_format: str | dict | None = None,
     ) -> Iterator[StreamEvent]:
+        request_id = uuid.uuid4().hex[:12]
         payload = {
             "model": model,
             "messages": [self._message_payload(message) for message in messages],
@@ -256,6 +270,21 @@ class OllamaClient:
             payload["format"] = response_format
         if tools:
             payload["tools"] = tools
+        if _stream_debug_enabled():
+            LOGGER.info(
+                "[STREAM START] request_id=%s model=%s input_messages=%d "
+                "input_chars=%d tools=%d num_predict=%s num_ctx=%s "
+                "temperature=%s stop=%s stream=true",
+                request_id,
+                model,
+                len(messages),
+                sum(len(message.content) for message in messages),
+                len(tools or []),
+                request_options.get("num_predict", "unset"),
+                request_options.get("num_ctx", "unset"),
+                request_options.get("temperature", "unset"),
+                request_options.get("stop", "unset"),
+            )
         body = json.dumps(payload).encode("utf-8")
         request = Request(
             self._url("/api/chat"),
@@ -281,7 +310,9 @@ class OllamaClient:
             with self._response_lock:
                 self._response = response
             LOGGER.info(
-                "[Ollama] Connection established in %.2fs; waiting for first token",
+                "[OLLAMA] request_id=%s connection_established_seconds=%.2f "
+                "stream_started=true",
+                request_id,
                 time.monotonic() - request_started,
             )
             first_token_at: float | None = None
@@ -325,8 +356,10 @@ class OllamaClient:
                         thinking_characters += len(event.thinking)
                         output_characters += len(event.content)
                         LOGGER.info(
-                            "[STREAM] chunk received #%d content_chars=%d thinking_chars=%d tool_calls=%d",
+                            "[STREAM] chunk received #%d request_id=%s "
+                            "content_chars=%d thinking_chars=%d tool_calls=%d",
                             chunk_count,
+                            request_id,
                             len(event.content),
                             len(event.thinking),
                             len(event.tool_calls),
@@ -334,9 +367,13 @@ class OllamaClient:
                         if event.done:
                             stream_finished = True
                             LOGGER.info(
-                                "[STREAM] Ollama finished chunks=%d characters=%d completion_reason=%s done_reason=%s",
+                                "[OLLAMA] request_id=%s stream_finished=true "
+                                "total_chunks=%d total_chars=%d generated_tokens=%s "
+                                "completion_reason=%s done_reason=%s",
+                                request_id,
                                 chunk_count,
                                 output_characters,
+                                (event.metrics or {}).get("eval_count", "unknown"),
                                 self._completion_reason(event.done_reason),
                                 event.done_reason or "unspecified",
                             )
@@ -356,22 +393,138 @@ class OllamaClient:
                     )
             except OllamaCancelledError:
                 LOGGER.info(
-                    "[STREAM] CANCELLED_BY_USER chunks_received=%d characters_received=%d",
+                    "[OLLAMA] request_id=%s cancelled=true chunks_received=%d "
+                    "chars_received=%d",
+                    request_id,
                     chunk_count,
                     output_characters,
                 )
                 raise
             except Exception as error:
                 LOGGER.error(
-                    "[STREAM] ERROR error_type=%s chunks_received=%d characters_received=%d",
+                    "[OLLAMA] request_id=%s stream_finished=false error_type=%s "
+                    "chunks_received=%d chars_received=%d characters_received=%d",
+                    request_id,
                     type(error).__name__,
                     chunk_count,
+                    output_characters,
                     output_characters,
                 )
                 raise
             finally:
+                if _stream_debug_enabled() and not stream_finished:
+                    LOGGER.info(
+                        "[OLLAMA] request_id=%s stream_finished=false "
+                        "total_chunks=%d total_chars=%d",
+                        request_id,
+                        chunk_count,
+                        output_characters,
+                    )
                 with self._response_lock:
                     self._response = None
+
+    def chat_once(
+        self,
+        messages: list[ChatMessage],
+        model: str,
+        cancel_event: threading.Event | None = None,
+        tools: list[dict] | None = None,
+        context_size: int | None = None,
+        options: dict[str, int | float | str | bool] | None = None,
+        response_format: str | dict | None = None,
+    ) -> StreamEvent:
+        """Run the same chat request without streaming for diagnostics.
+
+        This is intentionally not used by the application. It provides a
+        controlled stream=true versus stream=false comparison without changing
+        the normal UI behavior.
+        """
+
+        if cancel_event and cancel_event.is_set():
+            raise OllamaCancelledError()
+        payload = {
+            "model": model,
+            "messages": [self._message_payload(message) for message in messages],
+            "stream": False,
+            "keep_alive": self.keep_alive,
+        }
+        thinking_option = self._thinking_option(model, messages)
+        if thinking_option is not None:
+            payload["think"] = thinking_option
+        request_options = dict(options or {})
+        if context_size:
+            request_options["num_ctx"] = context_size
+        if request_options:
+            payload["options"] = request_options
+        if response_format is not None:
+            payload["format"] = response_format
+        if tools:
+            payload["tools"] = tools
+        request_id = uuid.uuid4().hex[:12]
+        if _stream_debug_enabled():
+            LOGGER.info(
+                "[STREAM START] request_id=%s model=%s input_messages=%d "
+                "input_chars=%d tools=%d num_predict=%s num_ctx=%s "
+                "temperature=%s stop=%s stream=false",
+                request_id,
+                model,
+                len(messages),
+                sum(len(message.content) for message in messages),
+                len(tools or []),
+                request_options.get("num_predict", "unset"),
+                request_options.get("num_ctx", "unset"),
+                request_options.get("temperature", "unset"),
+                request_options.get("stop", "unset"),
+            )
+        request = Request(
+            self._url("/api/chat"),
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        response = None
+        try:
+            response = urlopen(request, timeout=self.connection_timeout)
+            self._set_response_timeout(response, max(self.timeout, self.default_stream_timeout))
+            with self._response_lock:
+                self._response = response
+            raw = response.read()
+            event = parse_stream_line(raw)
+            if event is None:
+                raise OllamaProtocolError("Ollama returned an empty response.")
+            if not event.done:
+                event = StreamEvent(
+                    content=event.content,
+                    done=True,
+                    tool_calls=event.tool_calls,
+                    thinking=event.thinking,
+                    metrics=event.metrics,
+                    done_reason=event.done_reason,
+                )
+            LOGGER.info(
+                "[OLLAMA] request_id=%s stream_finished=true total_chunks=1 "
+                "total_chars=%d generated_tokens=%s done_reason=%s stream=false",
+                request_id,
+                len(event.content),
+                (event.metrics or {}).get("eval_count", "unknown"),
+                event.done_reason or "unspecified",
+            )
+            return event
+        except OllamaCancelledError:
+            raise
+        except HTTPError as error:
+            message = self._read_http_error(error)
+            if error.code == 404 or "not found" in message.lower():
+                raise OllamaModelNotFoundError(message) from error
+            raise OllamaProtocolError(message) from error
+        except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError) as error:
+            raise OllamaConnectionError(self._network_message(error)) from error
+        finally:
+            with self._response_lock:
+                if self._response is response:
+                    self._response = None
+            if response is not None:
+                response.close()
 
     @staticmethod
     def _message_payload(message: ChatMessage) -> dict:

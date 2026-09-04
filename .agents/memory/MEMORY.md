@@ -16,3 +16,4 @@
 - [Qt reminder bridge](qt-reminder-bridge.md) — Background reminder callbacks must enter the Qt UI through queued signals rather than touching widgets from scheduler threads.
 - [Remote API tool boundary](remote-api-tool-boundary.md) — Safe information tools need explicit API allowlisting; desktop registry exposure alone does not reach web or phone clients.
 - [Reminder accountability safety](reminder-accountability.md) — Accountability mode must remain a bounded app overlay with a hard timeout and emergency escape, never an unbreakable OS lock.
+- [Stream truncation diagnostics](stream-diagnostics.md) — Live stream-versus-non-stream comparisons must run on the Linux host that runs Ollama.
