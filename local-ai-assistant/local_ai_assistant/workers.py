@@ -89,6 +89,7 @@ class ChatWorker(QObject):
                 ),
                 "",
             )
+            self.tool_manager.set_active_model(self.model)
             direct_call = self.tool_manager.direct_tool_call_for_request(
                 current_request
             )

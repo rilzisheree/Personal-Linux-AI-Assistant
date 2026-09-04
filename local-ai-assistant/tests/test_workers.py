@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -156,6 +157,50 @@ class VoiceWorkerTests(unittest.TestCase):
 
 
 class DirectToolDispatchTests(unittest.TestCase):
+    def test_chat_worker_reports_the_selected_model_without_routing(self) -> None:
+        class FakeService:
+            display_name = "Fake Ollama"
+
+            def __init__(self) -> None:
+                self.seen_messages: list[ChatMessage] = []
+
+            def route_request(self, *args, **kwargs):
+                raise AssertionError("Model identification should be direct-dispatched.")
+
+            def stream_reply(
+                self,
+                messages,
+                model,
+                cancel_event=None,
+                tools=None,
+                context_size=None,
+            ):
+                self.seen_messages = list(messages)
+                yield StreamEvent("The selected model is qwen3.5:2b.", True)
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        service = FakeService()
+        worker = ChatWorker(
+            service,
+            [ChatMessage("user", "What model are you currently using?")],
+            "qwen3.5:2b",
+            ToolManager(),
+        )
+        finished: list[str] = []
+        worker.finished.connect(finished.append)
+
+        worker.run()
+
+        self.assertEqual(finished, ["The selected model is qwen3.5:2b."])
+        tool_messages = [message for message in service.seen_messages if message.role == "tool"]
+        self.assertEqual(len(tool_messages), 1)
+        self.assertEqual(
+            json.loads(tool_messages[0].content)["data"]["active_model"],
+            "qwen3.5:2b",
+        )
+
     def test_chat_worker_executes_explicit_app_request_before_model_reply(self) -> None:
         class FakeService:
             display_name = "Fake Ollama"

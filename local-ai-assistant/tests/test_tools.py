@@ -30,6 +30,7 @@ class ToolManagerTests(unittest.TestCase):
         self.assertIn("get_gpu_usage", names)
         for name in (
             "get_identity",
+            "get_active_model",
             "get_gpu_info",
             "get_cpu_info",
             "get_ram_info",
@@ -90,6 +91,55 @@ class ToolManagerTests(unittest.TestCase):
         self.assertEqual(
             self.manager.direct_tool_call_for_request("How much RAM do I have?"),
             ("get_ram_info", {}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "What model are you currently using?"
+            ),
+            ("get_active_model", {}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request("What GPU do I have?"),
+            ("get_gpu_info", {}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request("What CPU do I have?"),
+            ("get_cpu_info", {}),
+        )
+
+    def test_active_model_result_uses_runtime_model_state(self) -> None:
+        manager = ToolManager(active_model="qwen3.5:2b")
+
+        result = manager.execute("get_active_model", {})
+
+        self.assertTrue(result.success)
+        self.assertEqual(
+            json.loads(result.content),
+            {
+                "success": True,
+                "data": {"active_model": "qwen3.5:2b", "model_type": "main"},
+                "error": None,
+            },
+        )
+        manager.set_active_model("llama3.2:3b")
+        self.assertEqual(
+            json.loads(manager.execute("get_active_model", {}).content)["data"][
+                "active_model"
+            ],
+            "llama3.2:3b",
+        )
+
+    def test_active_model_result_is_explicit_when_unavailable(self) -> None:
+        result = self.manager.execute("get_active_model", {})
+
+        self.assertFalse(result.success)
+        self.assertEqual(
+            json.loads(result.content),
+            {
+                "success": False,
+                "data": None,
+                "error": "The active Ollama model is unavailable.",
+            },
         )
 
     def test_direct_dispatch_maps_relative_reminder(self) -> None:

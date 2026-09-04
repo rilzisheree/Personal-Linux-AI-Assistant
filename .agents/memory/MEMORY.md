@@ -8,6 +8,7 @@
 - [Ollama Gemma adapter import](ollama-gemma-adapter.md) — Gemma 3 may run in Ollama while direct LoRA adapter import remains unsupported; merge and export to GGUF.
 - [Workspace pnpm bootstrap](pnpm-bootstrap.md) — This workspace’s pnpm shim may fail with EAGAIN while bootstrapping the package-manager version, independent of app code.
 - [Python lock repair](uv-lock-pyside.md) — An imported uv.lock can omit the root PySide6 package record while retaining its addon records, blocking dependency installs.
+- [Workspace Python installs](python-install-scope.md) — Package-manager installs can rewrite root uv metadata; keep temporary test-environment changes out of project diffs.
 - [Authoritative local dispatch](authoritative-local-dispatch.md) — Explicit desktop actions and live machine facts must be selected/executed by the app before the LLM formats results.
 - [Native Firefox launcher session](firefox-launcher-session.md) — Custom Firefox URL launchers must inherit the active desktop session to reuse an existing browser.
 - [Current currency endpoint](current-currency-endpoint.md) — Use the public ExchangeRate-API v6 endpoint for live SAR-compatible conversion; legacy Frankfurter paths may redirect or 404.

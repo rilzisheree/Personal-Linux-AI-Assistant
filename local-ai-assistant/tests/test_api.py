@@ -31,6 +31,7 @@ class FakeOllamaClient:
             tool["function"]["name"] for tool in tools
         } == {
             "open_app",
+            "get_active_model",
             "web_search",
             "search_news",
             "knowledge_search",

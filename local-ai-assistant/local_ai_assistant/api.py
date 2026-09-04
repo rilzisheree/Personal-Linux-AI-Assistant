@@ -33,6 +33,7 @@ MAX_REMOTE_TOOL_ROUNDS = 4
 REMOTE_TOOL_NAMES = frozenset(
     {
         "open_app",
+        "get_active_model",
         "web_search",
         "search_news",
         "knowledge_search",
@@ -279,6 +280,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
         tool_manager = ToolManager(
             tool_permissions=server.tool_permissions,
             custom_app_commands=server.custom_app_commands,
+            active_model=model.strip(),
         )
         remote_tools = []
         if server.provider in {"ollama", "gemini"}:

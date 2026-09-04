@@ -1,0 +1,190 @@
+You are the senior engineer responsible for fixing my local AI assistant, Lura.
+
+## FIRST FIX: MODEL IDENTIFICATION
+
+Project location:
+
+```text
+~/Personal-Linux-AI-Assistant
+```
+
+When I ask Lura:
+
+```text
+What model are you currently using?
+```
+
+it incorrectly responds with GPU/system information such as:
+
+```text
+NVIDIA GeForce RTX 4060
+8GB VRAM
+55°C
+89% utilization
+```
+
+This is wrong.
+
+I need you to fix **only this issue for now**.
+
+### Requirements
+
+1. **Inspect the existing codebase before changing anything.**
+2. Find how Lura currently handles questions about the active/current model.
+3. Trace the complete path:
+
+```text
+user request
+→ router
+→ tool selection
+→ model/tool execution
+→ response generation
+```
+
+4. Determine why a model-identification request is being routed to the GPU/system-information functionality, or why Qwen is hallucinating the answer.
+5. Determine which Ollama model is actually active at runtime.
+6. Implement a proper model-state/model-identification mechanism using the existing Ollama integration where possible.
+7. Do NOT hardcode the model name.
+8. Do NOT make Qwen infer the model from GPU information, system information, conversation history, or its own knowledge.
+9. If Lura supports model switching, the answer must reflect the **currently active model after switching**, not the startup/default model.
+10. If the application has multiple models, distinguish between:
+
+* router model
+* main conversational model
+* currently selected/active model
+
+11. Inspect the existing tool registry and schemas. If a suitable model-information function already exists, fix its registration/routing rather than creating a duplicate.
+12. If no suitable function exists, add the smallest appropriate structured tool/API needed to retrieve the active Ollama model.
+13. Preserve all existing functionality.
+14. Do not modify the Gemma LoRA model or training yet.
+15. Do not rewrite the application architecture unnecessarily.
+16. Do not give me instructions to manually fix the code. **Make the changes yourself.**
+
+### Important reliability requirement
+
+The model name must come from actual runtime state.
+
+For example, the implementation should conceptually behave like:
+
+```text
+get_active_model()
+    ↓
+Ollama/runtime state
+    ↓
+actual active model identifier
+    ↓
+structured tool result
+    ↓
+Qwen
+    ↓
+user-facing answer
+```
+
+It must NOT behave like:
+
+```text
+GPU information
+    ↓
+Qwen guesses model
+```
+
+### Structured result
+
+If this project uses structured tool results, use the existing format.
+
+If it does not already have one, prefer something equivalent to:
+
+```json
+{
+  "success": true,
+  "data": {
+    "active_model": "actual-model-name",
+    "model_type": "main"
+  },
+  "error": null
+}
+```
+
+Do not fabricate the value.
+
+If the active model cannot be determined, return an explicit structured error rather than guessing.
+
+### Router investigation
+
+Check whether the lightweight Gemma router is incorrectly classifying:
+
+```text
+What model are you currently using?
+```
+
+as a GPU/system-information request.
+
+If so, fix the routing/classification/tool schema responsible for that behavior.
+
+Do not add a brittle keyword-only rule such as:
+
+```text
+if "model" in request:
+    ...
+```
+
+unless it is genuinely appropriate within the existing routing architecture.
+
+The fix should correctly distinguish things like:
+
+```text
+What model are you currently using?
+What GPU do I have?
+What CPU do I have?
+How much RAM do I have?
+```
+
+### Testing
+
+After making the change, actually test it.
+
+At minimum test:
+
+```text
+What model are you currently using?
+What GPU do I have?
+What CPU do I have?
+How much RAM do I have?
+```
+
+Also test model switching if Lura supports it:
+
+```text
+switch model
+→ ask which model is active
+→ verify the returned model changed
+```
+
+Verify that the model-identification request no longer returns GPU/RAM/system information.
+
+If tests already exist for routing or Ollama integration, extend them rather than creating redundant tests.
+
+### Final report
+
+When finished, give me only a concise engineering report:
+
+```text
+FIXED
+- ...
+
+ROOT CAUSE
+- ...
+
+FILES CHANGED
+- ...
+
+TESTS
+- ...
+
+STILL BROKEN
+- ...
+```
+
+Do not move on to the other bugs yet.
+
+**Inspect → diagnose → modify → test.**

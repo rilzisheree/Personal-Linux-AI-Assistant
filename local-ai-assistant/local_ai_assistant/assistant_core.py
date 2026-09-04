@@ -56,7 +56,7 @@ SIMPLE, FUNCTION, or REASONING. Never answer, explain, use JSON, or add punctuat
 
 Choose FUNCTION first for any computer action or live computer information, or
 current external information that requires a tool:
-open, close, restart, screenshot, windows, CPU, memory, volume, website,
+open, close, restart, screenshot, windows, CPU, memory, volume, active model, website,
 weather, news, web search, currency, maps, travel, or game information.
 reminders, timers, or scheduled notifications.
 Otherwise choose REASONING for coding, planning, analysis, research, explanations,
@@ -74,6 +74,9 @@ Open Discord -> FUNCTION
 What is my CPU usage? -> FUNCTION
 Take a screenshot -> FUNCTION
 List my open windows -> FUNCTION
+What model are you currently using? -> FUNCTION
+Which model is active? -> FUNCTION
+What GPU do I have? -> FUNCTION
 What is the weather in Jeddah? -> FUNCTION
 Convert 500 SAR to USD -> FUNCTION
 What is the latest news about Minecraft? -> FUNCTION

@@ -42,6 +42,7 @@ DEFAULT_OLLAMA_TIMEOUT = 120.0
 REMOTE_TOOL_NAMES = frozenset(
     {
         "open_app",
+        "get_active_model",
         "close_app",
         "restart_app",
         "list_windows",
@@ -315,7 +316,7 @@ class LocalAssistant:
     def __init__(self, config: TelegramConfig) -> None:
         self.config = config
         self.ollama = OllamaClient(config.ollama_url, timeout=config.ollama_timeout)
-        self.tool_manager = ToolManager()
+        self.tool_manager = ToolManager(active_model=config.model)
         self.remote_tools = [
             schema
             for schema in self.tool_manager.definitions_for_ollama()

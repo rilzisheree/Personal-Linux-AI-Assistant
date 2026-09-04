@@ -202,6 +202,7 @@ class ToolManager:
         assistant_name: str = "Lura",
         tool_permissions: dict[str, str] | None = None,
         custom_app_commands: dict[str, str] | None = None,
+        active_model: str | None = None,
     ) -> None:
         self.memory_store = memory_store or MemoryStore()
         self.profile_store = profile_store or UserProfileStore()
@@ -217,6 +218,7 @@ class ToolManager:
             for key, value in (custom_app_commands or {}).items()
             if isinstance(key, str) and isinstance(value, str) and key.strip() and value.strip()
         }
+        self._active_model = active_model.strip() if isinstance(active_model, str) and active_model.strip() else None
         self.reminder_service = default_reminder_service()
         custom_launcher_names = ", ".join(
             f'"{alias}"' for alias in self.custom_app_commands
@@ -739,6 +741,12 @@ class ToolManager:
                 "Read the authoritative assistant name and editable user identity.",
                 self._get_identity,
             ),
+            "get_active_model": self._system_definition(
+                "get_active_model",
+                "Read the exact Ollama model selected for the current conversation request. "
+                "Do not infer this from GPU, CPU, memory, system information, or conversation history.",
+                self._get_active_model,
+            ),
             "update_user_profile": ToolDefinition(
                 "update_user_profile",
                 "Update editable local user profile fields. Only save fields explicitly supplied by the user.",
@@ -891,6 +899,14 @@ class ToolManager:
     def definitions_for_ollama(self) -> list[dict]:
         return [definition.ollama_schema() for definition in self._definitions.values()]
 
+    def set_active_model(self, model: str | None) -> None:
+        """Track the model that the next/current conversation request sends to Ollama."""
+        self._active_model = (
+            model.strip()
+            if isinstance(model, str) and model.strip()
+            else None
+        )
+
     def direct_tool_call_for_request(self, request: str) -> tuple[str, dict] | None:
         """Map unambiguous local actions/facts to tools before the LLM responds.
 
@@ -902,6 +918,33 @@ class ToolManager:
         folded = text.casefold()
         if not text:
             return None
+
+        model_question = (
+            bool(
+                re.search(
+                    r"\b(?:what(?:'s| is)?|which|tell me)\b"
+                    r".*\b(?:model|llm|language model)\b"
+                    r".*\b(?:currently|current|active|running|using|use|selected|loaded)\b",
+                    folded,
+                )
+            )
+            or bool(
+                re.search(
+                    r"\b(?:currently|current|active|running|selected|loaded)\b"
+                    r".*\b(?:model|llm|language model)\b",
+                    folded,
+                )
+            )
+            or bool(
+                re.search(
+                    r"\b(?:am i|are you)\s+using\b"
+                    r".*\b(?:model|llm|language model)\b",
+                    folded,
+                )
+            )
+        )
+        if model_question:
+            return "get_active_model", {}
 
         identity_question = (
             "who am i" in folded
@@ -1473,6 +1516,33 @@ class ToolManager:
             json.dumps(
                 self.profile_store.identity(self.assistant_name),
                 ensure_ascii=False,
+            ),
+        )
+
+    def _get_active_model(self, arguments: dict) -> ToolCallResult:
+        del arguments
+        if not self._active_model:
+            return ToolCallResult(
+                False,
+                json.dumps(
+                    {
+                        "success": False,
+                        "data": None,
+                        "error": "The active Ollama model is unavailable.",
+                    }
+                ),
+            )
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "success": True,
+                    "data": {
+                        "active_model": self._active_model,
+                        "model_type": "main",
+                    },
+                    "error": None,
+                }
             ),
         )
 
