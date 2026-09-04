@@ -13,6 +13,7 @@ from unittest.mock import patch
 from local_ai_assistant.api import ApiServer
 from local_ai_assistant.api_store import ApiStore
 from local_ai_assistant.ollama import StreamEvent, ToolCall
+from local_ai_assistant.errors import OllamaProtocolError
 from local_ai_assistant.tools import ToolCallResult
 
 
@@ -104,6 +105,16 @@ class RemoteSearchOllamaClient:
             return
         yield StreamEvent(content="Here are the latest results.")
         yield StreamEvent(done=True)
+
+
+class PartialErrorOllamaClient:
+    def __init__(self, _url: str, timeout: float = 8.0) -> None:
+        self.timeout = timeout
+
+    def stream_chat(self, messages, model, cancel_event, tools, context_size):
+        del messages, model, cancel_event, tools, context_size
+        yield StreamEvent(content="A partial answer")
+        raise OllamaProtocolError("the stream ended unexpectedly")
 
 
 class ApiTests(unittest.TestCase):
@@ -345,6 +356,35 @@ class ApiTests(unittest.TestCase):
             "web_search",
             {"query": "AI announcements"},
         )
+
+    @patch("local_ai_assistant.api.OllamaClient", PartialErrorOllamaClient)
+    def test_stream_error_preserves_partial_response_metadata(self) -> None:
+        cookie = self.login()
+        status, payload, _ = self.request(
+            "POST",
+            "/api/conversations",
+            {"title": "Interrupted chat"},
+            cookie=cookie,
+        )
+        self.assertEqual(status, 201)
+        conversation_id = payload["conversation"]["id"]
+
+        status, payload, _ = self.request(
+            "POST",
+            f"/api/conversations/{conversation_id}/messages",
+            {"content": "Explain Linux."},
+            cookie=cookie,
+        )
+
+        self.assertEqual(status, 200)
+        self.assertIn(
+            'event: token\ndata: {"content":"A partial answer"}',
+            payload,
+        )
+        self.assertIn('"status":"error"', payload)
+        self.assertIn('"partial":true', payload)
+        self.assertIn('"code":"STREAM_ERROR"', payload)
+        self.assertIn("the stream ended unexpectedly", payload)
 
     def test_invalid_password_and_account_registration_are_rejected(self) -> None:
         status, payload, headers = self.request(

@@ -17,6 +17,7 @@ from .assistant_core import AssistantService
 from .errors import (
     AssistantCancelledError,
     OllamaCancelledError,
+    OllamaProtocolError,
     format_backend_error,
 )
 from .ollama import ChatMessage, OllamaClient, ToolCall
@@ -78,6 +79,7 @@ class ChatWorker(QObject):
         )
         ollama_tools = self.tool_manager.definitions_for_ollama()
         complete_response: list[str] = []
+        cycle_response: list[str] = []
         tool_rounds = 0
         try:
             self.ollama_started.emit()
@@ -130,8 +132,9 @@ class ChatWorker(QObject):
                     return
                 route_tools = ollama_tools if route.route != "simple" else None
             while not self.cancel_event.is_set():
-                cycle_response: list[str] = []
+                cycle_response = []
                 tool_calls: list[ToolCall] = []
+                stream_complete = False
                 self.ollama_started.emit()
                 for event in self.service.stream_reply(
                     messages,
@@ -146,7 +149,12 @@ class ChatWorker(QObject):
                         self.chunk.emit(event.content)
                     tool_calls.extend(event.tool_calls)
                     if event.done:
+                        stream_complete = True
                         break
+                if not stream_complete:
+                    raise OllamaProtocolError(
+                        "The AI stream ended before sending a completion event."
+                    )
                 if self.cancel_event.is_set():
                     self.conversation_ready.emit(visible_messages)
                     self.failed.emit("Generation stopped.", "cancelled")
@@ -186,6 +194,7 @@ class ChatWorker(QObject):
                 )
                 messages.append(assistant_message)
                 visible_messages.append(assistant_message)
+                cycle_response = []
                 tool_results = []
                 for tool_call in normalized_tool_calls:
                     if self.cancel_event.is_set():
@@ -206,13 +215,24 @@ class ChatWorker(QObject):
                     visible_messages.append(tool_message)
             self.failed.emit("Generation stopped.", "cancelled")
         except (OllamaCancelledError, AssistantCancelledError):
+            self._preserve_partial_response(visible_messages, cycle_response)
             self.conversation_ready.emit(visible_messages)
             self.failed.emit("Generation stopped.", "cancelled")
         except Exception as error:
+            self._preserve_partial_response(visible_messages, cycle_response)
             self.conversation_ready.emit(visible_messages)
             self.failed.emit(
                 format_backend_error(error, self.service.backend_name), "error"
             )
+
+    @staticmethod
+    def _preserve_partial_response(
+        visible_messages: list[ChatMessage],
+        cycle_response: list[str],
+    ) -> None:
+        partial = "".join(cycle_response)
+        if partial:
+            visible_messages.append(ChatMessage("assistant", partial))
 
     def _execute_tool_call(
         self,

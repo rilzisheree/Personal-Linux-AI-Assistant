@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from local_ai_assistant.assistant_core import RouteDecision
+from local_ai_assistant.errors import OllamaProtocolError
 from local_ai_assistant.ollama import ChatMessage, StreamEvent
 from local_ai_assistant.applications import ApplicationRecord
 from local_ai_assistant.tools import ToolManager
@@ -157,6 +158,77 @@ class VoiceWorkerTests(unittest.TestCase):
 
 
 class DirectToolDispatchTests(unittest.TestCase):
+    def test_chat_worker_preserves_partial_response_when_stream_fails(self) -> None:
+        class FailingService:
+            display_name = "Fake Ollama"
+            backend_name = "Fake Ollama"
+
+            def route_request(self, *args, **kwargs):
+                return RouteDecision("simple")
+
+            def stream_reply(
+                self,
+                messages,
+                model,
+                cancel_event=None,
+                tools=None,
+                context_size=None,
+            ):
+                del messages, model, cancel_event, tools, context_size
+                yield StreamEvent("A partial sentence")
+                raise OllamaProtocolError("connection ended unexpectedly")
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        service = FailingService()
+        worker = ChatWorker(
+            service,
+            [ChatMessage("user", "Explain Linux.")],
+            "qwen3.5:2b",
+            ToolManager(),
+        )
+        ready_messages: list[list[ChatMessage]] = []
+        failures: list[tuple[str, str]] = []
+        worker.conversation_ready.connect(ready_messages.append)
+        worker.failed.connect(lambda message, kind: failures.append((message, kind)))
+
+        worker.run()
+
+        self.assertEqual(
+            ready_messages[-1][-1],
+            ChatMessage("assistant", "A partial sentence"),
+        )
+        self.assertEqual(failures[0][1], "error")
+        self.assertIn("connection ended unexpectedly", failures[0][0])
+
+    def test_chat_worker_rejects_a_stream_without_completion_event(self) -> None:
+        class IncompleteService:
+            backend_name = "Fake Ollama"
+
+            def route_request(self, *args, **kwargs):
+                return RouteDecision("simple")
+
+            def stream_reply(self, *args, **kwargs):
+                yield StreamEvent("A partial answer")
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        worker = ChatWorker(
+            IncompleteService(),
+            [ChatMessage("user", "Explain Linux.")],
+            "qwen3.5:2b",
+            ToolManager(),
+        )
+        failures: list[tuple[str, str]] = []
+        worker.failed.connect(lambda message, kind: failures.append((message, kind)))
+
+        worker.run()
+
+        self.assertEqual(failures[0][1], "error")
+        self.assertIn("completion event", failures[0][0])
+
     def test_chat_worker_reports_the_selected_model_without_routing(self) -> None:
         class FakeService:
             display_name = "Fake Ollama"

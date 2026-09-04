@@ -11,6 +11,7 @@ from local_ai_assistant.errors import (
     OllamaConnectionError,
     OllamaProtocolError,
     OllamaTimeoutError,
+    OllamaUnavailableError,
 )
 from local_ai_assistant.ollama import (
     ChatMessage,
@@ -45,10 +46,11 @@ class OllamaParserTests(unittest.TestCase):
     def test_parses_thinking_chunks_and_generation_metrics(self) -> None:
         event = parse_stream_line(
             '{"message":{"role":"assistant","thinking":"short plan"},'
-            '"done":true,"eval_count":12,"eval_duration":2000000000,'
+            '"done":true,"done_reason":"stop","eval_count":12,"eval_duration":2000000000,'
             '"total_duration":2500000000}'
         )
         self.assertEqual(event.thinking, "short plan")
+        self.assertEqual(event.done_reason, "stop")
         self.assertEqual(
             event.metrics,
             {
@@ -123,10 +125,74 @@ class OllamaParserTests(unittest.TestCase):
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertEqual(
             payload["options"],
-            {"num_ctx": 8192, "num_predict": OllamaClient.simple_output_token_limit},
+            {"num_ctx": 8192},
         )
         self.assertFalse(payload["think"])
         self.assertEqual(payload["keep_alive"], "10m")
+
+    def test_stream_chat_accumulates_chunks_and_logs_normal_completion(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"first "},"done":false}\n',
+                b'{"message":{"content":"second"},"done":false}\n',
+                b'{"message":{"content":""},"done":true,"done_reason":"stop"}\n',
+            ]
+            urlopen.return_value = response
+            with self.assertLogs("lura.ollama", level="INFO") as logs:
+                events = list(client.stream_chat([], "qwen3.5:4b"))
+
+        self.assertEqual("".join(event.content for event in events), "first second")
+        self.assertTrue(events[-1].done)
+        output = "\n".join(logs.output)
+        self.assertIn("[STREAM] chunk received #1", output)
+        self.assertIn("[STREAM] chunk received #3", output)
+        self.assertIn("completion_reason=NORMAL_COMPLETION", output)
+
+    def test_stream_chat_reports_model_token_limit_without_calling_it_a_stream_error(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"partial"},"done":false}\n',
+                b'{"message":{"content":""},"done":true,"done_reason":"length"}\n',
+            ]
+            urlopen.return_value = response
+            with self.assertLogs("lura.ollama", level="INFO") as logs:
+                events = list(client.stream_chat([], "qwen3.5:4b"))
+
+        self.assertEqual("".join(event.content for event in events), "partial")
+        output = "\n".join(logs.output)
+        self.assertIn("completion_reason=MODEL_REACHED_TOKEN_LIMIT", output)
+        self.assertNotIn("[STREAM] ERROR", output)
+
+    def test_stream_chat_rejects_eof_before_done_and_logs_stream_error(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"partial"},"done":false}\n',
+                b"",
+            ]
+            urlopen.return_value = response
+            with self.assertLogs("lura.ollama", level="ERROR") as logs:
+                with self.assertRaisesRegex(
+                    OllamaUnavailableError,
+                    "closed the response",
+                ):
+                    list(client.stream_chat([], "qwen3.5:4b"))
+
+        output = "\n".join(logs.output)
+        self.assertIn("error_type=OllamaUnavailableError", output)
+        self.assertIn("chunks_received=1", output)
+        self.assertIn("characters_received=7", output)
 
     def test_complex_qwen_request_keeps_reasoning_available(self) -> None:
         client = OllamaClient("http://localhost:11434")

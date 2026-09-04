@@ -317,6 +317,7 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
             while True:
                 cycle_response: list[str] = []
                 tool_calls = []
+                stream_complete = False
                 for event in client.stream_chat(
                     messages,
                     model.strip(),
@@ -330,8 +331,13 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
                         self._write_sse("token", {"content": event.content})
                     tool_calls.extend(event.tool_calls)
                     if event.done:
+                        stream_complete = True
                         break
 
+                if not stream_complete:
+                    raise OllamaProtocolError(
+                        "The AI stream ended before sending a completion event."
+                    )
                 if cancel_event.is_set():
                     return
                 if not tool_calls:
@@ -399,13 +405,20 @@ class ApiRequestHandler(BaseHTTPRequestHandler):
             cancel_event.set()
         except Exception as error:
             try:
+                error_message = format_backend_error(
+                    error,
+                    getattr(client, "display_name", "AI backend"),
+                )
                 self._write_sse(
                     "error",
                     {
-                        "message": format_backend_error(
-                            error,
-                            getattr(client, "display_name", "AI backend"),
-                        )
+                        "status": "error",
+                        "partial": bool(response_parts),
+                        "error": {
+                            "code": "STREAM_ERROR",
+                            "message": error_message,
+                        },
+                        "message": error_message,
                     },
                 )
             except (BrokenPipeError, ConnectionResetError, OSError):

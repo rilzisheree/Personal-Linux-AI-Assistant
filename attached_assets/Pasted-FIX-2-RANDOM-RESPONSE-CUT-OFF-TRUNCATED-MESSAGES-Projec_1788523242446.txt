@@ -1,0 +1,481 @@
+FIX #2 — RANDOM RESPONSE CUT-OFF / TRUNCATED MESSAGES
+
+Project:
+
+~/Personal-Linux-AI-Assistant
+
+This is now the highest-priority bug.
+
+Lura frequently starts generating a response and then abruptly stops in the middle of a sentence.
+
+Examples:
+
+latest NVIDIA news...
+
+stops halfway.
+
+latest AI news...
+
+stops halfway.
+
+Elden Ring information...
+
+stops halfway.
+
+Cyberpunk 2077...
+
+stops halfway.
+
+full system status...
+
+stops halfway.
+
+Reminder creation responses can also be cut off.
+
+This appears to be an actual pipeline/streaming problem, not merely the model choosing a short answer.
+
+IMPORTANT
+
+Do NOT rewrite the application.
+
+Do NOT increase token limits blindly and declare the issue fixed.
+
+Do NOT simply catch an exception and return whatever text was generated.
+
+Do NOT hide errors.
+
+Inspect the existing implementation first and determine the exact cause.
+
+TRACE THE ENTIRE RESPONSE PIPELINE
+
+Inspect and trace:
+
+USER REQUEST
+↓
+ROUTER
+↓
+TOOL EXECUTION (if applicable)
+↓
+OLLAMA REQUEST
+↓
+OLLAMA STREAM
+↓
+BACKEND STREAM PROCESSOR
+↓
+SSE / HTTP STREAM
+↓
+FRONTEND STREAM HANDLER
+↓
+MESSAGE STATE
+↓
+FINAL DISPLAYED RESPONSE
+
+Determine where the response is actually being truncated.
+
+I want you to investigate ALL plausible termination points.
+
+1. OLLAMA STREAMING
+
+Inspect the Ollama integration.
+
+Check:
+
+streaming configuration
+request payload
+stream: true/false
+async iteration
+response reading
+connection handling
+timeouts
+exceptions
+cancellation
+response buffering
+model generation parameters
+num_predict
+context limits
+stop sequences
+
+Determine whether Ollama itself is terminating generation or whether Lura is terminating the stream prematurely.
+
+Do not change generation parameters unless you have evidence they are responsible.
+
+2. BACKEND STREAMING
+
+Inspect every async generator / generator involved in producing responses.
+
+Look for:
+
+yield
+return
+break
+premature generator termination
+swallowed exceptions
+task cancellation
+asyncio.CancelledError
+timeout handlers
+connection disconnect handling
+cleanup code
+queue handling
+partial chunks
+incorrect end-of-stream detection
+
+Make sure a normal Ollama completion cannot accidentally be interpreted as an error or end-of-stream.
+
+If a genuine error occurs halfway through generation, preserve enough information to distinguish:
+
+NORMAL_COMPLETION
+
+from:
+
+STREAM_ERROR
+
+from:
+
+USER_CANCELLED
+3. SSE / HTTP STREAMING
+
+Inspect the API endpoint that sends streamed responses to the frontend.
+
+Check:
+
+SSE formatting
+event boundaries
+JSON parsing
+newline handling
+chunk boundaries
+[DONE] handling
+connection closing
+HTTP timeouts
+proxy/server buffering
+malformed events
+partial JSON chunks
+
+A single Ollama chunk must not be treated as the complete response.
+
+For example, if Ollama sends:
+
+chunk 1
+chunk 2
+chunk 3
+chunk 4
+chunk 5
+
+Lura must not terminate after:
+
+chunk 2
+
+unless a genuine termination condition occurred.
+
+4. FRONTEND STREAM HANDLING
+
+Inspect the frontend code that consumes the stream.
+
+Check whether it:
+
+stops reading after one event
+incorrectly detects [DONE]
+treats an empty chunk as completion
+has race conditions with state updates
+overwrites accumulated text
+aborts the request accidentally
+has a timeout
+cancels requests during rendering
+loses chunks because of React/state update behavior
+closes the connection prematurely
+
+The frontend must accumulate the entire response.
+
+Conceptually:
+
+incoming chunk
+↓
+append to existing response
+↓
+continue reading
+↓
+repeat
+↓
+final completion event
+↓
+finish message
+
+It must NOT behave like:
+
+incoming chunk
+↓
+replace response
+↓
+finish
+5. STOP SEQUENCES
+
+Inspect all configured stop sequences.
+
+Determine whether any stop sequence can accidentally match normal natural-language output.
+
+Pay particular attention to:
+
+XML-related stop tokens
+tool-call delimiters
+<...>
+</...>
+[DONE]
+custom separators
+
+Do not remove tool-call stopping behavior blindly.
+
+If stop sequences are causing normal conversational responses to terminate, fix them at the correct layer.
+
+6. XML INTERACTION
+
+The application also has an XML/tool-call parsing issue that will be fixed separately.
+
+For this task, investigate whether XML parsing is causing the response truncation.
+
+For example:
+
+normal answer
+→ parser sees something resembling XML
+→ parser assumes tool call
+→ parser terminates response
+
+If this is happening, identify it clearly.
+
+Do NOT perform a broad XML rewrite unless it is required to fix the streaming bug.
+
+7. TOKEN LIMITS
+
+Inspect the actual Ollama generation configuration.
+
+Determine:
+
+context window
+num_predict
+max output tokens
+any application-level maximum response length
+frontend maximum text length
+API response limits
+
+If the model is genuinely reaching its configured output-token limit, identify that as the cause.
+
+However, distinguish between:
+
+MODEL REACHED TOKEN LIMIT
+
+and:
+
+STREAM WAS PREMATURELY TERMINATED
+
+These are different bugs.
+
+Do not simply increase the token limit without determining which one is occurring.
+
+8. LOGGING
+
+Add temporary or debug-mode logging around the complete stream lifecycle.
+
+I want to be able to see something similar to:
+
+[STREAM] request started
+[STREAM] Ollama connection established
+[STREAM] chunk received #1
+[STREAM] chunk received #2
+[STREAM] chunk received #3
+...
+[STREAM] Ollama finished
+[STREAM] total chunks: 47
+[STREAM] total characters: 1832
+[STREAM] completion reason: stop
+
+If it fails:
+
+[STREAM] ERROR
+[STREAM] error_type=TIMEOUT
+[STREAM] chunks_received=23
+[STREAM] characters_received=812
+
+If the user cancels:
+
+[STREAM] CANCELLED_BY_USER
+
+Do not log secrets, API keys, passwords, authentication tokens, or sensitive data.
+
+Prefer metadata such as:
+
+chunk count
+character count
+timestamps
+completion reason
+error type
+model name
+
+rather than logging entire conversations.
+
+9. PRESERVE PARTIAL RESPONSE ON REAL ERRORS
+
+If a genuine network/stream error happens after 800 characters, do not silently pretend the response naturally ended.
+
+The UI should be able to distinguish:
+
+complete response
+
+from:
+
+response interrupted by error
+
+For example, internally:
+
+{
+  "status": "error",
+  "partial": true,
+  "error": {
+    "code": "OLLAMA_STREAM_ERROR"
+  }
+}
+
+Use the project's existing structured-result architecture if one already exists.
+
+10. TEST DIFFERENT RESPONSE TYPES
+
+After diagnosing and fixing the issue, actually test all of these:
+
+Short response
+Hello
+Normal response
+Explain what Linux is.
+Long response
+Give me a detailed explanation of how GPUs work, including CUDA, VRAM, shaders, memory bandwidth, and GPU utilization.
+Multi-turn
+What is 20 × 5?
+
+Then:
+
+And what's that plus 10?
+Tool response
+What GPU do I have?
+Long tool response
+Give me my full system status.
+Web response
+Search for the latest AI news and summarize it.
+Reminder
+Create a reminder for 5 minutes from now to test Lura.
+Multiple requests
+
+Send several messages sequentially and verify that one response does not terminate or interfere with another.
+
+11. IMPORTANT TEST: RAW OLLAMA VS LURA
+
+If practical, test the Ollama stream independently from the Lura pipeline.
+
+Determine:
+
+Does Ollama itself finish correctly?
+
+Then:
+
+Does Lura receive the entire Ollama response?
+
+Then:
+
+Does the frontend display the entire Lura response?
+
+This should let you identify the failing layer.
+
+12. DO NOT CONFUSE NATURAL COMPLETION WITH A BUG
+
+A response ending naturally is valid.
+
+For example:
+
+Linux is an open-source operating system.
+
+is a complete response.
+
+The bug is when Lura produces something like:
+
+Linux is an open-source operating
+
+and stops unexpectedly.
+
+13. AUTOMATED TESTS
+
+Add or improve automated tests for the streaming pipeline.
+
+At minimum test:
+
+short response
+long response
+multiple chunks
+single chunk
+empty chunk
+normal completion
+stream error
+timeout
+user cancellation
+tool response
+multi-turn response
+
+If possible, mock Ollama with deterministic chunk sequences so the test does not depend entirely on the live model.
+
+Also test that:
+
+chunk 1 + chunk 2 + chunk 3
+
+produces:
+
+chunk 1chunk 2chunk 3
+
+rather than only one chunk.
+
+14. SCOPE
+
+For this task, primarily fix:
+
+response streaming
+response accumulation
+premature termination
+stream errors
+
+Do not start fixing:
+
+weather
+currency
+places
+directions
+desktop automation
+reminders
+security architecture
+Gemma LoRA
+unrelated UI issues
+
+Only change other components if the investigation proves they are directly responsible for the truncation.
+
+Preserve everything currently working.
+
+FINAL REPORT
+
+After implementing and testing the fix, give me:
+
+FIXED
+- ...
+
+ROOT CAUSE
+- ...
+
+STREAMING LAYER AFFECTED
+- Ollama / Backend / SSE / Frontend / Other
+
+FILES CHANGED
+- ...
+
+TESTS PASSED
+- ...
+
+STILL BROKEN
+- ...
+
+REMAINING RISKS
+- ...
+
+Do not tell me "fixed" unless you actually tested it.
+
+Inspect → diagnose → modify → test.

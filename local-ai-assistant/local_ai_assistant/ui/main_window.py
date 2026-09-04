@@ -1796,7 +1796,12 @@ class MainWindow(QMainWindow):
             if self._conversation_active:
                 self._end_conversation("CONVERSATION ENDED // AI ERROR")
             if self.active_assistant_bubble:
-                self.active_assistant_bubble.set_content(message)
+                content = (
+                    f"{self.active_response}\n\n⚠ {message}"
+                    if self.active_response
+                    else message
+                )
+                self.active_assistant_bubble.set_content(content)
             self._set_status("error")
             self.status_label.setText("Ollama error")
         self._persist_current_conversation()

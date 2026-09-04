@@ -76,6 +76,7 @@ class StreamEvent:
     tool_calls: tuple[ToolCall, ...] = ()
     thinking: str = ""
     metrics: dict[str, int | float] | None = None
+    done_reason: str = ""
 
 
 def parse_stream_line(line: str | bytes) -> StreamEvent | None:
@@ -148,12 +149,18 @@ def parse_stream_line(line: str | bytes) -> StreamEvent | None:
         value = payload.get(name)
         if isinstance(value, (int, float)) and not isinstance(value, bool):
             metrics[name] = value
+    done_reason = payload.get("done_reason", "")
+    if done_reason is None:
+        done_reason = ""
+    if not isinstance(done_reason, str):
+        raise OllamaProtocolError("Ollama sent an invalid completion reason.")
     return StreamEvent(
         content=content,
         done=bool(payload.get("done", False)),
         tool_calls=tuple(tool_calls),
         thinking=thinking,
         metrics=metrics or None,
+        done_reason=done_reason,
     )
 
 
@@ -174,7 +181,6 @@ class OllamaClient:
     default_timeout = 120.0
     default_connection_timeout = 10.0
     default_stream_timeout = 600.0
-    simple_output_token_limit = 96
     _thinking_boolean_models = (
         "qwen3",
         "qwen3.5",
@@ -233,17 +239,17 @@ class OllamaClient:
             "stream": True,
             "keep_alive": self.keep_alive,
         }
+        LOGGER.info(
+            "[STREAM] request started model=%s tools=%d",
+            model,
+            len(tools or []),
+        )
         thinking_option = self._thinking_option(model, messages)
-        simple_request = thinking_option is False
         if thinking_option is not None:
             payload["think"] = thinking_option
         request_options = dict(options or {})
         if context_size:
             request_options["num_ctx"] = context_size
-            if simple_request:
-                request_options.setdefault("num_predict", self.simple_output_token_limit)
-        elif simple_request:
-            request_options.setdefault("num_predict", self.simple_output_token_limit)
         if request_options:
             payload["options"] = request_options
         if response_format is not None:
@@ -280,6 +286,7 @@ class OllamaClient:
             )
             first_token_at: float | None = None
             stream_finished = False
+            chunk_count = 0
             thinking_characters = 0
             output_characters = 0
             try:
@@ -308,6 +315,7 @@ class OllamaClient:
                         break
                     event = parse_stream_line(line)
                     if event is not None:
+                        chunk_count += 1
                         if (event.content or event.thinking) and first_token_at is None:
                             first_token_at = time.monotonic()
                             LOGGER.info(
@@ -316,9 +324,22 @@ class OllamaClient:
                             )
                         thinking_characters += len(event.thinking)
                         output_characters += len(event.content)
-                        yield event
+                        LOGGER.info(
+                            "[STREAM] chunk received #%d content_chars=%d thinking_chars=%d tool_calls=%d",
+                            chunk_count,
+                            len(event.content),
+                            len(event.thinking),
+                            len(event.tool_calls),
+                        )
                         if event.done:
                             stream_finished = True
+                            LOGGER.info(
+                                "[STREAM] Ollama finished chunks=%d characters=%d completion_reason=%s done_reason=%s",
+                                chunk_count,
+                                output_characters,
+                                self._completion_reason(event.done_reason),
+                                event.done_reason or "unspecified",
+                            )
                             self._log_generation_metrics(
                                 request_started,
                                 first_token_at,
@@ -326,11 +347,28 @@ class OllamaClient:
                                 output_characters,
                                 event.metrics or {},
                             )
+                        yield event
+                        if event.done:
                             break
                 if not stream_finished:
                     raise OllamaUnavailableError(
                         "Ollama closed the response before generation completed."
                     )
+            except OllamaCancelledError:
+                LOGGER.info(
+                    "[STREAM] CANCELLED_BY_USER chunks_received=%d characters_received=%d",
+                    chunk_count,
+                    output_characters,
+                )
+                raise
+            except Exception as error:
+                LOGGER.error(
+                    "[STREAM] ERROR error_type=%s chunks_received=%d characters_received=%d",
+                    type(error).__name__,
+                    chunk_count,
+                    output_characters,
+                )
+                raise
             finally:
                 with self._response_lock:
                     self._response = None
@@ -429,6 +467,15 @@ class OllamaClient:
         if len(normalized) > 220 or normalized.count(".") + normalized.count("?") > 1:
             return False
         return cls._complexity_markers.search(normalized) is None
+
+    @staticmethod
+    def _completion_reason(done_reason: str) -> str:
+        normalized = done_reason.strip().casefold()
+        if normalized in {"length", "max_tokens", "token_limit"}:
+            return "MODEL_REACHED_TOKEN_LIMIT"
+        if normalized in {"", "stop", "eos", "end_turn"}:
+            return "NORMAL_COMPLETION"
+        return normalized.upper()
 
     @staticmethod
     def _log_generation_metrics(

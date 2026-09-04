@@ -10,6 +10,7 @@
 - [Python lock repair](uv-lock-pyside.md) — An imported uv.lock can omit the root PySide6 package record while retaining its addon records, blocking dependency installs.
 - [Workspace Python installs](python-install-scope.md) — Package-manager installs can rewrite root uv metadata; keep temporary test-environment changes out of project diffs.
 - [Authoritative local dispatch](authoritative-local-dispatch.md) — Explicit desktop actions and live machine facts must be selected/executed by the app before the LLM formats results.
+- [User response length policy](user-response-length.md) — Keep output limits scoped to classifier calls; user-facing generations must not inherit a low blanket cap.
 - [Native Firefox launcher session](firefox-launcher-session.md) — Custom Firefox URL launchers must inherit the active desktop session to reuse an existing browser.
 - [Current currency endpoint](current-currency-endpoint.md) — Use the public ExchangeRate-API v6 endpoint for live SAR-compatible conversion; legacy Frankfurter paths may redirect or 404.
 - [Qt reminder bridge](qt-reminder-bridge.md) — Background reminder callbacks must enter the Qt UI through queued signals rather than touching widgets from scheduler threads.
