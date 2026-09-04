@@ -1,0 +1,357 @@
+# Fix: Web Search Reliability and No-Fake-Results
+
+Fix the web-search subsystem in `~/Personal-Linux-AI-Assistant`.
+
+## Current bug
+
+Lura's web search is unreliable.
+
+Sometimes:
+
+* A web-search request produces no response.
+* Search results are incomplete.
+* The model appears to answer without actually searching.
+* The model may present information as current/live without verified search results.
+* Search/tool failures are not always communicated correctly.
+* The model may hallucinate or fabricate search results.
+
+## CRITICAL REQUIREMENT
+
+Lura must NEVER claim that it searched the web unless the web-search tool actually executed successfully and returned usable results.
+
+If web search:
+
+* fails
+* times out
+* is unavailable
+* returns zero results
+* returns malformed data
+* encounters a network error
+
+then Lura MUST NOT fabricate an answer or pretend that live information was retrieved.
+
+It must return a clear structured error/status to the model.
+
+---
+
+# 1. Inspect before modifying
+
+Trace the complete web-search pipeline:
+
+USER REQUEST
+→ ROUTER
+→ SEARCH INTENT DETECTION
+→ WEB SEARCH TOOL
+→ HTTP REQUEST
+→ SEARCH RESULT PARSER
+→ STRUCTURED TOOL RESULT
+→ MODEL CONTEXT
+→ OLLAMA
+→ FINAL RESPONSE
+
+Identify the existing implementation first.
+
+Do not rewrite the architecture.
+
+---
+
+# 2. Test the actual search tool independently
+
+Find the web-search tool and execute it directly.
+
+Test searches such as:
+
+* `latest NVIDIA news`
+* `latest AI news`
+* `What is the current price of Bitcoin?`
+* `Linux kernel latest release`
+* `OpenAI latest news`
+
+For each test record:
+
+* whether the tool executed
+* HTTP status
+* response size
+* number of results
+* titles
+* URLs
+* snippets
+* timestamp if available
+* parsing success/failure
+* timeout/error information
+
+Do NOT use fabricated results for testing.
+
+---
+
+# 3. Verify the router
+
+Determine how Lura decides that a request requires web search.
+
+Test:
+
+`What is the capital of France?`
+
+This may not require live search.
+
+Then test:
+
+`What is the latest NVIDIA news?`
+
+This SHOULD require web search.
+
+Then:
+
+`What is happening in AI today?`
+
+This SHOULD require web search.
+
+Then:
+
+`Search the web for the latest Linux kernel release.`
+
+This MUST explicitly trigger web search.
+
+Verify that the router does not incorrectly classify current-information requests as ordinary knowledge questions.
+
+---
+
+# 4. Verify tool execution
+
+For every request that requires web search, log:
+
+* selected tool
+* arguments
+* search query
+* tool start
+* tool completion
+* success/failure
+* number of results
+* execution time
+
+Do not log secrets.
+
+Make sure the model cannot claim:
+
+"I searched the web..."
+
+unless the tool actually returned success.
+
+---
+
+# 5. Use structured results
+
+The web-search tool should return structured data similar to:
+
+```json
+{
+  "success": true,
+  "query": "latest NVIDIA news",
+  "results": [
+    {
+      "title": "...",
+      "url": "...",
+      "snippet": "...",
+      "source": "..."
+    }
+  ]
+}
+```
+
+On failure:
+
+```json
+{
+  "success": false,
+  "error_code": "NETWORK_ERROR",
+  "message": "Web search is currently unavailable."
+}
+```
+
+Adapt this to the project's existing tool architecture rather than blindly copying this schema.
+
+Do NOT pass uncontrolled raw HTML directly into the model.
+
+---
+
+# 6. Enforce accountability
+
+Implement a hard rule:
+
+### success=true + usable results
+
+The model may say it searched the web and may use those results.
+
+### success=false
+
+The model MUST NOT claim that it searched successfully.
+
+### zero results
+
+The model MUST say that no usable results were found.
+
+### timeout
+
+The model MUST report that the search timed out.
+
+### malformed response
+
+The model MUST report that the search service returned invalid data.
+
+Never silently convert a failed tool call into a normal answer.
+
+---
+
+# 7. Verify URLs and result integrity
+
+Ensure every returned search result has a valid URL.
+
+Do not invent URLs.
+
+Preserve the actual title/snippet/source returned by the search provider.
+
+If the provider returns duplicate results, deduplicate them safely.
+
+---
+
+# 8. Current-information handling
+
+Requests containing concepts such as:
+
+* latest
+* today
+* current
+* now
+* recently
+* this week
+* breaking
+* current price
+* current version
+* current weather
+* current status
+
+should strongly prefer actual web/live tools where appropriate.
+
+Do not allow the model's training knowledge to masquerade as live information.
+
+---
+
+# 9. Error handling
+
+Use the project's structured error system where possible.
+
+Relevant errors may include:
+
+* `WEB_SEARCH_UNAVAILABLE`
+* `NETWORK_ERROR`
+* `TIMEOUT`
+* `NO_RESULTS`
+* `PARSER_ERROR`
+* `INVALID_RESULT`
+* `PERMISSION_DENIED`
+
+Do not add duplicate error systems if one already exists.
+
+---
+
+# 10. Test multi-result searches
+
+Test:
+
+`Search the web for the latest NVIDIA news and summarize the top 5 results.`
+
+Verify:
+
+1. Search actually executes.
+2. At least 5 usable results are returned when available.
+3. Results are passed to the model correctly.
+4. The final answer clearly distinguishes searched information from model knowledge.
+5. No result is fabricated.
+6. URLs remain associated with their actual results.
+
+---
+
+# 11. Test search failure
+
+Temporarily simulate:
+
+* network failure
+* timeout
+* empty result
+* malformed response
+
+Verify that Lura reports the failure rather than hallucinating search results.
+
+Do not leave the network disabled after the test.
+
+---
+
+# 12. Regression tests
+
+Add automated tests for:
+
+* current-information request triggers search
+* explicit "search the web" triggers search
+* normal static question does not unnecessarily require search
+* successful search produces structured results
+* zero results handled correctly
+* timeout handled correctly
+* network error handled correctly
+* malformed result handled correctly
+* invalid URL handled correctly
+* model cannot claim successful search after tool failure
+* multi-result search preserves multiple results
+
+---
+
+# 13. Preserve existing functionality
+
+Do NOT modify:
+
+* GPU functionality
+* streaming behavior
+* reminders
+* desktop control
+* security boundaries
+
+unless a direct dependency makes it necessary.
+
+Keep the change isolated to the web-search subsystem.
+
+---
+
+# FINAL REPORT
+
+Before claiming the bug is fixed, provide:
+
+### ROOT CAUSE
+
+What specifically caused web search to be unreliable?
+
+### EVIDENCE
+
+What tests prove the diagnosis?
+
+### FIX
+
+What was changed?
+
+### FILES CHANGED
+
+Exact files.
+
+### TEST RESULTS
+
+Before/after results for all major cases.
+
+### REGRESSION TESTS
+
+Which automated tests were added?
+
+### REMAINING ISSUES
+
+Anything that could not be tested or remains uncertain.
+
+Do not claim success based solely on static code inspection.
+
+Inspect → reproduce → diagnose → minimal fix → test → report.

@@ -12,6 +12,7 @@ import platform
 import re
 import shlex
 import shutil
+import socket
 import subprocess
 import tempfile
 import time
@@ -21,7 +22,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable
 from html.parser import HTMLParser
-from urllib.parse import urlencode, urlparse
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 from .applications import ApplicationRecord, ApplicationRegistry
@@ -115,6 +117,8 @@ _WORKSPACE_NAME = re.compile(r"^[A-Za-z0-9_:-]+$")
 _MAX_SEARCH_RESULTS = 50
 _MAX_SEARCH_DIRECTORIES = 10_000
 _MAX_SCREENSHOTS = 20
+_WEB_SEARCH_TIMEOUT = 15
+_WEB_SEARCH_MAX_RESPONSE_BYTES = 1_000_000
 _GPU_TOOL_NAMES = frozenset({"get_gpu_info", "get_gpu_status", "get_gpu_usage"})
 _GPU_QUERY = [
     "nvidia-smi",
@@ -137,12 +141,14 @@ class _DuckDuckGoParser(HTMLParser):
         attributes = dict(attrs)
         classes = set((attributes.get("class") or "").split())
         if tag == "a" and "result__a" in classes:
+            self.finish_current()
             self._current = {
                 "title": "",
                 "url": attributes.get("href") or "",
                 "snippet": "",
             }
             self._field = "title"
+            self._field_tag = None
         elif self._current is not None and "result__snippet" in classes:
             self._field = "snippet"
             self._field_tag = tag
@@ -157,6 +163,14 @@ class _DuckDuckGoParser(HTMLParser):
         if tag == "a" and self._field == "title":
             self._field = None
         elif self._field == "snippet" and tag == self._field_tag:
+            self.items.append(self._current)
+            self._current = None
+            self._field = None
+            self._field_tag = None
+
+    def finish_current(self) -> None:
+        """Commit a result even when a provider omits its snippet element."""
+        if self._current is not None:
             self.items.append(self._current)
             self._current = None
             self._field = None
@@ -1171,6 +1185,35 @@ class ToolManager:
                 )
                 return search_tool, {"query": query}
 
+        # Current external questions must reach a live-information tool even
+        # when the user does not say "search". Specialized tools below still
+        # own weather/currency/maps/etc.; this conservative branch covers news
+        # and general current web facts that the model must not answer from
+        # training memory.
+        current_marker = re.search(
+            r"\b(?:latest|today|now|recently|this week|breaking|current)\b",
+            folded,
+        )
+        specialized_current = re.search(
+            r"\b(?:weather|forecast|temperature|currency|exchange rate|"
+            r"directions?|route|nearby|restaurant|travel|flight|game|gaming)\b",
+            folded,
+        )
+        if current_marker and not specialized_current:
+            query = re.sub(
+                r"^(?:(?:what(?:'s| is)|what are|tell me|show me|give me)\s+)",
+                "",
+                text,
+                flags=re.IGNORECASE,
+            ).strip(" .!?")
+            if query:
+                search_tool = (
+                    "search_news"
+                    if re.search(r"\b(?:news|headlines?|breaking)\b", query, re.IGNORECASE)
+                    else "web_search"
+                )
+                return search_tool, {"query": query}
+
         app_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
             r"(open|launch|start|run|close|quit|exit|stop)\s+"
@@ -1387,23 +1430,149 @@ class ToolManager:
     def _web_search(arguments: dict) -> ToolCallResult:
         query = _string_argument(arguments, "query")
         max_results = _integer_argument(arguments, "max_results", 1, 8) if "max_results" in arguments else 5
+        started_at = time.monotonic()
+        LOGGER.info(
+            "[WEB_SEARCH] start query=%r max_results=%d",
+            query,
+            max_results,
+        )
+
+        def failure(error_code: str, message: str) -> ToolCallResult:
+            elapsed_ms = round((time.monotonic() - started_at) * 1000)
+            LOGGER.info(
+                "[WEB_SEARCH] complete query=%r success=false error_code=%s "
+                "result_count=0 elapsed_ms=%d",
+                query,
+                error_code,
+                elapsed_ms,
+            )
+            return ToolCallResult(
+                False,
+                json.dumps(
+                    {
+                        "success": False,
+                        "query": query,
+                        "results": [],
+                        "error_code": error_code,
+                        "message": message,
+                    },
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ),
+            )
+
         request = Request(
             "https://html.duckduckgo.com/html/?" + urlencode({"q": query}),
-            headers={"User-Agent": "Lura/1.0 (personal desktop assistant)"},
+            headers={
+                "Accept": "text/html",
+                "User-Agent": "Lura/1.0 (personal desktop assistant)",
+            },
         )
         try:
-            with urlopen(request, timeout=15) as response:
-                html = response.read(1_000_000).decode("utf-8", errors="replace")
+            with urlopen(request, timeout=_WEB_SEARCH_TIMEOUT) as response:
+                status = response.getcode()
+                raw_html = response.read(_WEB_SEARCH_MAX_RESPONSE_BYTES + 1)
+        except HTTPError as error:
+            error_code = "PERMISSION_DENIED" if error.code in {401, 403} else "NETWORK_ERROR"
+            return failure(error_code, f"DuckDuckGo returned HTTP {error.code}.")
+        except (TimeoutError, socket.timeout) as error:
+            return failure("TIMEOUT", f"DuckDuckGo search timed out: {error}")
+        except (URLError, ConnectionError, OSError) as error:
+            return failure("NETWORK_ERROR", f"DuckDuckGo is unavailable: {error}")
         except Exception as error:
-            return ToolCallResult(False, f"Web search failed: {error}")
+            return failure("WEB_SEARCH_UNAVAILABLE", f"DuckDuckGo search failed: {error}")
+
+        if not isinstance(status, int) or status < 200 or status >= 300:
+            return failure("WEB_SEARCH_UNAVAILABLE", f"DuckDuckGo returned HTTP {status}.")
+        if len(raw_html) > _WEB_SEARCH_MAX_RESPONSE_BYTES:
+            return failure("PARSER_ERROR", "DuckDuckGo returned an oversized response.")
+        try:
+            html = raw_html.decode("utf-8")
+        except UnicodeDecodeError as error:
+            return failure("PARSER_ERROR", f"DuckDuckGo returned invalid text: {error}")
+
+        # DuckDuckGo currently responds with HTTP 202 and an anomaly challenge
+        # when automated requests are rate-limited. Treat it as unavailable;
+        # never reinterpret the challenge page as an empty successful search.
+        lowered_html = html.casefold()
+        if "challenge-form" in lowered_html or "anomaly-modal" in lowered_html:
+            return failure(
+                "WEB_SEARCH_UNAVAILABLE",
+                "DuckDuckGo requires a human verification challenge.",
+            )
+        if not html.strip() or "<" not in html:
+            return failure("PARSER_ERROR", "DuckDuckGo returned malformed HTML.")
+
         results = _DuckDuckGoParser()
-        results.feed(html)
-        if not results.items:
-            return ToolCallResult(False, f"No web results found for '{query}'.")
-        lines = [f"Web results for: {query}"]
-        for index, item in enumerate(results.items[:max_results], start=1):
-            lines.append(f"{index}. {item['title']}\n   {item['url']}\n   {item['snippet']}")
-        return ToolCallResult(True, "\n".join(lines))
+        try:
+            results.feed(html)
+            results.finish_current()
+        except Exception as error:
+            return failure("PARSER_ERROR", f"DuckDuckGo returned invalid HTML: {error}")
+
+        usable_results: list[dict[str, str]] = []
+        seen_urls: set[str] = set()
+        for item in results.items:
+            title = " ".join(item.get("title", "").split())
+            raw_url = item.get("url", "").strip()
+            if raw_url.startswith("//"):
+                raw_url = "https:" + raw_url
+            parsed_url = urlparse(raw_url)
+            if parsed_url.hostname == "duckduckgo.com" and parsed_url.path.startswith("/l/"):
+                target = parse_qs(parsed_url.query).get("uddg", [""])[0]
+                raw_url = unquote(target).strip() or raw_url
+                parsed_url = urlparse(raw_url)
+            if (
+                not title
+                or parsed_url.scheme not in {"http", "https"}
+                or not parsed_url.netloc
+            ):
+                continue
+            normalized_url = raw_url.split("#", 1)[0].rstrip("/")
+            dedupe_key = normalized_url.casefold()
+            if dedupe_key in seen_urls:
+                continue
+            seen_urls.add(dedupe_key)
+            usable_results.append(
+                {
+                    "title": title,
+                    "url": normalized_url,
+                    "snippet": " ".join(item.get("snippet", "").split()),
+                    "source": parsed_url.hostname or parsed_url.netloc,
+                }
+            )
+            if len(usable_results) >= max_results:
+                break
+
+        if not usable_results:
+            error_code = "INVALID_RESULT" if results.items else "NO_RESULTS"
+            message = (
+                "DuckDuckGo returned no valid result records."
+                if error_code == "INVALID_RESULT"
+                else f"No web results found for '{query}'."
+            )
+            return failure(error_code, message)
+
+        elapsed_ms = round((time.monotonic() - started_at) * 1000)
+        LOGGER.info(
+            "[WEB_SEARCH] complete query=%r success=true result_count=%d elapsed_ms=%d",
+            query,
+            len(usable_results),
+            elapsed_ms,
+        )
+        return ToolCallResult(
+            True,
+            json.dumps(
+                {
+                    "success": True,
+                    "query": query,
+                    "results": usable_results,
+                    "source": "DuckDuckGo HTML",
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ),
+        )
 
     @staticmethod
     def _get_weather(arguments: dict) -> ToolCallResult:

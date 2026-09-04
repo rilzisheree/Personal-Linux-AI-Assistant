@@ -5,6 +5,7 @@ import unittest
 import json
 import subprocess
 from pathlib import Path
+from urllib.error import URLError
 from unittest.mock import patch
 
 from local_ai_assistant.applications import ApplicationRecord
@@ -350,6 +351,18 @@ class ToolManagerTests(unittest.TestCase):
         )
         self.assertEqual(
             self.manager.direct_tool_call_for_request(
+                "What is the latest NVIDIA news?"
+            ),
+            ("search_news", {"query": "the latest NVIDIA news"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "What is the current price of Bitcoin?"
+            ),
+            ("web_search", {"query": "the current price of Bitcoin"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
                 "Move my homework reminder to 9 hours from now."
             ),
             (
@@ -430,6 +443,137 @@ class ToolManagerTests(unittest.TestCase):
         result = self.manager.execute("exec", {"command": "printf tool-ok"}, approved=True)
         self.assertTrue(result.success)
         self.assertEqual(result.content, "tool-ok")
+
+    def test_web_search_returns_structured_deduplicated_results(self) -> None:
+        html = """
+        <html><body>
+          <div class="result">
+            <a class="result__a" href="https://example.com/a">First result</a>
+            <div class="result__snippet">First snippet.</div>
+          </div>
+          <div class="result">
+            <a class="result__a" href="https://example.com/a#fragment">Duplicate result</a>
+            <div class="result__snippet">Duplicate snippet.</div>
+          </div>
+          <div class="result">
+            <a class="result__a" href="https://example.org/b">Second result</a>
+          </div>
+        </body></html>
+        """
+
+        class Response:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def getcode(self):
+                return self.status
+
+            def read(self, _limit):
+                return html.encode("utf-8")
+
+        with patch("local_ai_assistant.tools.urlopen", return_value=Response()):
+            result = self.manager.execute(
+                "web_search",
+                {"query": "latest AI news", "max_results": 5},
+            )
+
+        self.assertTrue(result.success)
+        payload = json.loads(result.content)
+        self.assertTrue(payload["success"])
+        self.assertEqual(len(payload["results"]), 2)
+        self.assertEqual(payload["results"][0]["url"], "https://example.com/a")
+        self.assertEqual(payload["results"][1]["snippet"], "")
+        self.assertEqual(payload["results"][0]["source"], "example.com")
+
+    def test_web_search_failure_states_are_structured_and_accountable(self) -> None:
+        class Response:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def getcode(self):
+                return self.status
+
+            def read(self, _limit):
+                return b"<html><body>No result cards.</body></html>"
+
+        with patch("local_ai_assistant.tools.urlopen", return_value=Response()):
+            empty = self.manager.execute("web_search", {"query": "nothing"})
+        self.assertFalse(empty.success)
+        self.assertEqual(json.loads(empty.content)["error_code"], "NO_RESULTS")
+
+        with patch(
+            "local_ai_assistant.tools.urlopen",
+            side_effect=TimeoutError("slow provider"),
+        ):
+            timed_out = self.manager.execute("web_search", {"query": "latest news"})
+        self.assertEqual(json.loads(timed_out.content)["error_code"], "TIMEOUT")
+
+        with patch(
+            "local_ai_assistant.tools.urlopen",
+            side_effect=URLError("offline"),
+        ):
+            network_error = self.manager.execute("web_search", {"query": "latest news"})
+        self.assertEqual(json.loads(network_error.content)["error_code"], "NETWORK_ERROR")
+
+        class MalformedResponse(Response):
+            def read(self, _limit):
+                return b"not html"
+
+        with patch(
+            "local_ai_assistant.tools.urlopen",
+            return_value=MalformedResponse(),
+        ):
+            malformed = self.manager.execute("web_search", {"query": "latest news"})
+        self.assertEqual(json.loads(malformed.content)["error_code"], "PARSER_ERROR")
+
+    def test_web_search_rejects_challenges_and_invalid_urls(self) -> None:
+        class Response:
+            status = 202
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def getcode(self):
+                return self.status
+
+            def read(self, _limit):
+                return b'<form id="challenge-form">human check</form>'
+
+        with patch("local_ai_assistant.tools.urlopen", return_value=Response()):
+            challenged = self.manager.execute("web_search", {"query": "latest news"})
+        self.assertEqual(
+            json.loads(challenged.content)["error_code"],
+            "WEB_SEARCH_UNAVAILABLE",
+        )
+
+        class InvalidResultResponse(Response):
+            status = 200
+
+            def read(self, _limit):
+                return (
+                    b'<html><a class="result__a" href="javascript:alert(1)">'
+                    b'Unsafe</a><div class="result__snippet">Nope</div></html>'
+                )
+
+        with patch(
+            "local_ai_assistant.tools.urlopen",
+            return_value=InvalidResultResponse(),
+        ):
+            invalid = self.manager.execute("web_search", {"query": "latest news"})
+        self.assertEqual(json.loads(invalid.content)["error_code"], "INVALID_RESULT")
 
     def test_file_tools_read_and_create_without_overwrite(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

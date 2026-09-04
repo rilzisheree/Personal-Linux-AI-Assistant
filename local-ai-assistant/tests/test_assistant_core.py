@@ -12,6 +12,7 @@ from local_ai_assistant.assistant_core import (
     RoutedAssistantService,
 )
 from local_ai_assistant.ollama import ChatMessage, StreamEvent
+from local_ai_assistant.prompting import build_system_prompt
 
 
 class FakeBackend:
@@ -137,6 +138,14 @@ class RoutedAssistantServiceTests(unittest.TestCase):
         self.assertIn("CPU", service_prompt)
         self.assertIn("memory", service_prompt)
         self.assertIn("reminders", service_prompt)
+
+    def test_system_prompt_forbids_claiming_failed_live_search(self) -> None:
+        prompt = build_system_prompt()
+        self.assertIn("success=true", prompt)
+        self.assertIn("Never say that you searched", prompt)
+        self.assertIn("successfully when success=false", prompt)
+        self.assertIn("NO_RESULTS", prompt)
+        self.assertIn("Do not answer the live question from memory", prompt)
 
     def test_legacy_json_objects_are_rejected(self) -> None:
         tools = self.tools
