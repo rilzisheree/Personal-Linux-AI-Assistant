@@ -124,6 +124,13 @@ _MAX_SCREENSHOTS = 20
 _WEB_SEARCH_TIMEOUT = 15
 _WEB_SEARCH_MAX_RESPONSE_BYTES = 1_000_000
 _GPU_TOOL_NAMES = frozenset({"get_gpu_info", "get_gpu_status", "get_gpu_usage"})
+_REMINDER_TIME_EXPRESSION = (
+    r"\d+(?:\.\d+)?\s*(?:seconds?|secs?|minutes?|mins?|hours?|hrs?|days?)"
+)
+_REMINDER_CLOCK_EXPRESSION = (
+    r"(?:today|tomorrow)(?:\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?)?"
+    r"|\d{1,2}(?::\d{2})?\s*(?:am|pm)"
+)
 _GPU_QUERY = [
     "nvidia-smi",
     "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total",
@@ -195,6 +202,36 @@ def _optional_string_argument(arguments: dict, name: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"Tool argument '{name}' must be a string.")
     return value.strip()
+
+
+def _reminder_task_name(value: str) -> str:
+    """Remove scheduling language accidentally copied into a reminder title."""
+    text = " ".join(value.split()).strip(" .!?")
+    text = re.sub(
+        rf"^(?:create|set|make|schedule)\s+(?:a\s+)?reminder\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        rf"^in\s+{_REMINDER_TIME_EXPRESSION}\s*(?:to|that)?\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        rf"\s+in\s+{_REMINDER_TIME_EXPRESSION}$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        rf"\s+{_REMINDER_CLOCK_EXPRESSION}$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return text.strip(" .!?")
 
 
 def _first_inline_data(payload: object) -> str | None:
@@ -1757,7 +1794,9 @@ class ToolManager:
         )
 
     def _create_reminder(self, arguments: dict) -> ToolCallResult:
-        message = _string_argument(arguments, "message")
+        message = _reminder_task_name(_string_argument(arguments, "message"))
+        if not message:
+            raise ValueError("Reminder message must include a task.")
         delay_seconds = arguments.get("delay_seconds")
         reminder = self.reminder_service.schedule(message, delay_seconds)
         timing = format_reminder_timing(

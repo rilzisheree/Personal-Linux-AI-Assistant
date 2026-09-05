@@ -260,6 +260,43 @@ class ToolManagerTests(unittest.TestCase):
             self.assertEqual(reminders[0].message, "drink water")
             self.assertAlmostEqual(reminders[0].due_at, service._clock() + 5, delta=1)
 
+    def test_create_reminder_keeps_timing_out_of_task_name(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            self.manager.reminder_service = service
+
+            result = self.manager.execute(
+                "create_reminder",
+                {"message": "Drink water in 5 minutes", "delay_seconds": 300},
+            )
+
+            self.assertTrue(result.success)
+            self.assertEqual(service.store.list()[0].message, "Drink water")
+
+    def test_create_reminder_removes_copied_request_prefix_and_clock_time(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            self.manager.reminder_service = service
+
+            result = self.manager.execute(
+                "create_reminder",
+                {
+                    "message": "Create a reminder in 5 minutes to Drink water",
+                    "delay_seconds": 300,
+                },
+            )
+
+            self.assertTrue(result.success)
+            self.assertEqual(service.store.list()[0].message, "Drink water")
+
     def test_invalid_reminder_request_returns_failure(self) -> None:
         result = self.manager.execute(
             "create_reminder",
