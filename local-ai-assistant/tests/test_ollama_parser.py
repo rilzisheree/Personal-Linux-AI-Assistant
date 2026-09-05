@@ -21,6 +21,7 @@ from local_ai_assistant.ollama import (
     parse_stream,
     parse_stream_line,
 )
+from local_ai_assistant.tools import ToolManager
 
 
 class OllamaParserTests(unittest.TestCase):
@@ -129,6 +130,33 @@ class OllamaParserTests(unittest.TestCase):
         )
         self.assertFalse(payload["think"])
         self.assertEqual(payload["keep_alive"], "10m")
+
+    def test_stream_chat_sends_the_reminder_tool_schema_to_ollama(self) -> None:
+        client = OllamaClient("http://localhost:11434")
+        reminder_schema = next(
+            tool
+            for tool in ToolManager().definitions_for_ollama()
+            if tool["function"]["name"] == "create_reminder"
+        )
+        with patch("local_ai_assistant.ollama.urlopen") as urlopen:
+            response = Mock()
+            response.__enter__ = Mock(return_value=response)
+            response.__exit__ = Mock(return_value=False)
+            response.readline.side_effect = [
+                b'{"message":{"content":"ok"},"done":true}\n',
+            ]
+            urlopen.return_value = response
+            list(
+                client.stream_chat(
+                    [ChatMessage("user", "Remind me in 5 minutes to stretch.")],
+                    "qwen3.5:4b",
+                    tools=[reminder_schema],
+                )
+            )
+
+        payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
+        self.assertIn("tools", payload)
+        self.assertEqual(payload["tools"], [reminder_schema])
 
     def test_stream_chat_accumulates_chunks_and_logs_normal_completion(self) -> None:
         client = OllamaClient("http://localhost:11434")

@@ -993,6 +993,19 @@ class ToolManager:
     def definitions_for_ollama(self) -> list[dict]:
         return [definition.ollama_schema() for definition in self._definitions.values()]
 
+    def has_tool(self, name: str) -> bool:
+        return name in self._definitions
+
+    @staticmethod
+    def request_requires_tools(request: str) -> bool:
+        """Keep obvious reminder requests on the tool-enabled model path."""
+        return bool(
+            re.search(
+                r"\b(?:remind(?:er)?|timer|scheduled\s+notification)s?\b",
+                request.casefold(),
+            )
+        )
+
     def set_active_model(self, model: str | None) -> None:
         """Track the model that the next/current conversation request sends to Ollama."""
         self._active_model = (
@@ -1077,44 +1090,6 @@ class ToolManager:
                 {},
                 "explicit question about the user or assistant identity",
             )
-
-        reminder_match = re.search(
-            r"\bremind\s+me\s+in\s+"
-            r"(?P<amount>\d+(?:\.\d+)?)\s*"
-            r"(?P<unit>seconds?|secs?|minutes?|mins?|hours?|hrs?|days?)\b"
-            r"(?:\s+(?:to|that)\s+)?(?P<message>.+)$",
-            text,
-            re.IGNORECASE,
-        )
-        if reminder_match:
-            unit_seconds = {
-                "second": 1,
-                "seconds": 1,
-                "sec": 1,
-                "secs": 1,
-                "minute": 60,
-                "minutes": 60,
-                "min": 60,
-                "mins": 60,
-                "hour": 3600,
-                "hours": 3600,
-                "hr": 3600,
-                "hrs": 3600,
-                "day": 86400,
-                "days": 86400,
-            }
-            amount = float(reminder_match.group("amount"))
-            delay_seconds = amount * unit_seconds[reminder_match.group("unit").casefold()]
-            message = reminder_match.group("message").strip(" .!?")
-            if message:
-                return decision(
-                    "create_reminder",
-                    {
-                        "message": message,
-                        "delay_seconds": delay_seconds,
-                    },
-                    "explicit relative reminder request",
-                )
 
         if self.custom_app_commands and re.search(
             r"\b(?:open|launch|start|run|use|show|bring\s+up)\b",

@@ -200,24 +200,40 @@ class ToolManagerTests(unittest.TestCase):
             },
         )
 
-    def test_direct_dispatch_maps_relative_reminder(self) -> None:
-        self.assertEqual(
+    def test_reminder_requests_stay_on_ollama_tool_call_path(self) -> None:
+        self.assertIsNone(
             self.manager.direct_tool_call_for_request(
                 "Remind me in 5 seconds to drink water."
-            ),
-            (
-                "create_reminder",
-                {"message": "drink water", "delay_seconds": 5.0},
-            ),
+            )
         )
-        self.assertEqual(
+        self.assertIsNone(
             self.manager.direct_tool_call_for_request(
                 "Please remind me in 2 minutes to stretch"
-            ),
-            (
-                "create_reminder",
-                {"message": "stretch", "delay_seconds": 120.0},
-            ),
+            )
+        )
+
+    def test_create_reminder_schema_is_ollama_compatible(self) -> None:
+        schema = next(
+            tool
+            for tool in self.manager.definitions_for_ollama()
+            if tool["function"]["name"] == "create_reminder"
+        )
+        function = schema["function"]
+        self.assertEqual(schema["type"], "function")
+        self.assertEqual(function["name"], "create_reminder")
+        self.assertTrue(function["description"])
+        self.assertEqual(function["parameters"]["type"], "object")
+        self.assertEqual(
+            function["parameters"]["required"],
+            ["message", "delay_seconds"],
+        )
+        self.assertEqual(
+            function["parameters"]["properties"]["message"]["type"],
+            "string",
+        )
+        self.assertEqual(
+            function["parameters"]["properties"]["delay_seconds"]["type"],
+            "number",
         )
 
     def test_create_reminder_persists_and_returns_due_time(self) -> None:
@@ -241,6 +257,60 @@ class ToolManagerTests(unittest.TestCase):
             self.assertEqual(len(reminders), 1)
             self.assertEqual(reminders[0].message, "drink water")
             self.assertAlmostEqual(reminders[0].due_at, service._clock() + 5, delta=1)
+
+    def test_invalid_reminder_request_returns_failure(self) -> None:
+        result = self.manager.execute(
+            "create_reminder",
+            {"message": "", "delay_seconds": 5},
+        )
+        self.assertFalse(result.success)
+        self.assertIn("non-empty", result.content)
+
+    def test_reminder_tool_unavailable_returns_failure(self) -> None:
+        manager = ToolManager(tool_permissions={"create_reminder": "blocked"})
+        result = manager.execute(
+            "create_reminder",
+            {"message": "drink water", "delay_seconds": 5},
+        )
+        self.assertFalse(result.success)
+        self.assertIn("blocked", result.content)
+
+    def test_reminder_list_complete_and_cancel_tools_use_persisted_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            self.manager.reminder_service = service
+            self.manager.execute(
+                "create_reminder",
+                {"message": "drink water", "delay_seconds": 5},
+            )
+            listed = self.manager.execute("list_reminders", {})
+            self.assertTrue(listed.success)
+            self.assertIn("drink water", listed.content)
+
+            completed = self.manager.execute(
+                "complete_reminder",
+                {"reminder": "drink water"},
+            )
+            self.assertTrue(completed.success)
+            self.assertEqual(service.store.list()[0].status, "completed")
+
+            self.manager.execute(
+                "create_reminder",
+                {"message": "stretch", "delay_seconds": 5},
+            )
+            cancelled = self.manager.execute(
+                "cancel_reminder",
+                {"reminder": "stretch"},
+            )
+            self.assertTrue(cancelled.success)
+            self.assertEqual(
+                next(item for item in service.store.list() if item.message == "stretch").status,
+                "cancelled",
+            )
 
     def test_direct_dispatch_maps_application_actions_without_guessing_commands(self) -> None:
         self.assertEqual(

@@ -52,6 +52,15 @@ def _wake_debug_enabled() -> bool:
     }
 
 
+def _stream_debug_enabled() -> bool:
+    return os.environ.get("LURA_STREAM_DEBUG", "").casefold() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 class ChatWorker(QObject):
     chunk = Signal(str)
     ollama_started = Signal()
@@ -92,6 +101,24 @@ class ChatWorker(QObject):
             else list(visible_messages)
         )
         ollama_tools = self.tool_manager.definitions_for_ollama()
+        if _stream_debug_enabled():
+            tool_names = [
+                schema.get("function", {}).get("name", "")
+                for schema in ollama_tools
+                if isinstance(schema, dict)
+                and isinstance(schema.get("function"), dict)
+                and isinstance(schema.get("function", {}).get("name"), str)
+            ]
+            reminder_schema_present = "create_reminder" in tool_names
+            LOGGER.info(
+                "[TOOL FLOW] reminder_tool_registered=%s "
+                "reminder_schema_present=%s ollama_tools_count=%d "
+                "ollama_tool_names=%s",
+                str(self.tool_manager.has_tool("create_reminder")).lower(),
+                str(reminder_schema_present).lower(),
+                len(ollama_tools),
+                ",".join(tool_names) or "none",
+            )
         complete_response: list[str] = []
         cycle_response: list[str] = []
         tool_rounds = 0
@@ -150,6 +177,24 @@ class ChatWorker(QObject):
                     self.failed.emit("Generation stopped.", "cancelled")
                     return
                 route_tools = ollama_tools if route.route != "simple" else None
+                if (
+                    route_tools is None
+                    and self.tool_manager.request_requires_tools(current_request)
+                ):
+                    route_tools = ollama_tools
+                if _stream_debug_enabled():
+                    LOGGER.info(
+                        "[TOOL FLOW] classification=%s selected_tools=%s",
+                        route.route,
+                        ",".join(
+                            schema.get("function", {}).get("name", "")
+                            for schema in (route_tools or [])
+                            if isinstance(schema, dict)
+                            and isinstance(schema.get("function"), dict)
+                            and isinstance(schema.get("function", {}).get("name"), str)
+                        )
+                        or "none",
+                    )
             while not self.cancel_event.is_set():
                 cycle_response = []
                 tool_calls: list[ToolCall] = []
@@ -232,6 +277,11 @@ class ChatWorker(QObject):
                     )
                     return
 
+                if _stream_debug_enabled():
+                    LOGGER.info(
+                        "[TOOL FLOW] model_tool_call=%s",
+                        ",".join(tool_call.name for tool_call in tool_calls) or "none",
+                    )
                 tool_rounds += 1
                 if tool_rounds > MAX_TOOL_ROUNDS:
                     self.conversation_ready.emit(visible_messages)
@@ -346,6 +396,12 @@ class ChatWorker(QObject):
             result.success,
             result.images,
         )
+        if _stream_debug_enabled():
+            LOGGER.info(
+                "[TOOL FLOW] dispatched_tool=%s tool_result_success=%s",
+                tool_call.name,
+                str(result.success).lower(),
+            )
         return result
 
     def cancel(self) -> None:

@@ -262,6 +262,19 @@ class OllamaClient:
             model,
             len(tools or []),
         )
+        if _stream_debug_enabled():
+            tool_names = [
+                tool.get("function", {}).get("name", "")
+                for tool in (tools or [])
+                if isinstance(tool, dict)
+                and isinstance(tool.get("function"), dict)
+                and isinstance(tool.get("function", {}).get("name"), str)
+            ]
+            LOGGER.info(
+                "[STREAM TOOLS] request_id=%s tool_names=%s",
+                request_id,
+                ",".join(name for name in tool_names if name) or "none",
+            )
         thinking_option = self._thinking_option(model, messages)
         if thinking_option is not None:
             payload["think"] = thinking_option

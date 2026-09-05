@@ -8,8 +8,9 @@ from unittest.mock import Mock
 
 from local_ai_assistant.assistant_core import RouteDecision
 from local_ai_assistant.errors import OllamaProtocolError
-from local_ai_assistant.ollama import ChatMessage, StreamEvent
+from local_ai_assistant.ollama import ChatMessage, StreamEvent, ToolCall
 from local_ai_assistant.applications import ApplicationRecord
+from local_ai_assistant.reminders import ReminderService, ReminderStore
 from local_ai_assistant.tools import ToolManager
 from local_ai_assistant.voice import VoiceError
 from local_ai_assistant.workers import (
@@ -371,6 +372,79 @@ class DirectToolDispatchTests(unittest.TestCase):
         tool_messages = [message for message in service.seen_messages if message.role == "tool"]
         self.assertEqual(len(tool_messages), 1)
         self.assertIn("org.mozilla.firefox", tool_messages[0].content)
+
+    def test_chat_worker_sends_reminder_schema_and_persists_model_tool_call(self) -> None:
+        class FakeService:
+            display_name = "Fake Ollama"
+
+            def __init__(self) -> None:
+                self.calls: list[dict] = []
+
+            def route_request(self, messages, tools=None, cancel_event=None):
+                del messages, tools, cancel_event
+                return RouteDecision("function")
+
+            def stream_reply(
+                self,
+                messages,
+                model,
+                cancel_event=None,
+                tools=None,
+                context_size=None,
+            ):
+                del model, cancel_event, context_size
+                self.calls.append({"messages": list(messages), "tools": list(tools or [])})
+                if len(self.calls) == 1:
+                    yield StreamEvent(
+                        "",
+                        True,
+                        (
+                            ToolCall(
+                                "create_reminder",
+                                {"message": "drink water", "delay_seconds": 5},
+                                "call-reminder-1",
+                            ),
+                        ),
+                    )
+                else:
+                    yield StreamEvent("Reminder created successfully.", True)
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            manager = ToolManager()
+            manager.reminder_service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            service = FakeService()
+            worker = ChatWorker(
+                service,
+                [ChatMessage("user", "Remind me in 5 seconds to drink water.")],
+                "qwen3.5:2b",
+                manager,
+            )
+            finished: list[str] = []
+            failures: list[tuple[str, str]] = []
+            worker.finished.connect(finished.append)
+            worker.failed.connect(lambda message, kind: failures.append((message, kind)))
+
+            worker.run()
+
+            for call in service.calls:
+                names = {
+                    tool["function"]["name"]
+                    for tool in call["tools"]
+                }
+                self.assertIn("create_reminder", names)
+            self.assertEqual(len(service.calls), 2)
+            self.assertEqual(finished, ["Reminder created successfully."])
+            self.assertEqual(failures, [])
+            reminders = manager.reminder_service.store.list()
+            self.assertEqual(len(reminders), 1)
+            self.assertEqual(reminders[0].message, "drink water")
 
 
 if __name__ == "__main__":

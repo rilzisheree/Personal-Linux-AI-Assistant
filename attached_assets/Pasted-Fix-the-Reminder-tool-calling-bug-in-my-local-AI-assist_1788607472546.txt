@@ -1,0 +1,321 @@
+Fix the **Reminder tool-calling bug** in my local AI assistant **Lura**.
+
+## CURRENT BUG
+
+When I ask Lura to create a reminder, for example:
+
+```text
+Remind me in 5 minutes to check my downloads.
+```
+
+or:
+
+```text
+Set a reminder for 3:00 PM to do my homework.
+```
+
+Lura fails with:
+
+```text
+Ollama returned an error:
+The model requested a tool although no tools were enabled.
+```
+
+This indicates that the model is attempting to call a reminder tool, but the Ollama generation request was sent without the corresponding tool definitions enabled.
+
+## GOAL
+
+Make reminder creation work reliably again.
+
+The intended flow is:
+
+```text
+USER
+↓
+ROUTER / TOOL SELECTION
+↓
+REMINDER TOOL AVAILABLE
+↓
+OLLAMA RECEIVES REMINDER TOOL SCHEMA
+↓
+MODEL REQUESTS REMINDER TOOL
+↓
+REMINDER TOOL EXECUTES
+↓
+STRUCTURED TOOL RESULT
+↓
+MODEL GENERATES FINAL RESPONSE
+```
+
+## INVESTIGATE BEFORE MODIFYING
+
+Inspect the complete tool-calling path:
+
+```text
+user request
+→ router/classifier
+→ selected tools
+→ tool registry
+→ tool schema generation
+→ Ollama request construction
+→ Ollama tools parameter
+→ model tool call
+→ tool dispatcher
+→ reminder implementation
+→ final response
+```
+
+Find exactly where the reminder tool is being lost.
+
+Specifically inspect:
+
+* reminder tool registration
+* tool registry
+* tool names
+* tool schemas
+* tool availability
+* router output
+* selected-tool list
+* Ollama request construction
+* `tools` parameter passed to Ollama
+* whether tools are only enabled for certain request paths
+* whether the reminder path accidentally sends `tools=[]` or `tools=None`
+* whether a second model request after routing loses the tools
+* whether tool definitions disappear after conversation/history construction
+* whether the model is using an old/incorrect reminder tool name
+
+## IMPORTANT
+
+Do NOT simply disable tool calling.
+
+Do NOT make reminders work by having the model pretend that it created one.
+
+Do NOT hardcode a fake reminder response.
+
+The reminder must actually be created by the reminder system.
+
+If the tool call fails, Lura must honestly report the failure.
+
+## VERIFY THE TOOL SCHEMA
+
+Find the actual reminder tool definition and verify that it is valid for the Ollama tool-calling format.
+
+Verify:
+
+```text
+tool name
+description
+parameters
+required parameters
+parameter types
+JSON schema
+```
+
+Make sure the tool definition actually reaches the Ollama request when a reminder request is processed.
+
+For example, the request should conceptually contain:
+
+```text
+tools: [
+    {
+        type: "function",
+        function: {
+            name: "...reminder tool...",
+            description: "...",
+            parameters: {...}
+        }
+    }
+]
+```
+
+Use the project's existing schema and naming conventions rather than inventing a new interface.
+
+## TRACE THE FAILURE
+
+Add temporary/opt-in diagnostics if the project already has a logging system.
+
+For a reminder request, make it possible to see:
+
+```text
+USER_REQUEST
+CLASSIFICATION
+SELECTED_TOOLS
+REMINDER_TOOL_REGISTERED
+REMINDER_TOOL_SCHEMA_PRESENT
+OLLAMA_TOOLS_COUNT
+OLLAMA_TOOL_NAMES
+MODEL_TOOL_CALL
+DISPATCHED_TOOL
+TOOL_RESULT
+FINAL_RESPONSE
+```
+
+Do not log secrets or unnecessary private information.
+
+The critical question is:
+
+```text
+Did the reminder tool schema actually reach Ollama?
+```
+
+## MULTI-TURN TOOL FLOW
+
+Pay special attention to the fact that Lura may make multiple model calls.
+
+For example:
+
+```text
+USER
+↓
+MODEL / ROUTER
+↓
+TOOL CALL
+↓
+TOOL RESULT
+↓
+MODEL
+↓
+FINAL RESPONSE
+```
+
+Make sure the second model request is also constructed correctly if tools are supposed to remain available.
+
+Do not accidentally do:
+
+```text
+first request → tools=[reminder]
+second request → tools=[]
+```
+
+if the architecture requires the tool on the second call.
+
+## REMINDER PARAMETERS
+
+Verify that natural-language reminder requests are correctly converted into the reminder tool's expected arguments.
+
+Test:
+
+```text
+Remind me in 5 minutes to check my downloads.
+```
+
+```text
+Remind me in 10 minutes to drink water.
+```
+
+```text
+Set a reminder for 3:00 PM to do my homework.
+```
+
+```text
+Remind me tomorrow at 8 AM to study.
+```
+
+Do not modify reminder scheduling semantics unless the investigation proves they are involved in this failure.
+
+## ACCOUNTABILITY
+
+A reminder should only be reported as created if the actual reminder tool returns success.
+
+Correct:
+
+```text
+Reminder created successfully.
+```
+
+only when:
+
+```text
+tool_result.success == true
+```
+
+If the tool returns an error:
+
+```text
+success == false
+```
+
+Lura must not claim the reminder was created.
+
+## PRESERVE EXISTING REMINDER FEATURES
+
+Do not break:
+
+* reminder listing
+* reminder completion
+* reminder deletion
+* reminder states
+* reminder scheduler
+* reminder notifications
+* strict reminder functionality
+* persistence
+
+Only fix the tool availability/calling problem unless another issue is directly responsible.
+
+## REGRESSION TESTS
+
+Add tests for:
+
+1. Create reminder
+2. Create reminder with relative time
+3. Create reminder with explicit time
+4. List reminders
+5. Delete/cancel reminder
+6. Complete reminder
+7. Invalid reminder request
+8. Reminder tool unavailable
+9. Ollama tool-call failure
+
+At minimum, verify that a create-reminder request causes the Ollama request to contain the reminder tool schema.
+
+Also verify that the actual reminder is persisted after successful creation.
+
+## MANUAL TEST
+
+After the fix, test these through Lura:
+
+```text
+Remind me in 2 minutes to check my downloads.
+```
+
+Verify that Lura confirms creation.
+
+Then wait the full 2 minutes and verify that the reminder actually fires.
+
+Then test:
+
+```text
+Remind me in 5 minutes to test Lura.
+```
+
+Immediately ask:
+
+```text
+What are my active reminders?
+```
+
+Verify that the newly created reminder appears.
+
+Do NOT consider the fix successful merely because Lura says "Reminder created." Verify that it actually exists in the reminder system.
+
+## FINAL REPORT
+
+Return:
+
+```text
+ROOT CAUSE:
+EVIDENCE:
+WHERE THE TOOL WAS LOST:
+FIX:
+REMINDER TOOL NAME:
+REMINDER TOOL SCHEMA:
+OLLAMA TOOLS BEFORE:
+OLLAMA TOOLS AFTER:
+FILES CHANGED:
+TESTS:
+MANUAL TEST:
+REGRESSIONS:
+REMAINING ISSUES:
+```
+
+Keep this fix isolated to the reminder/tool-calling pipeline.
