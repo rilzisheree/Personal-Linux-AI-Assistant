@@ -1202,14 +1202,19 @@ class ToolManager:
             )
         cancellation_match = re.search(
             r"\b(?:cancel|delete|remove)\s+(?:(?:my|the)\s+)?"
-            r"(?P<reminder>.+?)\s+reminder\b",
+            r"(?:reminder\s+(?P<after_reminder>.+)|"
+            r"(?P<before_reminder>.+?)\s+reminder)\s*$",
             text,
             re.IGNORECASE,
         )
         if cancellation_match:
+            reminder_name = (
+                cancellation_match.group("after_reminder")
+                or cancellation_match.group("before_reminder")
+            ).strip(" .!?")
             return decision(
                 "cancel_reminder",
-                {"reminder": cancellation_match.group("reminder").strip()},
+                {"reminder": reminder_name},
                 "explicit request to cancel a reminder",
             )
         move_match = re.search(

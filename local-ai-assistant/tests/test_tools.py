@@ -372,6 +372,14 @@ class ToolManagerTests(unittest.TestCase):
             self.manager.direct_tool_call_for_request("Run a Python program")
         )
 
+    def test_direct_dispatch_understands_reminder_name_after_reminder(self) -> None:
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Can you remove the reminder EAT food?"
+            ),
+            ("cancel_reminder", {"reminder": "EAT food"}),
+        )
+
     @patch("local_ai_assistant.tools.subprocess.Popen")
     def test_open_app_executes_discovered_flatpak_id(self, popen_mock) -> None:
         self.manager.application_registry.resolve = unittest.mock.Mock(
