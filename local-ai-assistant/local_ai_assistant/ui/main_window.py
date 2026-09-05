@@ -86,6 +86,7 @@ class PendingConfirmation:
 
 
 class MainWindow(QMainWindow):
+    CONFIRMATION_TIMEOUT_SECONDS = 30.0
     reminder_due = Signal(object)
 
     def __init__(self, config: AppConfig) -> None:
@@ -544,6 +545,10 @@ class MainWindow(QMainWindow):
             # while the worker is waiting for authorization.
             self._resolve_pending_confirmation(decision)
             return
+        if confirmation_decision(prompt) is not None:
+            self.message_input.clear()
+            self._set_voice_status("NO ACTION AWAITING CONFIRMATION")
+            return
         if self.chat_worker is not None:
             return
         model = self.model_selector.currentText().strip() or self._configured_model(self.config)
@@ -649,9 +654,11 @@ class MainWindow(QMainWindow):
             name,
             dict(arguments),
             permission,
-            time.monotonic() + 8.0,
+            time.monotonic() + self.CONFIRMATION_TIMEOUT_SECONDS,
         )
-        self._confirmation_timer.start(8000)
+        self._confirmation_timer.start(
+            round(self.CONFIRMATION_TIMEOUT_SECONDS * 1000)
+        )
         self._set_voice_status(
             f"CONFIRMATION REQUIRED // {self._confirmation_prompt(name, arguments)}"
         )
@@ -712,6 +719,10 @@ class MainWindow(QMainWindow):
                 f"Sir, should I press {arguments.get('key', 'the requested key')}?"
             ),
             "update_user_profile": "Sir, may I update your personal profile?",
+            "create_reminder": (
+                "Sir, may I create the reminder "
+                f"'{arguments.get('message', 'requested reminder')}'?"
+            ),
         }
         return prompts.get(name, f"Sir, may I perform {name.replace('_', ' ')}?")
 

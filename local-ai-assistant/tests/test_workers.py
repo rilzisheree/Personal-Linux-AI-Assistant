@@ -433,14 +433,14 @@ class DirectToolDispatchTests(unittest.TestCase):
 
             worker.run()
 
-            for call in service.calls:
-                names = {
-                    tool["function"]["name"]
-                    for tool in call["tools"]
-                }
-                self.assertIn("create_reminder", names)
-            self.assertEqual(len(service.calls), 2)
-            self.assertEqual(finished, ["Reminder created successfully."])
+            names = {
+                tool["function"]["name"]
+                for tool in service.calls[0]["tools"]
+            }
+            self.assertIn("create_reminder", names)
+            self.assertEqual(len(service.calls), 1)
+            self.assertIn("Reminder created successfully", finished[0])
+            self.assertIn("in 5 seconds", finished[0])
             self.assertEqual(failures, [])
             reminders = manager.reminder_service.store.list()
             self.assertEqual(len(reminders), 1)

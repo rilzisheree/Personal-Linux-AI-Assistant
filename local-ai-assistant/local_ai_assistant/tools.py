@@ -40,7 +40,11 @@ from .information_tools import (
 )
 from .memory import MemoryStore
 from .profile import UserProfileStore, collect_system_profile
-from .reminders import default_reminder_service, format_due_time
+from .reminders import (
+    default_reminder_service,
+    format_due_time,
+    format_reminder_timing,
+)
 
 
 LOGGER = logging.getLogger("lura.tools")
@@ -752,7 +756,10 @@ class ToolManager:
                             "type": "number",
                             "minimum": 0.1,
                             "maximum": 31536000,
-                            "description": "Seconds from now until the reminder",
+                            "description": (
+                                "Seconds from now until the reminder. Convert relative "
+                                "requests such as 'in 5 minutes' to 300."
+                            ),
                         },
                     },
                     "required": ["message", "delay_seconds"],
@@ -1753,9 +1760,14 @@ class ToolManager:
         message = _string_argument(arguments, "message")
         delay_seconds = arguments.get("delay_seconds")
         reminder = self.reminder_service.schedule(message, delay_seconds)
+        timing = format_reminder_timing(
+            reminder.due_at,
+            float(delay_seconds),
+            now=self.reminder_service._clock(),
+        )
         return ToolCallResult(
             True,
-            f"Reminder scheduled for {format_due_time(reminder.due_at)}: {reminder.message}",
+            f"Reminder created successfully. It will fire {timing}: {reminder.message}",
         )
 
     def _list_reminders(self, arguments: dict) -> ToolCallResult:

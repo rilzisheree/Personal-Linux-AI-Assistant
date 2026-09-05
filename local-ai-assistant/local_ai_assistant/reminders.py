@@ -480,3 +480,42 @@ def format_due_time(timestamp: float) -> str:
     return datetime.fromtimestamp(timestamp).astimezone().strftime(
         "%Y-%m-%d %H:%M:%S %Z"
     )
+
+
+def format_delay(delay_seconds: float) -> str:
+    """Format a delay without losing the user's relative-time intent."""
+    seconds = max(0.0, float(delay_seconds))
+    if seconds < 60:
+        rounded = max(1, round(seconds))
+        return f"{rounded} second{'s' if rounded != 1 else ''}"
+    minutes = round(seconds / 60)
+    if minutes < 60:
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    hours = round(seconds / 3600)
+    if hours < 24:
+        return f"{hours} hour{'s' if hours != 1 else ''}"
+    days = round(seconds / 86400)
+    return f"{days} day{'s' if days != 1 else ''}"
+
+
+def format_reminder_timing(
+    timestamp: float,
+    delay_seconds: float,
+    *,
+    now: float | None = None,
+) -> str:
+    """Return an exact local-time description anchored to the scheduling clock."""
+    current = datetime.fromtimestamp(
+        time.time() if now is None else now
+    ).astimezone()
+    due = datetime.fromtimestamp(timestamp).astimezone()
+    if due.date() == current.date():
+        day_label = "today"
+    elif due.date().toordinal() == current.date().toordinal() + 1:
+        day_label = "tomorrow"
+    else:
+        day_label = due.strftime("%Y-%m-%d")
+    return (
+        f"in {format_delay(delay_seconds)} "
+        f"({day_label} at {due.strftime('%H:%M:%S %Z')}, {due:%Y-%m-%d})"
+    )

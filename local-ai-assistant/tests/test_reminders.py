@@ -6,7 +6,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from local_ai_assistant.reminders import Reminder, ReminderService, ReminderStore
+from local_ai_assistant.reminders import (
+    Reminder,
+    ReminderService,
+    ReminderStore,
+    format_delay,
+    format_reminder_timing,
+)
 
 
 class ReminderServiceTests(unittest.TestCase):
@@ -54,6 +60,14 @@ class ReminderServiceTests(unittest.TestCase):
             service.schedule("", 5)
         with self.assertRaises(ValueError):
             service.schedule("Drink water", 0)
+
+    def test_relative_timing_does_not_call_a_short_delay_tomorrow(self) -> None:
+        now = 1_756_000_000.0
+        self.assertEqual(format_delay(300), "5 minutes")
+        timing = format_reminder_timing(now + 300, 300, now=now)
+        self.assertIn("in 5 minutes", timing)
+        self.assertIn("(today at", timing)
+        self.assertNotIn("tomorrow", timing)
 
     def test_due_listener_is_called_and_can_be_removed(self) -> None:
         listener = Mock()

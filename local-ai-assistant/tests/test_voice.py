@@ -14,6 +14,7 @@ from local_ai_assistant.voice import (
     VoiceActivityDetector,
     VoiceError,
     VoiceService,
+    confirmation_decision,
     contains_arabic_text,
     conversation_end_requested,
     is_no_speech_error,
@@ -124,6 +125,10 @@ class VoiceServiceTests(unittest.TestCase):
                 self.assertTrue(reminder_stop_requested(phrase))
         self.assertFalse(reminder_stop_requested("stop the music"))
         self.assertFalse(reminder_stop_requested("please remind me tomorrow"))
+        for phrase in ("confirm", "confirmed", "approve", "yes, please"):
+            with self.subTest(phrase=phrase):
+                self.assertTrue(confirmation_decision(phrase))
+        self.assertFalse(confirmation_decision("no, cancel"))
         self.assertTrue(conversation_end_requested("go to sleep now"))
         self.assertTrue(conversation_end_requested("please stop listening"))
         self.assertTrue(conversation_end_requested("I am done now"))

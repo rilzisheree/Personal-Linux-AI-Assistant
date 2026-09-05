@@ -62,9 +62,23 @@ def confirmation_decision(text: str) -> bool | None:
     tokens = _normalise_spoken_text(text)
     if not tokens or len(tokens) > 5:
         return None
-    affirmative = {"yes", "yeah", "yep", "approve", "approved", "allow", "okay", "ok"}
+    affirmative = {
+        "yes",
+        "yeah",
+        "yep",
+        "approve",
+        "approved",
+        "allow",
+        "okay",
+        "ok",
+        "confirm",
+        "confirmed",
+        "proceed",
+    }
     negative = {"no", "nope", "nah", "cancel", "cancelled", "deny", "denied"}
     if tokens[0] in affirmative and not any(token in negative for token in tokens):
+        return True
+    if tokens in (["do", "it"], ["go", "ahead"]):
         return True
     if tokens[0] in negative and not any(token in affirmative for token in tokens):
         return False

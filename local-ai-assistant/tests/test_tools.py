@@ -251,7 +251,9 @@ class ToolManagerTests(unittest.TestCase):
             )
 
             self.assertTrue(result.success)
-            self.assertIn("Reminder scheduled for", result.content)
+            self.assertIn("Reminder created successfully", result.content)
+            self.assertIn("in 5 seconds", result.content)
+            self.assertIn("(today at", result.content)
             self.assertIn("drink water", result.content)
             reminders = service.store.list()
             self.assertEqual(len(reminders), 1)

@@ -327,6 +327,18 @@ class ChatWorker(QObject):
                     )
                     messages.append(tool_message)
                     visible_messages.append(tool_message)
+                if (
+                    len(normalized_tool_calls) == 1
+                    and normalized_tool_calls[0].name == "create_reminder"
+                ):
+                    # Reminder timing is an application fact. Do not ask the
+                    # model to paraphrase it, because it can turn a relative
+                    # delay such as five minutes into an incorrect day label.
+                    final_response = tool_results[0].content
+                    visible_messages.append(ChatMessage("assistant", final_response))
+                    self.conversation_ready.emit(visible_messages)
+                    self.finished.emit(final_response)
+                    return
             self.failed.emit("Generation stopped.", "cancelled")
         except (OllamaCancelledError, AssistantCancelledError):
             LOGGER.info(
