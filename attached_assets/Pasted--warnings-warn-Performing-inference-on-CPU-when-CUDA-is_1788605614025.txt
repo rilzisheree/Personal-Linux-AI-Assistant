@@ -1,0 +1,40 @@
+ warnings.warn("Performing inference on CPU when CUDA is available")
+2026-09-05 13:53:05,524 lura.workers INFO [WakeWord] Audio frames received: 18432 bytes
+2026-09-05 13:53:05,624 lura.workers INFO [WakeWord] Audio frames received: 3414 bytes
+2026-09-05 13:53:05,725 lura.workers INFO [WakeWord] Audio frames received: 3414 bytes
+/home/kirata/Personal-Linux-AI-Assistant/local-ai-assistant/.venv/lib/python3.14/site-packages/whisper/transcribe.py:130: UserWarning: Performing inference on CPU when CUDA is available
+  warnings.warn("Performing inference on CPU when CUDA is available")
+2026-09-05 13:53:05,749 lura.ollama INFO [STREAM] request started model=gemma3:270m tools=0
+2026-09-05 13:53:05,749 lura.ollama INFO [STREAM START] request_id=74ae63e142e8 model=gemma3:270m input_messages=2 input_chars=1625 estimated_input_tokens=406 estimated_context_headroom=1642 tools=0 num_predict=8 num_ctx=2048 temperature=0 stop=unset stream=true
+2026-09-05 13:53:05,795 lura.ollama INFO [OLLAMA] request_id=74ae63e142e8 connection_established_seconds=0.05 stream_started=true
+2026-09-05 13:53:05,795 lura.ollama INFO [Ollama] First model token received 0.05s after connection
+2026-09-05 13:53:05,795 lura.ollama INFO [STREAM] chunk received #1 request_id=74ae63e142e8 content_chars=1 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:05,798 lura.ollama INFO [STREAM] chunk received #2 request_id=74ae63e142e8 content_chars=6 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:05,802 lura.ollama INFO [STREAM] chunk received #3 request_id=74ae63e142e8 content_chars=1 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:05,826 lura.ollama INFO [STREAM] chunk received #4 request_id=74ae63e142e8 content_chars=0 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:05,826 lura.ollama INFO [OLLAMA] request_id=74ae63e142e8 stream_finished=true total_chunks=4 total_chars=8 generated_tokens=4 completion_reason=NORMAL_COMPLETION done_reason=stop
+2026-09-05 13:53:05,826 lura.ollama INFO [Ollama] GENERATION_METRICS {"generated_tokens": 4, "generation_seconds": 0.03, "output_characters": 8, "output_tokens_estimate": 2, "reasoning_characters": 0, "reasoning_tokens_estimate": 0, "time_to_first_token_seconds": 0.045, "tokens_per_second": 134.13, "total_elapsed_seconds": 0.077}
+2026-09-05 13:53:05,826 lura.assistant INFO [Router] Gemma selected route=simple
+2026-09-05 13:53:05,827 lura.ollama INFO [STREAM] request started model=qwen3.5:2b tools=0
+2026-09-05 13:53:05,827 lura.ollama INFO [STREAM START] request_id=8dd763638b5d model=qwen3.5:2b input_messages=161 input_chars=16975 estimated_input_tokens=4244 estimated_context_headroom=52076 tools=0 num_predict=-1 num_ctx=56320 temperature=unset stop=unset stream=true
+2026-09-05 13:53:06,094 lura.ollama INFO [OLLAMA] request_id=8dd763638b5d connection_established_seconds=0.27 stream_started=true
+2026-09-05 13:53:06,094 lura.ollama INFO [STREAM] chunk received #1 request_id=8dd763638b5d content_chars=0 thinking_chars=0 tool_calls=1
+2026-09-05 13:53:06,108 lura.ollama INFO [STREAM] chunk received #2 request_id=8dd763638b5d content_chars=0 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:06,109 lura.ollama INFO [OLLAMA] request_id=8dd763638b5d stream_finished=true total_chunks=2 total_chars=0 generated_tokens=15 completion_reason=NORMAL_COMPLETION done_reason=stop
+2026-09-05 13:53:06,109 lura.ollama INFO [Ollama] GENERATION_METRICS {"generated_tokens": 15, "generation_seconds": 0.196, "output_characters": 0, "output_tokens_estimate": 0, "reasoning_characters": 0, "reasoning_tokens_estimate": 0, "time_to_first_token_seconds": null, "tokens_per_second": 76.46, "total_elapsed_seconds": 0.281}
+2026-09-05 13:53:06,109 lura.assistant INFO [BACKEND] chunks_received=2 chars_received=0 stream_finished=true
+2026-09-05 13:53:06,109 lura.workers INFO [BACKEND] worker_cycle_chunks=2 worker_cycle_chars=0 worker_stream_chunks=2 worker_stream_chars=0 stream_finished=true done_reason=stop generated_tokens=15
+2026-09-05 13:53:06,111 lura.ollama INFO [STREAM] request started model=qwen3.5:2b tools=0
+2026-09-05 13:53:06,111 lura.ollama INFO [STREAM START] request_id=b9381f7a1591 model=qwen3.5:2b input_messages=163 input_chars=17069 estimated_input_tokens=4267 estimated_context_headroom=52053 tools=0 num_predict=-1 num_ctx=56320 temperature=unset stop=unset stream=true
+2026-09-05 13:53:06,359 lura.ollama INFO [OLLAMA] request_id=b9381f7a1591 connection_established_seconds=0.25 stream_started=true
+2026-09-05 13:53:06,359 lura.ollama INFO [STREAM] chunk received #1 request_id=b9381f7a1591 content_chars=0 thinking_chars=0 tool_calls=1
+2026-09-05 13:53:06,372 lura.ollama INFO [STREAM] chunk received #2 request_id=b9381f7a1591 content_chars=0 thinking_chars=0 tool_calls=0
+2026-09-05 13:53:06,372 lura.ollama INFO [OLLAMA] request_id=b9381f7a1591 stream_finished=true total_chunks=2 total_chars=0 generated_tokens=15 completion_reason=NORMAL_COMPLETION done_reason=stop
+2026-09-05 13:53:06,372 lura.ollama INFO [Ollama] GENERATION_METRICS {"generated_tokens": 15, "generation_seconds": 0.187, "output_characters": 0, "output_tokens_estimate": 0, "reasoning_characters": 0, "reasoning_tokens_estimate": 0, "time_to_first_token_seconds": null, "tokens_per_second": 80.3, "total_elapsed_seconds": 0.261}
+2026-09-05 13:53:06,372 lura.assistant INFO [BACKEND] chunks_received=2 chars_received=0 stream_finished=true
+2026-09-05 13:53:06,372 lura.workers INFO [BACKEND] worker_cycle_chunks=2 worker_cycle_chars=0 worker_stream_chunks=4 worker_stream_chars=0 stream_finished=true done_reason=stop generated_tokens=15
+2026-09-05 13:53:06,373 lura.ollama INFO [STREAM] request started model=qwen3.5:2b tools=0
+2026-09-05 13:53:06,373 lura.ollama INFO [STREAM START] request_id=ea2195b683dd model=qwen3.5:2b input_messages=165 input_chars=17163 estimated_input_tokens=4291 estimated_context_headroom=52029 tools=0 num_predict=-1 num_ctx=56320 temperature=unset stop=unset stream=true
+2026-09-05 13:53:06,610 lura.ollama INFO [OLLAMA] request_id=ea2195b683dd connection_established_seconds=0.24 stream_started=true
+2026-09-05 13:53:06,610 lura.ollama INFO [STREAM] chunk received #1 request_id=ea2195b683dd content_chars=0 thinking_chars=0 tool_calls=1
+2026-09-05 13:53:06,623 lura.ollama INFO [STREAM] chunk received #2 request_id=ea2195b683dd content_chars=0 thinking_chars=0 tool_calls=0

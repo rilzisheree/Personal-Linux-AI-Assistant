@@ -187,6 +187,20 @@ class ChatWorker(QObject):
                     self.conversation_ready.emit(visible_messages)
                     self.failed.emit("Generation stopped.", "cancelled")
                     return
+                if tool_calls and route_tools is None:
+                    LOGGER.warning(
+                        "[BACKEND] model_returned_tools_without_tools "
+                        "tool_calls=%d cycle_chars=%d",
+                        len(tool_calls),
+                        cycle_characters,
+                    )
+                    if not cycle_response:
+                        raise OllamaProtocolError(
+                            "The model requested a tool although no tools were enabled."
+                        )
+                    # Preserve visible text from a malformed mixed response, but
+                    # never execute a tool that was not offered to the model.
+                    tool_calls = []
                 if not tool_calls:
                     response = "".join(cycle_response)
                     assistant_message = ChatMessage("assistant", response)

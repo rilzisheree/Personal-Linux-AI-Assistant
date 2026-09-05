@@ -229,6 +229,45 @@ class DirectToolDispatchTests(unittest.TestCase):
         self.assertEqual(failures[0][1], "error")
         self.assertIn("completion event", failures[0][0])
 
+    def test_chat_worker_rejects_tool_calls_when_no_tools_were_offered(self) -> None:
+        class UnexpectedToolService:
+            backend_name = "Fake Ollama"
+
+            def route_request(self, *args, **kwargs):
+                return RouteDecision("simple")
+
+            def stream_reply(
+                self,
+                messages,
+                model,
+                cancel_event=None,
+                tools=None,
+                context_size=None,
+            ):
+                del messages, model, cancel_event, tools, context_size
+                yield StreamEvent(
+                    "",
+                    True,
+                    (ToolCall("web_search", {"query": "unexpected"}, "call-1"),),
+                )
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        worker = ChatWorker(
+            UnexpectedToolService(),
+            [ChatMessage("user", "Say hello.")],
+            "qwen3.5:2b",
+            ToolManager(),
+        )
+        failures: list[tuple[str, str]] = []
+        worker.failed.connect(lambda message, kind: failures.append((message, kind)))
+
+        worker.run()
+
+        self.assertEqual(failures[0][1], "error")
+        self.assertIn("no tools were enabled", failures[0][0])
+
     def test_chat_worker_reports_the_selected_model_without_routing(self) -> None:
         class FakeService:
             display_name = "Fake Ollama"
