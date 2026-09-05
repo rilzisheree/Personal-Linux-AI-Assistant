@@ -234,6 +234,32 @@ def _reminder_task_name(value: str) -> str:
     return text.strip(" .!?")
 
 
+def _reminder_time_present(value: str) -> bool:
+    return bool(
+        re.search(
+            rf"\b(?:in|after|for)\s+{_REMINDER_TIME_EXPRESSION}\b"
+            rf"|\b(?:at\s+)?(?:{_REMINDER_CLOCK_EXPRESSION})\b"
+            r"|\b\d{4}-\d{2}-\d{2}\b",
+            value,
+            re.IGNORECASE,
+        )
+    )
+
+
+def _reminder_detail_task(value: str) -> str:
+    task = _reminder_task_name(value)
+    task = re.sub(r"^(?:to|that)\s+", "", task, flags=re.IGNORECASE).strip()
+    if re.fullmatch(
+        rf"(?:in|after|for)\s+{_REMINDER_TIME_EXPRESSION}"
+        rf"|(?:at\s+)?{_REMINDER_CLOCK_EXPRESSION}"
+        r"|(?:today|tomorrow)",
+        task,
+        re.IGNORECASE,
+    ):
+        return ""
+    return task
+
+
 def _first_inline_data(payload: object) -> str | None:
     if isinstance(payload, dict):
         for key in ("inlineData", "inline_data"):
@@ -355,6 +381,9 @@ class ToolManager:
         }
         self._active_model = active_model.strip() if isinstance(active_model, str) and active_model.strip() else None
         self.reminder_service = default_reminder_service()
+        self._pending_reminder_active = False
+        self._pending_reminder_task: str | None = None
+        self._reminder_followup_ready = False
         custom_launcher_names = ", ".join(
             f'"{alias}"' for alias in self.custom_app_commands
         )
@@ -1049,6 +1078,61 @@ class ToolManager:
                 request.casefold(),
             )
         )
+
+    def reminder_clarification_for_request(self, request: str) -> str | None:
+        """Ask for missing reminder details before the model can guess them."""
+        text = re.sub(r"\s+", " ", request.strip()).strip(" .!?")
+        initial_match = re.search(
+            r"\b(?:create|set|make|schedule|add)\s+"
+            r"(?:a|an|new)?\s*reminder\b(?P<details>.*)$",
+            text,
+            re.IGNORECASE,
+        )
+        if initial_match:
+            details = initial_match.group("details").strip(" .!?")
+            has_time = _reminder_time_present(details)
+            task = _reminder_detail_task(details) if details else ""
+            if task.casefold() in {"please", "now"}:
+                task = ""
+            if task and has_time:
+                self._pending_reminder_active = False
+                self._pending_reminder_task = None
+                return None
+            self._pending_reminder_active = True
+            self._pending_reminder_task = task or None
+            return self._reminder_clarification_prompt(task, has_time)
+
+        if not self._pending_reminder_active:
+            return None
+        has_time = _reminder_time_present(text)
+        task = _reminder_detail_task(text)
+        if has_time and (self._pending_reminder_task or task):
+            self._pending_reminder_active = False
+            self._pending_reminder_task = None
+            self._reminder_followup_ready = True
+            return None
+        if task and not has_time:
+            self._pending_reminder_task = task
+        return self._reminder_clarification_prompt(
+            self._pending_reminder_task or task,
+            has_time,
+        )
+
+    @staticmethod
+    def _reminder_clarification_prompt(task: str, has_time: bool) -> str:
+        if task and not has_time:
+            return f"When should I remind you about “{task}”?"
+        if has_time and not task:
+            return "What should I remind you about?"
+        return (
+            "What should I remind you about, and when? "
+            "For example: “Drink water in 5 minutes.”"
+        )
+
+    def consume_reminder_followup(self) -> bool:
+        ready = self._reminder_followup_ready
+        self._reminder_followup_ready = False
+        return ready
 
     def set_active_model(self, model: str | None) -> None:
         """Track the model that the next/current conversation request sends to Ollama."""
@@ -1805,6 +1889,9 @@ class ToolManager:
             raise ValueError("Reminder message must include a task.")
         delay_seconds = arguments.get("delay_seconds")
         reminder = self.reminder_service.schedule(message, delay_seconds)
+        self._pending_reminder_active = False
+        self._pending_reminder_task = None
+        self._reminder_followup_ready = False
         timing = format_reminder_timing(
             reminder.due_at,
             float(delay_seconds),

@@ -146,6 +146,17 @@ class ChatWorker(QObject):
                 "",
             )
             self.tool_manager.set_active_model(self.model)
+            clarification = self.tool_manager.reminder_clarification_for_request(
+                current_request
+            )
+            if clarification:
+                assistant_message = ChatMessage("assistant", clarification)
+                messages.append(assistant_message)
+                visible_messages.append(assistant_message)
+                self.conversation_ready.emit(visible_messages)
+                self.finished.emit(clarification)
+                return
+            reminder_followup_ready = self.tool_manager.consume_reminder_followup()
             direct_call = self.tool_manager.direct_tool_call_for_request(
                 current_request
             )
@@ -196,7 +207,10 @@ class ChatWorker(QObject):
                 route_tools = ollama_tools if route.route != "simple" else None
                 if (
                     route_tools is None
-                    and self.tool_manager.request_requires_tools(current_request)
+                    and (
+                        self.tool_manager.request_requires_tools(current_request)
+                        or reminder_followup_ready
+                    )
                 ):
                     route_tools = ollama_tools
                 if _stream_debug_enabled():

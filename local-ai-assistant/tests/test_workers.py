@@ -481,6 +481,28 @@ class DirectToolDispatchTests(unittest.TestCase):
             self.assertEqual(failures, [])
             self.assertEqual(manager.reminder_service.store.list()[0].status, "cancelled")
 
+    def test_chat_worker_asks_for_missing_reminder_details_without_ollama(self) -> None:
+        class FakeService:
+            display_name = "Fake Ollama"
+
+            def route_request(self, *args, **kwargs):
+                raise AssertionError("Incomplete reminder should not reach Ollama")
+
+        manager = ToolManager()
+        worker = ChatWorker(
+            FakeService(),
+            [ChatMessage("user", "Set a reminder")],
+            "qwen3.5:2b",
+            manager,
+        )
+        finished: list[str] = []
+        worker.finished.connect(finished.append)
+
+        worker.run()
+
+        self.assertEqual(len(finished), 1)
+        self.assertIn("What should I remind you about", finished[0])
+
 
 if __name__ == "__main__":
     unittest.main()

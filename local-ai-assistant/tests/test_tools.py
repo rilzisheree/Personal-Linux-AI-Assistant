@@ -380,6 +380,28 @@ class ToolManagerTests(unittest.TestCase):
             ("cancel_reminder", {"reminder": "EAT food"}),
         )
 
+    def test_incomplete_reminder_requests_ask_for_missing_details(self) -> None:
+        self.assertEqual(
+            self.manager.reminder_clarification_for_request("Create a reminder"),
+            "What should I remind you about, and when? "
+            "For example: “Drink water in 5 minutes.”",
+        )
+        self.assertEqual(
+            self.manager.reminder_clarification_for_request("Drink water"),
+            "When should I remind you about “Drink water”?",
+        )
+        self.assertIsNone(
+            self.manager.reminder_clarification_for_request("in 5 minutes")
+        )
+        self.assertTrue(self.manager.consume_reminder_followup())
+        self.assertFalse(self.manager.consume_reminder_followup())
+        self.assertEqual(
+            self.manager.reminder_clarification_for_request(
+                "Set a reminder in 5 minutes"
+            ),
+            "What should I remind you about?",
+        )
+
     @patch("local_ai_assistant.tools.subprocess.Popen")
     def test_open_app_executes_discovered_flatpak_id(self, popen_mock) -> None:
         self.manager.application_registry.resolve = unittest.mock.Mock(
