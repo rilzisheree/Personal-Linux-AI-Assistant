@@ -1,0 +1,612 @@
+Fix the **response cutoff/truncation bug** in my local AI assistant **Lura**. This is now a high-priority bug.
+
+## CURRENT PROBLEM
+
+Lura frequently starts generating a perfectly valid response but stops abruptly in the middle of a sentence.
+
+Examples observed:
+
+```text
+...making
+```
+
+```text
+On an NVIDIA RTX
+```
+
+```text
+...system has been up for roughly 223
+```
+
+```text
+...currently used at 49%
+```
+
+Web-search responses also get cut off, for example:
+
+```text
+DLSS 5 Confirmation: The company has officially confirmed the launch of DL
+```
+
+and:
+
+```text
+...Linux kernel release is roughly 2
+```
+
+The problem is NOT simply that Lura is unable to answer the question. It begins answering correctly and then terminates prematurely.
+
+This has happened with:
+
+* normal model responses
+* GPU/system-information responses
+* full system-status responses
+* web-search responses
+* long explanations
+* multi-tool responses
+
+Short responses sometimes work normally.
+
+## IMPORTANT CONTEXT
+
+A previous investigation already looked at the GPU path and found a GPU parser defect involving malformed `nvidia-smi` rows. That parser was fixed.
+
+However, the response cutoff **still occurs**, including with responses that do not depend on the GPU parser.
+
+Therefore:
+
+**DO NOT assume the GPU parser is the root cause.**
+
+Do not undo the GPU parser fix.
+
+Also do not modify the web-search provider as part of this task.
+
+The routing issue where casual questions unnecessarily triggered web search has also already been fixed.
+
+Focus specifically on the response lifecycle.
+
+---
+
+# TRACE THE ENTIRE RESPONSE PIPELINE
+
+Inspect the actual implementation from beginning to end:
+
+```text
+USER REQUEST
+↓
+ROUTER
+↓
+TOOL EXECUTION (if any)
+↓
+MAIN MODEL REQUEST
+↓
+OLLAMA API
+↓
+OLLAMA STREAM
+↓
+BACKEND STREAM PROCESSING
+↓
+SSE / HTTP / IPC
+↓
+FRONTEND RECEIVER
+↓
+MESSAGE ACCUMULATION
+↓
+FINAL DISPLAY
+```
+
+Find exactly where the response is being truncated.
+
+Do not guess.
+
+Determine whether the model itself is stopping, or whether Lura is stopping/discarding the response.
+
+---
+
+# FIRST TEST: RAW OLLAMA VS LURA
+
+This is extremely important.
+
+Run the main model directly through the existing Ollama interface/API with a prompt designed to produce a long response.
+
+Then run the exact same/similar prompt through Lura.
+
+Compare:
+
+```text
+RAW OLLAMA OUTPUT
+LURA OUTPUT
+```
+
+Determine:
+
+```text
+Did Ollama itself stop?
+OR
+Did Lura stop receiving/displaying tokens?
+```
+
+If Ollama produces the complete response while Lura truncates it, the bug is definitely somewhere in Lura's pipeline.
+
+Do not change token limits blindly before determining this.
+
+---
+
+# INVESTIGATE OLLAMA REQUEST PARAMETERS
+
+Inspect every parameter sent to Ollama.
+
+Especially:
+
+* `num_predict`
+* `num_ctx`
+* `temperature`
+* `stop`
+* `stream`
+* model name
+* timeout
+* keep_alive
+* any max token/output limit
+* any response length limit
+* any internal token budget
+* any cancellation signal
+
+Look for accidental values such as:
+
+```text
+num_predict = 100
+num_predict = 256
+num_predict = 512
+```
+
+or anything else that could explain the repeated early termination.
+
+Also inspect whether a `stop` sequence is accidentally matching ordinary text.
+
+Do NOT simply increase token limits without understanding the existing configuration.
+
+---
+
+# INVESTIGATE STREAMING
+
+Inspect all streaming code.
+
+Look for:
+
+* generators ending early
+* `return` inside stream loops
+* `break` conditions
+* exception handlers swallowing errors
+* async task cancellation
+* timeout expiration
+* connection closure
+* SSE termination
+* incorrect `[DONE]` handling
+* frontend treating a temporary event as final
+* only consuming the first chunk
+* incorrect JSON parsing
+* dropped chunks
+* race conditions
+* queue exhaustion
+* background worker termination
+* task cancellation after tool execution
+* response state being overwritten
+* frontend replacing accumulated text instead of appending
+* duplicate/final event handling
+* stream buffers being flushed incorrectly
+
+Pay particular attention to code that does something equivalent to:
+
+```python
+return
+break
+cancel()
+close()
+```
+
+inside or immediately around the streaming loop.
+
+---
+
+# VERY IMPORTANT: DISTINGUISH "MODEL STOPPED" FROM "LURA STOPPED"
+
+Instrument the stream temporarily so we can determine:
+
+```text
+OLLAMA_CHUNKS_RECEIVED = N
+OLLAMA_FINAL_EVENT = true/false
+OLLAMA_DONE_REASON = ...
+BACKEND_TEXT_LENGTH = ...
+SSE_EVENTS_SENT = ...
+FRONTEND_CHUNKS_RECEIVED = ...
+FINAL_TEXT_LENGTH = ...
+```
+
+If possible, record the Ollama response's actual completion metadata, including the model's stop reason.
+
+We need to know whether termination is:
+
+```text
+completed normally
+length limit
+stop sequence
+cancelled
+timeout
+connection error
+parser error
+unknown
+```
+
+Do not hide this information.
+
+If an exception occurs after partial output, preserve the partial output but clearly record the error internally.
+
+---
+
+# CHECK FOR TOKEN / LENGTH LIMITS
+
+Search the entire project for things like:
+
+```text
+max_tokens
+max_new_tokens
+num_predict
+max_output
+max_response
+response_limit
+token_limit
+output_limit
+MAX_TOKENS
+MAX_OUTPUT
+```
+
+Also inspect frontend/backend limits such as:
+
+```text
+maxLength
+slice(...)
+[:...]
+substring(...)
+truncate(...)
+truncateText(...)
+```
+
+A character/string limit could produce exactly this kind of behavior even if Ollama generated the full response.
+
+Search for any code that truncates:
+
+```text
+response
+content
+message
+text
+output
+tokens
+chunks
+```
+
+before displaying them.
+
+---
+
+# CHECK STREAM ACCUMULATION
+
+Verify that the frontend/backend does:
+
+```text
+existing_text += new_chunk
+```
+
+and does NOT accidentally do:
+
+```text
+existing_text = new_chunk
+```
+
+or periodically reset the response.
+
+Also check whether a final metadata event accidentally replaces the accumulated response with a shorter value.
+
+Test with a deliberately long response containing numbered markers:
+
+```text
+1. AAA
+2. BBB
+3. CCC
+4. DDD
+...
+30. XXX
+```
+
+This makes it easy to identify exactly where data disappears.
+
+---
+
+# CHECK TOOL → MODEL TRANSITIONS
+
+Because Lura can use tools, inspect what happens after tool execution.
+
+For example:
+
+```text
+USER
+↓
+TOOL
+↓
+TOOL RESULT
+↓
+MAIN MODEL
+↓
+STREAM
+```
+
+Make sure tool results are not causing:
+
+* premature stream termination
+* context overflow
+* malformed prompt construction
+* accidental stop sequences
+* response-length reduction
+* cancellation of the model task
+* duplicate completion handling
+
+Test BOTH:
+
+### No-tool
+
+```text
+Explain how RAM works in detail. Give me at least 15 numbered points.
+```
+
+### Tool-assisted
+
+```text
+Give me a detailed full system status including CPU, RAM, GPU, disk, network, and uptime.
+```
+
+The second should not truncate simply because multiple tools were involved.
+
+---
+
+# CHECK CONTEXT WINDOW
+
+Inspect the actual context sent to Qwen3.5:2b.
+
+Do not assume the configured context size is what is actually being used.
+
+Log:
+
+```text
+model
+num_ctx
+estimated_input_tokens
+estimated_output_tokens
+total_context
+```
+
+Determine whether a large tool result or conversation history is consuming the context window.
+
+If context exhaustion is the cause, fix the context management rather than blindly increasing everything.
+
+The machine has limited VRAM, so do not introduce a huge context size that causes severe memory pressure.
+
+---
+
+# CHECK TIMEOUTS
+
+Search for every timeout in the response path.
+
+Especially:
+
+```text
+HTTP timeout
+Ollama timeout
+stream timeout
+asyncio timeout
+worker timeout
+frontend timeout
+SSE timeout
+idle timeout
+```
+
+A timeout may be incorrectly terminating a stream while the model is still generating.
+
+Test with a long response that takes more time to generate.
+
+---
+
+# CHECK CANCELLATION
+
+Find every place that can cancel the active generation.
+
+Examples:
+
+```text
+task.cancel()
+future.cancel()
+abort()
+AbortController
+disconnect
+client disconnect
+worker shutdown
+new request
+voice state transition
+```
+
+Make sure Lura does not accidentally cancel generation after a fixed amount of time or after a tool finishes.
+
+---
+
+# CHECK STOP SEQUENCES
+
+Inspect every `stop` sequence passed to Ollama.
+
+Verify that none can naturally occur in ordinary responses.
+
+Temporarily log:
+
+```text
+stop_sequences = [...]
+```
+
+for debugging.
+
+If a stop sequence is responsible, identify the exact sequence and why it was configured.
+
+Do not simply remove safety-relevant stop sequences without understanding why they exist.
+
+---
+
+# DO NOT "FIX" THIS BY HIDING THE SYMPTOM
+
+Do NOT:
+
+* simply increase frontend timeout
+* simply increase `num_predict`
+* remove all stop sequences
+* disable streaming
+* rewrite the entire response architecture
+* replace Ollama
+* switch models
+* add arbitrary delays
+* retry the same generation repeatedly
+* silently append fake text
+* have the model regenerate missing sentences
+* modify unrelated tools
+
+The goal is to identify and fix the actual termination point.
+
+---
+
+# REGRESSION TESTS
+
+Add tests covering:
+
+### Short response
+
+```text
+What is Linux?
+```
+
+### Long no-tool response
+
+```text
+Explain how RAM works in detail with at least 20 numbered points.
+```
+
+### Long system/tool response
+
+```text
+Give me a detailed full system status.
+```
+
+### Long web/tool response
+
+```text
+Give me a detailed summary of the latest NVIDIA news.
+```
+
+### Multi-tool response
+
+Use a request that genuinely requires multiple local tools.
+
+Verify that the entire final response reaches the UI.
+
+Tests should verify:
+
+```text
+generated_text_length
+received_text_length
+displayed_text_length
+```
+
+where practical.
+
+Also verify that a normal completion is not accidentally treated as an error.
+
+---
+
+# MANUAL DIAGNOSTIC TEST
+
+After the code changes, run a deliberately long test through Lura:
+
+```text
+Write a detailed explanation of how a modern gaming PC works. Cover the CPU, GPU, RAM, VRAM, motherboard, storage, PSU, cooling, operating system, drivers, and display pipeline. Use 20 numbered sections and explain each section in several sentences.
+```
+
+Then run:
+
+```text
+Give me a complete system status including CPU, RAM, GPU, VRAM, GPU temperature, GPU utilization, disk, network, uptime, and operating system. Explain every result.
+```
+
+Then:
+
+```text
+Search for the latest NVIDIA news and give me a detailed summary of the important stories.
+```
+
+The responses should reach their natural completion instead of stopping in the middle of a sentence.
+
+---
+
+# DEBUGGING REQUIREMENT
+
+Add an opt-in diagnostic mode if the project already has a logging/debug mechanism.
+
+For example, if appropriate to the existing architecture:
+
+```text
+LURA_STREAM_DEBUG=1
+```
+
+Do not spam normal users with debug output.
+
+The diagnostic information should allow us to identify:
+
+```text
+REQUEST
+MODEL
+MODEL PARAMETERS
+STREAM_STARTED
+CHUNKS_RECEIVED
+TOKENS_RECEIVED
+LAST_CHUNK
+OLLAMA_DONE
+DONE_REASON
+BACKEND_OUTPUT_LENGTH
+SSE_EVENTS_SENT
+FRONTEND_EVENTS_RECEIVED
+FINAL_DISPLAY_LENGTH
+ERROR/CANCELLATION/TIMEOUT
+```
+
+Do not log secrets, API keys, or unnecessary private information.
+
+---
+
+# REQUIRED FINAL REPORT
+
+After actually inspecting and testing the implementation, report exactly:
+
+```text
+ROOT CAUSE:
+EVIDENCE:
+WHERE THE RESPONSE WAS BEING LOST:
+FIX:
+FILES CHANGED:
+OLLAMA PARAMETERS BEFORE:
+OLLAMA PARAMETERS AFTER:
+STREAMING BEHAVIOR BEFORE:
+STREAMING BEHAVIOR AFTER:
+TESTS:
+MANUAL TEST RESULTS:
+REGRESSIONS:
+REMAINING ISSUES:
+```
+
+Most importantly:
+
+**Do not claim the cutoff is fixed unless a long response was actually tested end-to-end and reached the UI completely.**
+
+Keep this fix isolated to the response-generation/streaming pipeline.

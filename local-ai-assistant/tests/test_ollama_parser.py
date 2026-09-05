@@ -125,7 +125,7 @@ class OllamaParserTests(unittest.TestCase):
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertEqual(
             payload["options"],
-            {"num_ctx": 8192},
+            {"num_predict": -1, "num_ctx": 8192},
         )
         self.assertFalse(payload["think"])
         self.assertEqual(payload["keep_alive"], "10m")
@@ -192,7 +192,10 @@ class OllamaParserTests(unittest.TestCase):
 
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertFalse(payload["stream"])
-        self.assertEqual(payload["options"], {"num_ctx": 8192, "temperature": 0.2})
+        self.assertEqual(
+            payload["options"],
+            {"num_predict": -1, "num_ctx": 8192, "temperature": 0.2},
+        )
         self.assertEqual(event.content, "complete answer")
         self.assertTrue(event.done)
         self.assertEqual(event.done_reason, "stop")
@@ -239,7 +242,7 @@ class OllamaParserTests(unittest.TestCase):
             )
         payload = json.loads(urlopen.call_args.args[0].data.decode("utf-8"))
         self.assertTrue(payload["think"])
-        self.assertNotIn("num_predict", payload.get("options", {}))
+        self.assertEqual(payload["options"]["num_predict"], -1)
 
     def test_router_request_can_set_deterministic_json_options(self) -> None:
         client = OllamaClient("http://localhost:11434")

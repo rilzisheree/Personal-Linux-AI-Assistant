@@ -190,6 +190,10 @@ class OllamaClient:
     """Small, synchronous HTTP client intended to run off the Qt UI thread."""
 
     display_name = "Ollama"
+    # Keep the bounded classifier budget separate from user-facing generation.
+    # Explicitly sending -1 prevents a model/Modelfile default num_predict cap
+    # from cutting off normal responses mid-sentence.
+    default_num_predict = -1
     default_keep_alive = "10m"
     default_timeout = 120.0
     default_connection_timeout = 10.0
@@ -261,7 +265,10 @@ class OllamaClient:
         thinking_option = self._thinking_option(model, messages)
         if thinking_option is not None:
             payload["think"] = thinking_option
-        request_options = dict(options or {})
+        request_options = {
+            "num_predict": self.default_num_predict,
+            **(options or {}),
+        }
         if context_size:
             request_options["num_ctx"] = context_size
         if request_options:
@@ -271,14 +278,25 @@ class OllamaClient:
         if tools:
             payload["tools"] = tools
         if _stream_debug_enabled():
+            input_chars = sum(len(message.content) for message in messages)
+            input_tokens_estimate = round(input_chars / 4) if input_chars else 0
+            requested_context = request_options.get("num_ctx")
+            context_headroom = (
+                max(int(requested_context) - input_tokens_estimate, 0)
+                if isinstance(requested_context, int)
+                else None
+            )
             LOGGER.info(
                 "[STREAM START] request_id=%s model=%s input_messages=%d "
-                "input_chars=%d tools=%d num_predict=%s num_ctx=%s "
+                "input_chars=%d estimated_input_tokens=%d "
+                "estimated_context_headroom=%s tools=%d num_predict=%s num_ctx=%s "
                 "temperature=%s stop=%s stream=true",
                 request_id,
                 model,
                 len(messages),
-                sum(len(message.content) for message in messages),
+                input_chars,
+                input_tokens_estimate,
+                context_headroom if context_headroom is not None else "unknown",
                 len(tools or []),
                 request_options.get("num_predict", "unset"),
                 request_options.get("num_ctx", "unset"),
@@ -451,7 +469,10 @@ class OllamaClient:
         thinking_option = self._thinking_option(model, messages)
         if thinking_option is not None:
             payload["think"] = thinking_option
-        request_options = dict(options or {})
+        request_options = {
+            "num_predict": self.default_num_predict,
+            **(options or {}),
+        }
         if context_size:
             request_options["num_ctx"] = context_size
         if request_options:

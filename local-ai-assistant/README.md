@@ -400,10 +400,13 @@ loaded model between nearby messages. The native app also logs one
 and `spoken_response_completed` to locate the slow stage.
 
 For thinking-capable Ollama models such as Qwen3/Qwen3.5, routine short
-requests send `think: false` and a 96-token response budget so greetings,
-lookups, and one-step actions do not spend time on unnecessary reasoning.
-Longer or reasoning-oriented prompts send `think: true`, preserving the
-model's ability to work through complex requests. The client logs an
+requests send `think: false` so greetings, lookups, and one-step actions do not
+spend time on unnecessary reasoning. User-facing generations explicitly send
+`num_predict=-1`, leaving the output length governed by the model context
+window rather than a hidden small response cap. The route-only classifier keeps
+its own strict output budget. Longer or reasoning-oriented prompts send
+`think: true`, preserving the model's ability to work through complex requests.
+The client logs an
 `[Ollama] GENERATION_METRICS` JSON record with time to first model token,
 Ollama's aggregate generated-token count, estimated reasoning/output token
 counts, generation time, and tokens per second. Ollama currently reports
