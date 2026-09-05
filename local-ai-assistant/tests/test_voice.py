@@ -20,6 +20,7 @@ from local_ai_assistant.voice import (
     reminder_stop_requested,
     remove_wake_word,
     find_wake_word,
+    wake_word_match_score,
     speech_text,
     wake_word_matches,
 )
@@ -84,6 +85,18 @@ class VoiceServiceTests(unittest.TestCase):
             ),
             "what's up?",
         )
+
+    def test_wake_word_match_score_exposes_tolerant_confidence(self) -> None:
+        self.assertGreater(wake_word_match_score("Laura, what time is it?", "Lura"), 0.75)
+        self.assertEqual(wake_word_match_score("", "Lura"), 0.0)
+
+    def test_wake_word_threshold_can_be_configured(self) -> None:
+        self.assertEqual(
+            AppConfig(wake_word_match_threshold="0.7").wake_word_match_threshold,
+            0.7,
+        )
+        with self.assertRaises(ValueError):
+            AppConfig(wake_word_match_threshold=0.4)
 
     def test_conversation_end_phrases_are_conservative(self) -> None:
         for phrase in (

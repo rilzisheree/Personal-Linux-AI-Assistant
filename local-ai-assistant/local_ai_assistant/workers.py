@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import queue
 import logging
+import os
 import subprocess
 import threading
 import time
@@ -30,12 +31,25 @@ from .voice import (
     find_wake_word,
     is_no_speech_error,
     remove_wake_word,
+    wake_word_match_score,
 )
 
 
 MAX_TOOL_ROUNDS = 8
 LOGGER = logging.getLogger("lura.workers")
 DEFAULT_WAKE_WORD_WINDOW_SECONDS = 1.5
+WAKE_WORD_SAMPLE_RATE = 16_000
+WAKE_WORD_CHANNELS = 1
+WAKE_WORD_SAMPLE_WIDTH = 2
+
+
+def _wake_debug_enabled() -> bool:
+    return os.environ.get("LURA_VOICE_DEBUG", "").casefold() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 class ChatWorker(QObject):
@@ -558,6 +572,15 @@ class WakeWordWorker(QObject):
         # Preserve the old attribute for callers that display the primary alias.
         self.wake_word = self.wake_words[0]
         self.chunk_seconds = chunk_seconds
+        configured_threshold = getattr(
+            getattr(service, "config", None),
+            "wake_word_match_threshold",
+            0.68,
+        )
+        try:
+            self.match_threshold = float(configured_threshold)
+        except (TypeError, ValueError):
+            self.match_threshold = 0.68
         self._stop_event = threading.Event()
         self._process: subprocess.Popen | None = None
 
@@ -570,7 +593,26 @@ class WakeWordWorker(QObject):
             stream_path = self.service.new_recording_path()
             process = self.service.start_recorder(stream_path)
             self._process = process
-            LOGGER.info("[WakeWord] Microphone connected")
+            if _wake_debug_enabled():
+                LOGGER.info(
+                    "[WakeWord] capture device=%r sample_rate=%d channels=%d "
+                    "sample_width=%d window_bytes=%d threshold=%.2f state=listening",
+                    getattr(self.service.config, "microphone_device", ""),
+                    WAKE_WORD_SAMPLE_RATE,
+                    WAKE_WORD_CHANNELS,
+                    WAKE_WORD_SAMPLE_WIDTH,
+                    max(
+                        1,
+                        int(
+                            self.chunk_seconds
+                            * WAKE_WORD_SAMPLE_RATE
+                            * WAKE_WORD_SAMPLE_WIDTH
+                        ),
+                    ),
+                    self.match_threshold,
+                )
+            else:
+                LOGGER.info("[WakeWord] Microphone connected")
             if self.chunk_seconds <= 0:
                 # A zero-length window is useful for deterministic worker
                 # tests and keeps the worker's public seam backwards
@@ -589,10 +631,30 @@ class WakeWordWorker(QObject):
                 self.chunk_seconds,
                 overlap_seconds,
             )
-            window_bytes = max(1, int(self.chunk_seconds * 16_000 * 2))
-            overlap_bytes = min(window_bytes // 2, int(overlap_seconds * 16_000 * 2))
+            window_bytes = max(
+                WAKE_WORD_SAMPLE_WIDTH,
+                int(
+                    self.chunk_seconds
+                    * WAKE_WORD_SAMPLE_RATE
+                    * WAKE_WORD_SAMPLE_WIDTH
+                ),
+            )
+            window_bytes -= window_bytes % WAKE_WORD_SAMPLE_WIDTH
+            overlap_bytes = min(
+                window_bytes // 2,
+                int(
+                    overlap_seconds
+                    * WAKE_WORD_SAMPLE_RATE
+                    * WAKE_WORD_SAMPLE_WIDTH
+                ),
+            )
+            overlap_bytes -= overlap_bytes % WAKE_WORD_SAMPLE_WIDTH
             pcm = b""
             offset = 44
+            frames_received = 0
+            frames_dropped = 0
+            windows_processed = 0
+            last_detection_at: float | None = None
             while not self._stop_event.is_set():
                 if process.poll() is not None:
                     raise VoiceError("The microphone stream stopped unexpectedly.")
@@ -606,14 +668,20 @@ class WakeWordWorker(QObject):
                     usable = len(new_pcm) - (len(new_pcm) % 2)
                     pcm += new_pcm[:usable]
                     offset += usable
-                    LOGGER.info("[WakeWord] Audio frames received: %d bytes", usable)
+                    frames_received += usable // WAKE_WORD_SAMPLE_WIDTH
+                    if _wake_debug_enabled():
+                        LOGGER.debug(
+                            "[WakeWord] audio frames_received=%d bytes=%d",
+                            frames_received,
+                            usable,
+                        )
                 if len(pcm) >= window_bytes:
                     snapshot = self.service.new_recording_path()
                     try:
                         with wave.open(str(snapshot), "wb") as audio:
                             audio.setnchannels(1)
                             audio.setsampwidth(2)
-                            audio.setframerate(16_000)
+                            audio.setframerate(WAKE_WORD_SAMPLE_RATE)
                             audio.writeframes(pcm[-window_bytes:])
                         # Keep wake listening off the GPU used by Ollama and
                         # other desktop workloads. The recorder itself stays
@@ -622,12 +690,44 @@ class WakeWordWorker(QObject):
                         transcript = self.service.transcribe(
                             snapshot, device="cpu"
                         ).casefold()
-                        LOGGER.info("[WakeWord] Window transcribed: %r", transcript[:160])
+                        windows_processed += 1
+                        scores = {
+                            wake_word: wake_word_match_score(transcript, wake_word)
+                            for wake_word in self.wake_words
+                        }
+                        best_score = max(scores.values(), default=0.0)
+                        if _wake_debug_enabled():
+                            LOGGER.info(
+                                "[WakeWord] device=%r sample_rate=%d channels=%d "
+                                "format=s16le window_bytes=%d window=%d "
+                                "frames_received=%d frames_dropped=%d "
+                                "confidence=%.3f threshold=%.2f state=%s "
+                                "last_detection=%s cooldown=inactive",
+                                getattr(self.service.config, "microphone_device", ""),
+                                WAKE_WORD_SAMPLE_RATE,
+                                WAKE_WORD_CHANNELS,
+                                window_bytes,
+                                windows_processed,
+                                frames_received,
+                                frames_dropped,
+                                best_score,
+                                self.match_threshold,
+                                "listening",
+                                last_detection_at,
+                            )
                         matched_wake_word = find_wake_word(
-                            transcript, self.wake_words
+                            transcript,
+                            self.wake_words,
+                            threshold=self.match_threshold,
                         )
                         if matched_wake_word is not None:
-                            LOGGER.info("[WakeWord] Wake word detected")
+                            last_detection_at = time.monotonic()
+                            LOGGER.info(
+                                "[WakeWord] Wake word detected "
+                                "(confidence=%.3f threshold=%.2f)",
+                                scores.get(matched_wake_word, 0.0),
+                                self.match_threshold,
+                            )
                             self.detected.emit(
                                 remove_wake_word(transcript, matched_wake_word) or ""
                             )

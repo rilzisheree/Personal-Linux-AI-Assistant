@@ -63,6 +63,14 @@ character counts, generated-token metrics when Ollama supplies them, the
 completion reason, and the actual `num_predict`, `num_ctx`, `temperature`, and
 `stop` request options. They never log prompt or response contents.
 
+For wake-word capture diagnostics, set `LURA_VOICE_DEBUG=1`. The listener then
+logs the selected microphone, 16 kHz mono PCM format, window size, received and
+dropped frame counters, per-window wake-word confidence, configured match
+threshold, detector state, and the last detection timestamp. Transcripts and
+audio contents are not logged. The match threshold can also be tuned in
+Settings → Voice; values closer to `0.5` tolerate more Whisper spelling
+variation, while higher values reduce false activations.
+
 For a controlled no-tool comparison using the same prompt, run:
 
 ```bash

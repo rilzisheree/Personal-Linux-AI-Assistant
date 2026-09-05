@@ -1,0 +1,192 @@
+Fix the **wake-word voice detection reliability** in my local AI assistant **Lura**.
+
+The wake word is unreliable: I can speak loudly and clearly, but Lura often fails to detect it. Sometimes it works, but frequently it doesn't.
+
+## GOAL
+
+Make wake-word detection significantly more reliable without causing excessive false activations.
+
+Inspect the entire pipeline:
+
+```text
+Microphone
+↓
+Audio capture
+↓
+Audio buffer/chunks
+↓
+Preprocessing
+↓
+Wake-word detector
+↓
+Confidence score
+↓
+Threshold
+↓
+Debounce/cooldown
+↓
+Wake-word activation
+↓
+Voice assistant
+```
+
+## INVESTIGATE FIRST
+
+Do not immediately change the threshold.
+
+Inspect the existing implementation and determine whether the problem is caused by:
+
+* incorrect microphone/device selection
+* wrong sample rate
+* wrong number of channels
+* audio format mismatch
+* incorrect chunk size
+* chunks being dropped
+* insufficient audio buffering
+* gaps between audio chunks
+* wake-word model receiving incomplete windows
+* incorrect resampling
+* excessive noise suppression
+* excessive filtering
+* incorrect normalization
+* lack of gain/AGC
+* VAD incorrectly rejecting speech
+* wake-word confidence threshold being too high
+* confidence scores being interpreted incorrectly
+* sliding-window/overlap problems
+* detector cooldown being too long
+* detector state not resetting correctly
+* microphone initialization problems
+* detector stopping while idle
+* audio stream becoming stale after a command
+* another process interfering with the microphone
+
+## ADD DIAGNOSTICS
+
+Use the existing debug/logging system if available.
+
+When diagnostics are enabled, expose information such as:
+
+```text
+microphone device
+sample rate
+channels
+chunk size
+audio format
+frames received
+frames dropped
+wake-word confidence
+configured threshold
+detector state
+last detection time
+cooldown state
+```
+
+Do not log unnecessary private information.
+
+## TEST DIFFERENT CONDITIONS
+
+Test wake-word detection under:
+
+1. normal speaking volume
+2. loud speaking
+3. quiet speaking
+4. microphone close to mouth
+5. microphone farther away
+6. background noise
+7. silence
+8. after Lura has been idle for a long time
+9. immediately after Lura finishes a command
+10. repeated wake-word attempts
+
+Determine whether confidence scores are consistently below the current threshold.
+
+If the threshold is the issue, make it configurable and tune it based on actual observed confidence values rather than guessing.
+
+## AUDIO BUFFERING
+
+Verify that the detector receives continuous audio.
+
+Check for:
+
+```text
+dropped chunks
+buffer underruns
+buffer overruns
+gaps
+incorrect window sizes
+insufficient overlap
+```
+
+If the wake-word model requires a specific sample rate/window size, ensure the audio reaching it matches those requirements exactly.
+
+## FALSE POSITIVE PROTECTION
+
+Do not solve missed detections by simply making the threshold extremely low.
+
+Test common speech and background noise to ensure the detector doesn't constantly activate.
+
+Use appropriate:
+
+* confidence threshold
+* debounce
+* cooldown
+* consecutive-frame confirmation
+
+if supported by the existing detector.
+
+## IMPORTANT
+
+Preserve the existing voice-command pipeline.
+
+Do NOT rewrite unrelated parts of Lura.
+
+Do NOT replace the wake-word engine unless the current implementation is demonstrably unusable.
+
+Do NOT change Ollama/model behavior.
+
+Do NOT modify web search, routing, reminders, or unrelated tools.
+
+Make the smallest targeted changes necessary.
+
+## REGRESSION TESTING
+
+Add tests where practical for:
+
+* valid wake word
+* wake word at normal volume
+* wake word at low volume
+* wake word at high volume
+* background noise
+* no speech
+* similar-sounding speech
+* repeated wake word
+* cooldown behavior
+* detector reset after activation
+
+If hardware-dependent testing cannot be automated, clearly state that.
+
+## SUCCESS TARGET
+
+In a quiet environment with clear speech, the wake word should reliably activate the assistant instead of requiring repeated attempts.
+
+Do not claim success based only on unit tests. Test the actual microphone/detector path on the Linux machine if possible.
+
+## FINAL REPORT
+
+Return:
+
+```text
+ROOT CAUSE:
+EVIDENCE:
+FIX:
+FILES CHANGED:
+BEFORE:
+AFTER:
+FALSE POSITIVE RESULTS:
+REGRESSION TESTS:
+HARDWARE TEST RESULTS:
+REMAINING ISSUES:
+```
+
+Only modify the wake-word/audio detection path.

@@ -69,6 +69,15 @@ class VoiceWorkerTests(unittest.TestCase):
         )
         self.assertEqual(commands, ["what time is it?"])
 
+    def test_wake_word_worker_uses_configured_match_threshold(self) -> None:
+        from local_ai_assistant.workers import WakeWordWorker
+
+        service = Mock()
+        service.config.wake_word_match_threshold = 0.81
+        worker = WakeWordWorker(service, "Lura")
+
+        self.assertEqual(worker.match_threshold, 0.81)
+
     def test_record_worker_stop_sets_cancel_and_terminates_process(self) -> None:
         service = Mock()
         process = Mock()

@@ -179,7 +179,8 @@ def _normalise_spoken_text(text: str) -> list[str]:
     return [token for token in cleaned.split() if token]
 
 
-def _wake_word_match_score(text: str, wake_word: str) -> float:
+def wake_word_match_score(text: str, wake_word: str) -> float:
+    """Return the best word-aligned similarity for a wake-word candidate."""
     from difflib import SequenceMatcher
 
     expected = _normalise_spoken_text(wake_word)
@@ -204,7 +205,7 @@ def wake_word_matches(text: str, wake_word: str, threshold: float = 0.72) -> boo
     Comparing individual words (rather than arbitrary substrings) avoids
     treating a word that merely contains the wake word as a trigger.
     """
-    return _wake_word_match_score(text, wake_word) >= threshold
+    return wake_word_match_score(text, wake_word) >= threshold
 
 
 def find_wake_word(
@@ -223,7 +224,7 @@ def find_wake_word(
     for wake_word in candidates:
         if not isinstance(wake_word, str) or not wake_word.strip():
             continue
-        score = _wake_word_match_score(text, wake_word)
+        score = wake_word_match_score(text, wake_word)
         if score >= best_score:
             best_wake_word = wake_word
             best_score = score

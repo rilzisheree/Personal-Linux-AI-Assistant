@@ -26,6 +26,7 @@ TTS_VOICE_PRESETS = PIPER_VOICE_PRESETS
 DEFAULT_VOICE_SILENCE_DURATION = 0.9
 DEFAULT_VOICE_MIN_SPEECH_DURATION = 0.3
 DEFAULT_VOICE_VAD_THRESHOLD = 350
+DEFAULT_WAKE_WORD_MATCH_THRESHOLD = 0.68
 DEFAULT_CONVERSATION_TIMEOUT = 8
 DEFAULT_CONVERSATION_TRANSITION_DELAY = 0.35
 DEFAULT_WAKE_WORD = "Lura"
@@ -67,6 +68,7 @@ class AppConfig:
     voice_silence_duration: float = DEFAULT_VOICE_SILENCE_DURATION
     voice_min_speech_duration: float = DEFAULT_VOICE_MIN_SPEECH_DURATION
     voice_vad_threshold: int = DEFAULT_VOICE_VAD_THRESHOLD
+    wake_word_match_threshold: float = DEFAULT_WAKE_WORD_MATCH_THRESHOLD
     theme: str = "obsidian"
     orb_intensity: int = 65
     animation_intensity: int = 70
@@ -122,6 +124,10 @@ class AppConfig:
             )
         if isinstance(self.voice_vad_threshold, str):
             self.voice_vad_threshold = int(self.voice_vad_threshold.strip())
+        if isinstance(self.wake_word_match_threshold, str):
+            self.wake_word_match_threshold = float(
+                self.wake_word_match_threshold.strip()
+            )
         if isinstance(self.conversation_timeout, str):
             self.conversation_timeout = int(self.conversation_timeout.strip())
         if isinstance(self.conversation_transition_delay, str):
@@ -208,6 +214,14 @@ class AppConfig:
             or not 100 <= self.voice_vad_threshold <= 4000
         ):
             raise ValueError("Voice activity threshold must be between 100 and 4000.")
+        if (
+            isinstance(self.wake_word_match_threshold, bool)
+            or not isinstance(self.wake_word_match_threshold, (int, float))
+            or not 0.5 <= self.wake_word_match_threshold <= 0.95
+        ):
+            raise ValueError(
+                "Wake-word match threshold must be between 0.5 and 0.95."
+            )
         if self.theme not in {"obsidian"}:
             raise ValueError("Theme must be obsidian.")
         for value, label in (
@@ -323,6 +337,13 @@ class AppConfig:
                 voice_vad_threshold=_int_setting(
                     raw.get("voice_vad_threshold", DEFAULT_VOICE_VAD_THRESHOLD),
                     DEFAULT_VOICE_VAD_THRESHOLD,
+                ),
+                wake_word_match_threshold=_float_setting(
+                    raw.get(
+                        "wake_word_match_threshold",
+                        DEFAULT_WAKE_WORD_MATCH_THRESHOLD,
+                    ),
+                    DEFAULT_WAKE_WORD_MATCH_THRESHOLD,
                 ),
                 theme=str(raw.get("theme", "obsidian")),
                 orb_intensity=_int_setting(raw.get("orb_intensity", 65), 65),

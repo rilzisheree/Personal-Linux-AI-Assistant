@@ -427,6 +427,17 @@ class SettingsDialog(QDialog):
         self.voice_vad_threshold_input.setSingleStep(50)
         self.voice_vad_threshold_input.setValue(config.voice_vad_threshold)
         self.voice_vad_threshold_input.setSuffix(" level")
+        self.wake_word_match_threshold_input = QDoubleSpinBox()
+        self.wake_word_match_threshold_input.setRange(0.5, 0.95)
+        self.wake_word_match_threshold_input.setSingleStep(0.01)
+        self.wake_word_match_threshold_input.setDecimals(2)
+        self.wake_word_match_threshold_input.setValue(
+            config.wake_word_match_threshold
+        )
+        self.wake_word_match_threshold_input.setToolTip(
+            "Lower values tolerate more Whisper spelling variation but may "
+            "increase false activations."
+        )
         input_form.addRow("", self.voice_input_enabled)
         input_form.addRow("Microphone", microphone_row)
         input_form.addRow("Whisper model", self.whisper_model_input)
@@ -436,6 +447,10 @@ class SettingsDialog(QDialog):
             "Minimum speech", self.voice_min_speech_duration_input
         )
         input_form.addRow("Voice activity threshold", self.voice_vad_threshold_input)
+        input_form.addRow(
+            "Wake-word match threshold",
+            self.wake_word_match_threshold_input,
+        )
         layout.addWidget(input_group)
 
         output_group, output_form = self._group("VOICE OUTPUT")
@@ -613,6 +628,7 @@ class SettingsDialog(QDialog):
             voice_silence_duration=self.voice_silence_duration_input.value(),
             voice_min_speech_duration=self.voice_min_speech_duration_input.value(),
             voice_vad_threshold=self.voice_vad_threshold_input.value(),
+            wake_word_match_threshold=self.wake_word_match_threshold_input.value(),
             theme=str(self.theme_input.currentData()),
             orb_intensity=self.orb_intensity_input.value(),
             animation_intensity=self.animation_intensity_input.value(),
