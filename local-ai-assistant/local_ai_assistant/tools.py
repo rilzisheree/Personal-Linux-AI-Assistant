@@ -42,8 +42,8 @@ from .memory import MemoryStore
 from .profile import UserProfileStore, collect_system_profile
 from .reminders import (
     default_reminder_service,
+    format_delay,
     format_due_time,
-    format_reminder_timing,
 )
 
 
@@ -381,6 +381,7 @@ class ToolManager:
         }
         self._active_model = active_model.strip() if isinstance(active_model, str) and active_model.strip() else None
         self.reminder_service = default_reminder_service()
+        self._last_created_reminder_id: str | None = None
         self._pending_reminder_active = False
         self._pending_reminder_task: str | None = None
         self._reminder_followup_ready = False
@@ -1284,6 +1285,19 @@ class ToolManager:
                 {"reminder": completion_match.group("reminder").strip()},
                 "explicit request to complete a reminder",
             )
+        last_reminder_match = re.search(
+            r"\b(?:cancel|delete|remove)\s+(?:(?:my|the)\s+)?"
+            r"(?:that\s+reminder|(?:last|latest)\s+reminder|"
+            r"reminder\s+(?:you|we)\s+just\s+created)\b",
+            text,
+            re.IGNORECASE,
+        )
+        if last_reminder_match:
+            return decision(
+                "cancel_reminder",
+                {"reminder": "__last_created_reminder__"},
+                "explicit request to cancel the most recently created reminder",
+            )
         cancellation_match = re.search(
             r"\b(?:cancel|delete|remove)\s+(?:(?:my|the)\s+)?"
             r"(?:reminder\s+(?P<after_reminder>.+)|"
@@ -1889,17 +1903,16 @@ class ToolManager:
             raise ValueError("Reminder message must include a task.")
         delay_seconds = arguments.get("delay_seconds")
         reminder = self.reminder_service.schedule(message, delay_seconds)
+        self._last_created_reminder_id = reminder.reminder_id
         self._pending_reminder_active = False
         self._pending_reminder_task = None
         self._reminder_followup_ready = False
-        timing = format_reminder_timing(
-            reminder.due_at,
-            float(delay_seconds),
-            now=self.reminder_service._clock(),
-        )
         return ToolCallResult(
             True,
-            f"Reminder created successfully. It will fire {timing}: {reminder.message}",
+            (
+                "Reminder created successfully. "
+                f"It will fire in {format_delay(float(delay_seconds))}: {reminder.message}"
+            ),
         )
 
     def _list_reminders(self, arguments: dict) -> ToolCallResult:
@@ -1929,6 +1942,24 @@ class ToolManager:
 
     def _matching_reminder(self, value: str):
         reminders = self.reminder_service.store.list()
+        if value.strip() == "__last_created_reminder__":
+            if self._last_created_reminder_id:
+                reminder = next(
+                    (
+                        item
+                        for item in reminders
+                        if item.reminder_id == self._last_created_reminder_id
+                    ),
+                    None,
+                )
+                if reminder is not None:
+                    return reminder
+            upcoming = [
+                item
+                for item in reminders
+                if item.status in {"upcoming", "triggered"}
+            ]
+            return max(upcoming, key=lambda item: item.created_at, default=None)
         needle = value.strip().casefold()
         return next(
             (

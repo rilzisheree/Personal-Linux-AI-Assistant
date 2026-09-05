@@ -253,7 +253,8 @@ class ToolManagerTests(unittest.TestCase):
             self.assertTrue(result.success)
             self.assertIn("Reminder created successfully", result.content)
             self.assertIn("in 5 seconds", result.content)
-            self.assertIn("(today at", result.content)
+            self.assertNotIn("(today at", result.content)
+            self.assertNotIn("2026-", result.content)
             self.assertIn("drink water", result.content)
             reminders = service.store.list()
             self.assertEqual(len(reminders), 1)
@@ -379,6 +380,38 @@ class ToolManagerTests(unittest.TestCase):
             ),
             ("cancel_reminder", {"reminder": "EAT food"}),
         )
+
+    def test_direct_dispatch_can_cancel_the_last_created_reminder(self) -> None:
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "Remove that reminder you just created"
+            ),
+            (
+                "cancel_reminder",
+                {"reminder": "__last_created_reminder__"},
+            ),
+        )
+
+    def test_last_created_reminder_can_be_cancelled_without_ollama_guessing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            self.manager.reminder_service = service
+            self.manager.execute(
+                "create_reminder",
+                {"message": "Eat food", "delay_seconds": 300},
+            )
+
+            result = self.manager.execute(
+                "cancel_reminder",
+                {"reminder": "__last_created_reminder__"},
+            )
+
+            self.assertTrue(result.success)
+            self.assertIn("Cancelled reminder: Eat food", result.content)
 
     def test_incomplete_reminder_requests_ask_for_missing_details(self) -> None:
         self.assertEqual(
