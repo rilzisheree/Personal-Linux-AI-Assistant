@@ -1013,6 +1013,21 @@ class ToolManager:
         if not text:
             return None
 
+        def decision(
+            tool_name: str | None,
+            arguments: dict | None,
+            reason: str,
+        ) -> tuple[str, dict] | None:
+            LOGGER.debug(
+                "[ROUTER] user_request=%r classification=%s selected_tool=%s "
+                "why_tool=%s",
+                text[:600],
+                "direct_tool" if tool_name else "no_tool",
+                tool_name or "none",
+                reason,
+            )
+            return (tool_name, arguments or {}) if tool_name else None
+
         model_question = (
             bool(
                 re.search(
@@ -1038,7 +1053,11 @@ class ToolManager:
             )
         )
         if model_question:
-            return "get_active_model", {}
+            return decision(
+                "get_active_model",
+                {},
+                "explicit question about the active model",
+            )
 
         identity_question = (
             "who am i" in folded
@@ -1053,7 +1072,11 @@ class ToolManager:
             or bool(re.search(r"\b(?:what(?:'s| is))\s+(?:my|your)\s+name\b", folded))
         )
         if identity_question:
-            return "get_identity", {}
+            return decision(
+                "get_identity",
+                {},
+                "explicit question about the user or assistant identity",
+            )
 
         reminder_match = re.search(
             r"\bremind\s+me\s+in\s+"
@@ -1084,10 +1107,14 @@ class ToolManager:
             delay_seconds = amount * unit_seconds[reminder_match.group("unit").casefold()]
             message = reminder_match.group("message").strip(" .!?")
             if message:
-                return "create_reminder", {
-                    "message": message,
-                    "delay_seconds": delay_seconds,
-                }
+                return decision(
+                    "create_reminder",
+                    {
+                        "message": message,
+                        "delay_seconds": delay_seconds,
+                    },
+                    "explicit relative reminder request",
+                )
 
         if self.custom_app_commands and re.search(
             r"\b(?:open|launch|start|run|use|show|bring\s+up)\b",
@@ -1095,11 +1122,19 @@ class ToolManager:
         ):
             for alias in self.custom_app_commands:
                 if re.search(re.escape(alias.casefold()), folded):
-                    return "open_app", {"app": alias}
+                    return decision(
+                        "open_app",
+                        {"app": alias},
+                        "explicit configured application launch request",
+                    )
 
         url = re.search(r"https?://[^\s]+", text, re.IGNORECASE)
         if url and re.match(r"^(?:please\s+)?(?:open|launch|visit|go to)\b", folded):
-            return "open_website", {"url": url.group(0).rstrip(".,!?")}
+            return decision(
+                "open_website",
+                {"url": url.group(0).rstrip(".,!?")},
+                "explicit request to open a URL",
+            )
 
         live_search_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
@@ -1123,24 +1158,40 @@ class ToolManager:
                     )
                     else "web_search"
                 )
-                return search_tool, {"query": query}
+                return decision(
+                    search_tool,
+                    {"query": query},
+                    "explicit live/web search request",
+                )
 
         if re.search(r"\b(?:what are|show|list)\s+(?:my\s+)?reminders\b", folded):
-            return "list_reminders", {}
+            return decision(
+                "list_reminders",
+                {},
+                "explicit request to list reminders",
+            )
         completion_match = re.search(
             r"\b(?:mark|set)\s+(?P<reminder>.+?)\s+(?:as\s+)?(?:done|complete|completed)\b",
             text,
             re.IGNORECASE,
         )
         if completion_match:
-            return "complete_reminder", {"reminder": completion_match.group("reminder").strip()}
+            return decision(
+                "complete_reminder",
+                {"reminder": completion_match.group("reminder").strip()},
+                "explicit request to complete a reminder",
+            )
         cancellation_match = re.search(
             r"\b(?:cancel|delete|remove)\s+(?:my\s+)?(?P<reminder>.+?)\s+reminder\b",
             text,
             re.IGNORECASE,
         )
         if cancellation_match:
-            return "cancel_reminder", {"reminder": cancellation_match.group("reminder").strip()}
+            return decision(
+                "cancel_reminder",
+                {"reminder": cancellation_match.group("reminder").strip()},
+                "explicit request to cancel a reminder",
+            )
         move_match = re.search(
             r"\b(?:move|reschedule| postpone)\s+(?:my\s+)?(?P<reminder>.+?)\s+reminder\b"
             r".*?\b(?P<amount>\d+(?:\.\d+)?)\s*(?P<unit>seconds?|minutes?|hours?|days?)\b",
@@ -1159,10 +1210,14 @@ class ToolManager:
                 "days": 86400,
             }
             unit = move_match.group("unit").casefold()
-            return "reschedule_reminder", {
-                "reminder": move_match.group("reminder").strip(),
-                "delay_seconds": float(move_match.group("amount")) * unit_seconds[unit],
-            }
+            return decision(
+                "reschedule_reminder",
+                {
+                    "reminder": move_match.group("reminder").strip(),
+                    "delay_seconds": float(move_match.group("amount")) * unit_seconds[unit],
+                },
+                "explicit request to reschedule a reminder",
+            )
 
         search_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
@@ -1183,13 +1238,18 @@ class ToolManager:
                     )
                     else "web_search"
                 )
-                return search_tool, {"query": query}
+                return decision(
+                    search_tool,
+                    {"query": query},
+                    "explicit search or lookup request",
+                )
 
         # Current external questions must reach a live-information tool even
         # when the user does not say "search". Specialized tools below still
-        # own weather/currency/maps/etc.; this conservative branch covers news
-        # and general current web facts that the model must not answer from
-        # training memory.
+        # own weather/currency/maps/etc. A time word alone is not enough:
+        # conversational requests commonly contain "today" or "now". Require
+        # an external-information cue as well so uncertainty falls through to
+        # the normal model route instead of causing an unnecessary search.
         current_marker = re.search(
             r"\b(?:latest|today|now|recently|this week|breaking|current)\b",
             folded,
@@ -1199,7 +1259,14 @@ class ToolManager:
             r"directions?|route|nearby|restaurant|travel|flight|game|gaming)\b",
             folded,
         )
-        if current_marker and not specialized_current:
+        external_information_cue = re.search(
+            r"\b(?:news|headlines?|breaking|release|releases|price|prices|"
+            r"stock|stocks|market|markets|score|scores|result|results|"
+            r"updates?|events?|race|races|won|happened|happening|"
+            r"what(?:'s| is) new)\b",
+            folded,
+        )
+        if current_marker and external_information_cue and not specialized_current:
             query = re.sub(
                 r"^(?:(?:what(?:'s| is)|what are|tell me|show me|give me)\s+)",
                 "",
@@ -1212,7 +1279,11 @@ class ToolManager:
                     if re.search(r"\b(?:news|headlines?|breaking)\b", query, re.IGNORECASE)
                     else "web_search"
                 )
-                return search_tool, {"query": query}
+                return decision(
+                    search_tool,
+                    {"query": query},
+                    "current marker paired with an external-information cue",
+                )
 
         app_match = re.match(
             r"^(?:(?:please|can you|could you|would you|will you)\s+)?"
@@ -1243,9 +1314,12 @@ class ToolManager:
                 and app.casefold() not in {"listening", "the app", "an app"}
                 and app
             ):
-                return ("close_app" if action in {"close", "quit", "exit", "stop"} else "open_app"), {
-                    "app": app
-                }
+                tool_name = "close_app" if action in {"close", "quit", "exit", "stop"} else "open_app"
+                return decision(
+                    tool_name,
+                    {"app": app},
+                    "explicit application action",
+                )
 
         local_state_marker = re.search(
             r"\b(?:my|your|i have|do i have|am i using|current|usage|"
@@ -1256,26 +1330,58 @@ class ToolManager:
         if local_state_marker and re.search(
             r"\b(?:gpu|graphics card|video card|vram|graphics memory)\b", folded
         ):
-            return "get_gpu_info", {}
+            return decision(
+                "get_gpu_info",
+                {},
+                "explicit request for local GPU state",
+            )
         if local_state_marker and re.search(
             r"\b(?:cpu|processor|processing unit|cpu cores?|threads?)\b", folded
         ):
-            return "get_cpu_info", {}
+            return decision(
+                "get_cpu_info",
+                {},
+                "explicit request for local CPU state",
+            )
         if local_state_marker and re.search(r"\b(?:ram|memory)\b", folded):
             if re.search(r"(?:using|uses|top|most|process)", folded):
-                return "get_processes", {}
-            return "get_ram_info", {}
+                return decision(
+                    "get_processes",
+                    {},
+                    "explicit request for processes using local memory",
+                )
+            return decision(
+                "get_ram_info",
+                {},
+                "explicit request for local memory state",
+            )
         if local_state_marker and re.search(
             r"\b(?:disk|storage|drive space|free space)\b", folded
         ):
-            return "get_disk_info", {}
+            return decision(
+                "get_disk_info",
+                {},
+                "explicit request for local storage state",
+            )
         if re.search(r"\b(?:system info|system information|computer status|machine status|linux version)\b", folded):
-            return "get_system_info", {}
+            return decision(
+                "get_system_info",
+                {},
+                "explicit request for local system information",
+            )
         if re.search(r"\b(?:screenshot|screen capture|capture my screen)\b", folded):
-            return "take_screenshot", {}
+            return decision(
+                "take_screenshot",
+                {},
+                "explicit request for a desktop screenshot",
+            )
         if re.search(r"\b(?:open windows?|windows? do i have)\b", folded):
-            return "list_windows", {}
-        return None
+            return decision(
+                "list_windows",
+                {},
+                "explicit request to list desktop windows",
+            )
+        return decision(None, None, "no unambiguous direct tool intent")
 
     def permission_for(self, name: str, arguments: dict) -> PermissionLevel:
         definition = self._definitions.get(name)

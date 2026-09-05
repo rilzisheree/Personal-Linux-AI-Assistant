@@ -371,6 +371,45 @@ class ToolManagerTests(unittest.TestCase):
             ),
         )
 
+    def test_direct_dispatch_does_not_search_for_casual_or_general_questions(self) -> None:
+        no_direct_tool_requests = (
+            "How are you doing today?",
+            "How are you?",
+            "What's up?",
+            "Good morning.",
+            "Tell me a joke.",
+            "What can you do?",
+            "Explain what RAM is.",
+            "What is Linux?",
+            "What's the weather today?",
+        )
+
+        for request in no_direct_tool_requests:
+            with self.subTest(request=request):
+                self.assertIsNone(
+                    self.manager.direct_tool_call_for_request(request)
+                )
+
+    def test_direct_dispatch_searches_only_when_current_request_has_external_intent(self) -> None:
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "What happened in AI today?"
+            ),
+            ("web_search", {"query": "What happened in AI today"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "What's the latest NVIDIA news?"
+            ),
+            ("search_news", {"query": "the latest NVIDIA news"}),
+        )
+        self.assertEqual(
+            self.manager.direct_tool_call_for_request(
+                "What are you doing today?"
+            ),
+            None,
+        )
+
     def test_custom_launcher_names_are_exposed_to_the_model(self) -> None:
         manager = ToolManager(custom_app_commands={"Youtube tab": "firefox"})
 

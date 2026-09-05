@@ -1,0 +1,326 @@
+Fix one specific bug in my local AI assistant **Lura**:
+
+When I ask simple conversational questions such as:
+
+* “How are you doing today?”
+* “How are you?”
+* “What’s up?”
+* “Are you working?”
+* “Tell me something funny.”
+* “Good morning.”
+* “Thank you.”
+* “What can you do?”
+* “Can you help me?”
+* normal questions about Lura itself
+
+Lura sometimes enters a reasoning/tool-use phase and incorrectly calls `web_search`.
+
+Example of the current bad behavior:
+
+```text
+✕ web_search
+
+{
+  "success": false,
+  "query": "How are you doing today",
+  "results": [],
+  "error_code": "NETWORK_ERROR",
+  "message": "DuckDuckGo is unavailable: <urlopen error [Errno 104] Connection reset by peer>"
+}
+```
+
+It then answers:
+
+```text
+I'm functioning normally. The system is running qwen3.5:2b on your NVIDIA GeForce RTX 4060 GPU, which shows 96% utilization and approximately 62°C temperature. How can I assist you today?
+```
+
+The web search was completely unnecessary.
+
+## GOAL
+
+Make Lura correctly distinguish between:
+
+1. **Conversational / casual requests**
+2. **Normal knowledge questions that do not require current information**
+3. **Requests that genuinely require web search**
+
+For conversational requests, the correct behavior is:
+
+```text
+USER
+↓
+ROUTER
+↓
+NO TOOL
+↓
+MAIN MODEL
+↓
+RESPONSE
+```
+
+NOT:
+
+```text
+USER
+↓
+ROUTER
+↓
+web_search
+↓
+NETWORK ERROR
+↓
+MAIN MODEL
+↓
+RESPONSE
+```
+
+## IMPORTANT
+
+Do NOT rewrite the whole assistant.
+
+Do NOT modify the web-search provider.
+
+Do NOT change Ollama.
+
+Do NOT change the wake-word system.
+
+Do NOT change streaming.
+
+Do NOT add a hardcoded list of every possible casual sentence.
+
+Instead, inspect the existing routing / classification / tool-selection architecture and fix the underlying reason it is selecting `web_search`.
+
+## INVESTIGATE
+
+Inspect the complete path:
+
+```text
+user message
+→ intent classification
+→ router
+→ tool-selection logic
+→ web-search trigger conditions
+→ selected tool
+→ tool execution
+```
+
+Find exactly why something like:
+
+```text
+"How are you doing today?"
+```
+
+is being interpreted as requiring web search.
+
+Look specifically for overly broad conditions such as:
+
+* every question being classified as needing search
+* question marks triggering web search
+* generic question words triggering web search
+* low-confidence classification defaulting to web search
+* “today” automatically triggering web search even when “today” is conversational
+* the model being instructed to use web search whenever uncertain
+* web search being treated as the default fallback
+* tool descriptions making web search appear appropriate for generic questions
+* router classification leaking into tool selection
+* conversation requests being incorrectly classified as information/current-events requests
+
+## CORRECT WEB-SEARCH BEHAVIOR
+
+Web search should be selected when the user's intent actually requires external/current information.
+
+Examples that SHOULD search:
+
+```text
+"What is the latest NVIDIA news?"
+"What's the weather in Riyadh today?"
+"What is NVIDIA's current stock price?"
+"Who won the latest F1 race?"
+"Find me restaurants near me."
+"What's the latest Linux kernel release?"
+"Search the web for..."
+"Look up..."
+"Find..."
+"What's happening in AI today?"
+```
+
+Examples that should NOT search:
+
+```text
+"How are you doing today?"
+"How are you?"
+"Are you okay?"
+"What are you doing?"
+"Tell me a joke."
+"Good morning."
+"Good night."
+"Thanks."
+"You're awesome."
+"What can you do?"
+"Can you help me?"
+"Explain what RAM is."
+"What is Linux?"
+"How does a CPU work?"
+"What does HTTP mean?"
+```
+
+The second category should go directly to the main model unless another specialized local tool is genuinely required.
+
+## SPECIAL CASE: "TODAY"
+
+Do NOT treat the mere presence of words such as:
+
+```text
+today
+now
+currently
+recently
+```
+
+as automatic web-search triggers.
+
+For example:
+
+```text
+"How are you doing today?"
+```
+
+must NOT search.
+
+Whereas:
+
+```text
+"What happened in the AI industry today?"
+```
+
+should search because the user is requesting current external information.
+
+The router needs to understand **intent**, not merely keywords.
+
+## PRESERVE TOOL USE
+
+Do not make the router overly conservative.
+
+It must still correctly select tools when tools are actually required.
+
+For example:
+
+```text
+"What's my GPU temperature?"
+```
+
+should use the local GPU/system tool.
+
+```text
+"What's the weather today?"
+```
+
+should use the weather capability if available.
+
+```text
+"Find restaurants near me."
+```
+
+should use the appropriate places/business capability.
+
+```text
+"Search the web for the latest RTX 5090 news."
+```
+
+should use web search.
+
+## IMPORTANT FALLBACK RULE
+
+If the router is uncertain whether a casual/general request needs web search, **do not automatically search**.
+
+Prefer:
+
+```text
+NO TOOL → MAIN MODEL
+```
+
+unless there is strong evidence that external/current information is required.
+
+The assistant must never call a tool merely because it is uncertain.
+
+## DEBUGGING
+
+Before changing anything, inspect the existing implementation and identify the exact decision responsible.
+
+Then make the smallest targeted fix.
+
+Add or improve structured debug information if the project already has a debug/logging system.
+
+For each request, it should be possible to determine:
+
+```text
+USER_REQUEST
+CLASSIFICATION
+SELECTED_TOOL
+WHY_TOOL_WAS_SELECTED
+```
+
+Do not log secrets or private data unnecessarily.
+
+## TESTS
+
+Add regression tests for at least:
+
+```text
+"How are you doing today?"
+"How are you?"
+"What's up?"
+"Good morning."
+"Tell me a joke."
+"What can you do?"
+"Explain what RAM is."
+"What is Linux?"
+"What is the latest NVIDIA news?"
+"What happened in AI today?"
+"What's the weather today?"
+"Search the web for the latest NVIDIA news."
+```
+
+Expected behavior:
+
+| Request                           | Web Search?              |
+| --------------------------------- | ------------------------ |
+| How are you doing today?          | NO                       |
+| How are you?                      | NO                       |
+| What's up?                        | NO                       |
+| Good morning.                     | NO                       |
+| Tell me a joke.                   | NO                       |
+| What can you do?                  | NO                       |
+| Explain what RAM is.              | NO                       |
+| What is Linux?                    | NO                       |
+| Latest NVIDIA news                | YES                      |
+| What happened in AI today?        | YES                      |
+| What's the weather today?         | YES / weather capability |
+| Search web for latest NVIDIA news | YES                      |
+
+Do not merely mock the router in a way that hides the bug. Test the actual routing logic.
+
+After implementing the fix:
+
+1. Run the relevant existing tests.
+2. Run the new regression tests.
+3. Verify that existing genuine web-search requests still select web search.
+4. Verify that casual/general questions no longer produce `web_search` tool calls.
+5. Check the diff and ensure no unrelated systems were changed.
+
+Report:
+
+```text
+ROOT CAUSE:
+EVIDENCE:
+FIX:
+FILES CHANGED:
+TESTS:
+BEFORE:
+AFTER:
+REGRESSIONS:
+REMAINING ISSUES:
+```
+
+Only make the targeted routing fix.
