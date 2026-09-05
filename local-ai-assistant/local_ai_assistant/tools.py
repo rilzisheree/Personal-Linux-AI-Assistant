@@ -1201,7 +1201,8 @@ class ToolManager:
                 "explicit request to complete a reminder",
             )
         cancellation_match = re.search(
-            r"\b(?:cancel|delete|remove)\s+(?:my\s+)?(?P<reminder>.+?)\s+reminder\b",
+            r"\b(?:cancel|delete|remove)\s+(?:(?:my|the)\s+)?"
+            r"(?P<reminder>.+?)\s+reminder\b",
             text,
             re.IGNORECASE,
         )

@@ -37,10 +37,18 @@ from .voice import (
 
 MAX_TOOL_ROUNDS = 8
 LOGGER = logging.getLogger("lura.workers")
-DEFAULT_WAKE_WORD_WINDOW_SECONDS = 1.5
+DEFAULT_WAKE_WORD_WINDOW_SECONDS = 2.5
 WAKE_WORD_SAMPLE_RATE = 16_000
 WAKE_WORD_CHANNELS = 1
 WAKE_WORD_SAMPLE_WIDTH = 2
+DIRECT_REMINDER_TOOLS = frozenset(
+    {
+        "list_reminders",
+        "complete_reminder",
+        "cancel_reminder",
+        "reschedule_reminder",
+    }
+)
 
 
 def _wake_debug_enabled() -> bool:
@@ -166,6 +174,15 @@ class ChatWorker(QObject):
                 # formats the result and cannot replace it with a refusal or
                 # another guessed tool call.
                 route_tools = None
+                if tool_name in DIRECT_REMINDER_TOOLS:
+                    # Reminder state and timing are application facts. Avoid
+                    # a second no-tools model request, which can cause a
+                    # model to request the same reminder tool again.
+                    final_response = result.content
+                    visible_messages.append(ChatMessage("assistant", final_response))
+                    self.conversation_ready.emit(visible_messages)
+                    self.finished.emit(final_response)
+                    return
             else:
                 route = self.service.route_request(
                     messages,

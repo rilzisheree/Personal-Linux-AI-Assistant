@@ -48,7 +48,7 @@ class VoiceWorkerTests(unittest.TestCase):
         worker = WakeWordWorker(Mock(), "Lura")
 
         self.assertEqual(worker.chunk_seconds, DEFAULT_WAKE_WORD_WINDOW_SECONDS)
-        self.assertLessEqual(worker.chunk_seconds, 1.5)
+        self.assertGreaterEqual(worker.chunk_seconds, 2.0)
 
     def test_wake_word_worker_transcribes_on_cpu(self) -> None:
         from local_ai_assistant.workers import WakeWordWorker
@@ -445,6 +445,41 @@ class DirectToolDispatchTests(unittest.TestCase):
             reminders = manager.reminder_service.store.list()
             self.assertEqual(len(reminders), 1)
             self.assertEqual(reminders[0].message, "drink water")
+
+    def test_chat_worker_finishes_direct_reminder_cancellation_locally(self) -> None:
+        class FakeService:
+            display_name = "Fake Ollama"
+
+            def stream_reply(self, *args, **kwargs):
+                raise AssertionError("Ollama should not be called after local cancellation")
+
+            def cancel_active_request(self) -> None:
+                return None
+
+        with tempfile.TemporaryDirectory() as directory:
+            manager = ToolManager()
+            manager.reminder_service = ReminderService(
+                ReminderStore(Path(directory) / "reminders.json"),
+                notify_send="",
+                start_scheduler=False,
+            )
+            manager.reminder_service.schedule("Drink water", 300)
+            worker = ChatWorker(
+                FakeService(),
+                [ChatMessage("user", "Remove the Drink water reminder")],
+                "qwen3.5:2b",
+                manager,
+            )
+            finished: list[str] = []
+            failures: list[tuple[str, str]] = []
+            worker.finished.connect(finished.append)
+            worker.failed.connect(lambda message, kind: failures.append((message, kind)))
+
+            worker.run()
+
+            self.assertEqual(finished, ["Cancelled reminder: Drink water"])
+            self.assertEqual(failures, [])
+            self.assertEqual(manager.reminder_service.store.list()[0].status, "cancelled")
 
 
 if __name__ == "__main__":
